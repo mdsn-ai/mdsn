@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}}</title>
+    <meta name="description" content="{{description}}" />
+    <link rel="canonical" href="{{canonical_url}}" />
+    <link rel="alternate" type="text/markdown" href="{{markdown_alternate_url}}" />
+    {{hreflang_links}}
+    <link rel="llms-txt" href="/llms.txt" />
+    <meta name="theme-color" content="#f3f6ff" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="{{site_name}}" />
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:url" content="{{canonical_url}}" />
+    <meta property="og:image" content="{{og_image_url}}" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="{{title}}" />
+    <meta property="twitter:description" content="{{description}}" />
+    <meta property="twitter:image" content="{{og_image_url}}" />
+    <link rel="icon" href="/favicon.svg?v=20260322" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png?v=20260322" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16x16.png?v=20260322" type="image/png" sizes="16x16" />
+    <link rel="shortcut icon" href="/favicon.ico?v=20260322" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260322" sizes="180x180" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "MDSN Documentation",
+        "author": {
+          "@type": "Organization",
+          "name": "MDSN"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "MDSN",
+          "url": "https://docs.mdsn.ai"
+        },
+        "url": "https://docs.mdsn.ai/docs",
+        "description": "Official MDSN documentation."
+      }
+    </script>
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/docs.css" />
+    <meta name="mdsn-posthog-key" content="{{posthog_project_api_key}}" />
+    <meta name="mdsn-posthog-host" content="{{posthog_host}}" />
+    <script>
+      (() => {
+        const key = document.querySelector('meta[name="mdsn-posthog-key"]')?.getAttribute("content")?.trim();
+        if (!key) return;
+        const hostRaw = document.querySelector('meta[name="mdsn-posthog-host"]')?.getAttribute("content")?.trim();
+        const host = (hostRaw || "https://us.i.posthog.com").replace(/\/+$/, "");
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = `${host}/static/array.js`;
+        script.onload = () => {
+          if (!window.posthog || typeof window.posthog.init !== "function") return;
+          window.posthog.init(key, {
+            api_host: host,
+            capture_pageview: true,
+            capture_pageleave: true,
+            autocapture: true,
+            person_profiles: "identified_only",
+          });
+
+          document.addEventListener(
+            "click",
+            (event) => {
+              const target = event.target instanceof Element ? event.target.closest("a") : null;
+              if (!target) return;
+              const href = target.getAttribute("href");
+              if (!href || href.startsWith("#")) return;
+              window.posthog?.capture?.("cta_click", {
+                href,
+                text: (target.textContent || "").trim().slice(0, 120),
+                pathname: window.location.pathname,
+              });
+            },
+            true,
+          );
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
+  </head>
+  <body class="docs-page" data-lang="{{lang}}" data-pathname="{{pathname}}">
+    <header class="docs-topbar">
+      <a class="docs-brand" href="/docs" aria-label="MDSN Docs">
+        <img src="/favicon.svg" alt="" width="26" height="26" />
+        <span>MDSN Docs</span>
+      </a>
+      <nav class="docs-global-nav" aria-label="Primary">
+        <a href="/docs">Docs</a>
+        <a href="/docs/getting-started">Getting Started</a>
+        <a href="/docs/sdk-reference">SDK</a>
+      </nav>
+      <div class="docs-lang-switch" aria-label="Language">
+        <a id="docs-lang-en" href="/docs">EN</a>
+        <a id="docs-lang-zh" href="/zh/docs">中文</a>
+      </div>
+    </header>
+
+    <main class="docs-main-shell">
+      <aside class="docs-sidebar" aria-label="Documentation Navigation">
+        <div class="docs-sidebar-head">
+          <p class="docs-sidebar-title">Documentation</p>
+          <input id="docs-search" type="search" placeholder="Search docs..." autocomplete="off" />
+        </div>
+        <nav id="docs-tree"></nav>
+      </aside>
+
+      <article class="docs-article">
+        {{content}}
+      </article>
+
+      <aside id="docs-toc" class="docs-toc" aria-label="On this page"></aside>
+    </main>
+
+    <footer class="docs-footer">
+      <p>
+        MDSN Docs ·
+        <a href="https://docs.mdsn.ai">docs.mdsn.ai</a> ·
+        <a href="https://github.com/mdsn-ai">GitHub</a> ·
+        <a href="https://x.com/mdsndev">@mdsndev</a>
+      </p>
+    </footer>
+
+    <script>
+      (() => {
+        const lang = "{{lang}}";
+        const pathname = "{{pathname}}";
+        const chromeByLang = {
+          en: {
+            sidebarTitle: "Documentation",
+            searchPlaceholder: "Search docs...",
+            tocTitle: "On this page",
+          },
+          zh: {
+            sidebarTitle: "文档导航",
+            searchPlaceholder: "搜索文档...",
+            tocTitle: "本页目录",
+          },
+        };
+        const chrome = chromeByLang[lang] || chromeByLang.en;
+        let docsSearchTimer = null;
+        const treeByLang = {
+          en: [
+            {
+              section: "Getting Started",
+              items: [
+                { href: "/docs", label: "Overview" },
+                { href: "/docs/getting-started", label: "Getting Started" },
+                { href: "/docs/site-development", label: "Framework Development" },
+              ],
+            },
+            {
+              section: "Site Development",
+              items: [
+                { href: "/docs/routing-layouts", label: "Routing and Layouts" },
+                { href: "/docs/config-reference", label: "Config Reference" },
+                { href: "/docs/action-reference", label: "Action Reference" },
+              ],
+            },
+            {
+              section: "Advanced Development",
+              items: [
+                { href: "/docs/agent-app-demo", label: "Agent App Demo Walkthrough" },
+                { href: "/docs/server-development", label: "Server Development" },
+                { href: "/docs/vue-rendering", label: "Custom Rendering with Vue" },
+                { href: "/docs/react-rendering", label: "Custom Rendering with React" },
+                { href: "/docs/shared-interaction", label: "HTTP Content Negotiation and Shared Interaction" },
+              ],
+            },
+            {
+              section: "Reference",
+              items: [
+                { href: "/docs/cli-reference", label: "CLI Reference" },
+                { href: "/docs/sdk-reference", label: "SDK Reference" },
+              ],
+            },
+          ],
+          zh: [
+            {
+              section: "入门",
+              items: [
+                { href: "/zh/docs", label: "文档首页" },
+                { href: "/zh/docs/getting-started", label: "快速开始" },
+                { href: "/zh/docs/site-development", label: "基础开发框架" },
+              ],
+            },
+            {
+              section: "站点开发",
+              items: [
+                { href: "/zh/docs/routing-layouts", label: "路由与布局" },
+                { href: "/zh/docs/config-reference", label: "配置参考" },
+                { href: "/zh/docs/action-reference", label: "Action 参考" },
+              ],
+            },
+            {
+              section: "深入开发",
+              items: [
+                { href: "/zh/docs/agent-app-demo", label: "Agent App Demo 讲解" },
+                { href: "/zh/docs/server-development", label: "服务端开发" },
+                { href: "/zh/docs/vue-rendering", label: "使用 Vue 自定义渲染" },
+                { href: "/zh/docs/react-rendering", label: "使用 React 自定义渲染" },
+                { href: "/zh/docs/shared-interaction", label: "HTTP 内容协商与共享交互" },
+              ],
+            },
+            {
+              section: "参考",
+              items: [
+                { href: "/zh/docs/cli-reference", label: "CLI 参考" },
+                { href: "/zh/docs/sdk-reference", label: "SDK 参考" },
+              ],
+            },
+          ],
+        };
+
+        function normalizeRoute(path) {
+          if (!path) return "/";
+          if (path === "/en") return "/";
+          if (path.startsWith("/en/")) return path.slice(3);
+          return path;
+        }
+
+        function getDocsSuffix(path) {
+          const normalized = normalizeRoute(path);
+          if (normalized === "/docs") return "";
+          if (normalized.startsWith("/docs/")) return normalized.slice("/docs".length);
+          if (normalized === "/zh/docs") return "";
+          if (normalized.startsWith("/zh/docs/")) return normalized.slice("/zh/docs".length);
+          return "";
+        }
+
+        function slugify(input) {
+          return input
+            .trim()
+            .toLowerCase()
+            .replace(/[^\w\u4e00-\u9fa5 -]/g, "")
+            .replace(/\s+/g, "-");
+        }
+
+        function renderSidebar() {
+          const docsTree = treeByLang[lang] || treeByLang.en;
+          const root = document.getElementById("docs-tree");
+          const search = document.getElementById("docs-search");
+          const sidebarTitle = document.querySelector(".docs-sidebar-title");
+          if (!root) return;
+          if (sidebarTitle) sidebarTitle.textContent = chrome.sidebarTitle;
+          if (search) search.placeholder = chrome.searchPlaceholder;
+
+          const activeRoute = normalizeRoute(pathname);
+
+          const allItems = [];
+          docsTree.forEach((group) => {
+            const groupEl = document.createElement("section");
+            groupEl.className = "docs-tree-group";
+
+            const titleEl = document.createElement("h2");
+            titleEl.textContent = group.section;
+            groupEl.appendChild(titleEl);
+
+            const listEl = document.createElement("ul");
+            group.items.forEach((item) => {
+              const li = document.createElement("li");
+              const a = document.createElement("a");
+              a.href = item.href;
+              a.textContent = item.label;
+              const normalizedHref = normalizeRoute(item.href);
+              if (activeRoute === normalizedHref) {
+                a.setAttribute("aria-current", "page");
+              }
+              li.appendChild(a);
+              listEl.appendChild(li);
+              allItems.push({ li, label: item.label.toLowerCase() });
+            });
+            groupEl.appendChild(listEl);
+            root.appendChild(groupEl);
+          });
+
+          if (!search) return;
+          search.addEventListener("input", () => {
+            const key = search.value.trim().toLowerCase();
+            allItems.forEach((item) => {
+              const visible = key.length === 0 || item.label.includes(key);
+              item.li.style.display = visible ? "" : "none";
+            });
+            if (docsSearchTimer) {
+              clearTimeout(docsSearchTimer);
+            }
+            docsSearchTimer = setTimeout(() => {
+              if (key.length < 2) return;
+              window.posthog?.capture?.("doc_search", {
+                query: key,
+                pathname: window.location.pathname,
+                locale: lang,
+              });
+            }, 400);
+          });
+        }
+
+        function renderToc() {
+          const tocRoot = document.getElementById("docs-toc");
+          const article = document.querySelector(".docs-article .mdsn-content");
+          if (!tocRoot || !article) return;
+
+          const headings = Array.from(article.querySelectorAll("h2, h3"));
+          if (headings.length === 0) {
+            tocRoot.style.display = "none";
+            return;
+          }
+
+          const title = document.createElement("p");
+          title.className = "docs-toc-title";
+          title.textContent = chrome.tocTitle;
+          tocRoot.appendChild(title);
+
+          const list = document.createElement("ul");
+          list.className = "docs-toc-list";
+
+          headings.forEach((heading) => {
+            if (!heading.id) {
+              heading.id = slugify(heading.textContent || "section");
+            }
+            const li = document.createElement("li");
+            li.className = heading.tagName.toLowerCase() === "h3" ? "depth-3" : "depth-2";
+            const link = document.createElement("a");
+            link.href = `#${heading.id}`;
+            link.textContent = heading.textContent || "";
+            li.appendChild(link);
+            list.appendChild(li);
+          });
+
+          tocRoot.appendChild(list);
+        }
+
+        function wireLanguageSwitch() {
+          const en = document.getElementById("docs-lang-en");
+          const zh = document.getElementById("docs-lang-zh");
+          const suffix = getDocsSuffix(pathname);
+          if (en) en.href = `/docs${suffix}`;
+          if (zh) zh.href = `/zh/docs${suffix}`;
+          if (lang === "zh") {
+            zh?.setAttribute("aria-current", "page");
+          } else {
+            en?.setAttribute("aria-current", "page");
+          }
+        }
+
+        function pruneRuntimeChrome() {
+          document.querySelectorAll(".docs-article .mdsn-source, .docs-article .mdsn-status, .docs-article .mdsn-footer")
+            .forEach((node) => node.remove());
+        }
+
+        function enhancePreviewEmbeds() {
+          const previewLinks = document.querySelectorAll('.docs-article .mdsn-content a[title^="mdsn-preview"]');
+          previewLinks.forEach((link) => {
+            const href = link.getAttribute("href");
+            if (!href) return;
+            const host = link.closest("p") ?? link;
+            const nextParagraph = host.nextElementSibling instanceof HTMLParagraphElement
+              ? host.nextElementSibling
+              : null;
+            const duplicateOpenLink = nextParagraph?.querySelector('a[href]');
+
+            const wrapper = document.createElement("section");
+            wrapper.className = "docs-demo";
+
+            const toolbar = document.createElement("div");
+            toolbar.className = "docs-demo-toolbar";
+
+            const title = document.createElement("p");
+            title.className = "docs-demo-title";
+            title.textContent = (link.textContent || "").trim() || "Preview";
+
+            const open = document.createElement("a");
+            open.className = "docs-demo-open";
+            open.href = href;
+            open.target = "_blank";
+            open.rel = "noreferrer";
+            open.textContent = lang === "zh" ? "新窗口打开" : "Open in new window";
+
+            toolbar.appendChild(title);
+            toolbar.appendChild(open);
+
+            const frame = document.createElement("iframe");
+            frame.className = "docs-demo-frame";
+            frame.src = href;
+            frame.loading = "lazy";
+            frame.title = title.textContent;
+
+            wrapper.appendChild(toolbar);
+            wrapper.appendChild(frame);
+
+            host.replaceWith(wrapper);
+            if (duplicateOpenLink?.getAttribute("href") === href) {
+              nextParagraph?.remove();
+            }
+          });
+        }
+
+        renderSidebar();
+        enhancePreviewEmbeds();
+        renderToc();
+        wireLanguageSwitch();
+        pruneRuntimeChrome();
+      })();
+    </script>
+  </body>
+</html>

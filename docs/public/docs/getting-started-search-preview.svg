@@ -1,0 +1,14 @@
+<svg width="1200" height="560" viewBox="0 0 1200 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="560" rx="24" fill="#F5F3EF"/>
+  <rect x="36" y="36" width="1128" height="488" rx="24" fill="#FFFDF8" stroke="#DDD4C7" stroke-width="2"/>
+  <text x="84" y="166" fill="#1F1C18" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="54" font-weight="700">Search</text>
+  <text x="84" y="236" fill="#7A6D5B" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-style="italic">No entries yet.</text>
+
+  <rect x="744" y="92" width="360" height="220" rx="20" fill="#F3EEE5"/>
+  <text x="786" y="148" fill="#1F1C18" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="600">query</text>
+  <text x="856" y="148" fill="#C2410C" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="700">*</text>
+  <rect x="786" y="168" width="274" height="60" rx="14" fill="#FFFDF9" stroke="#CDBFAE" stroke-width="2"/>
+
+  <rect x="786" y="252" width="138" height="56" rx="28" fill="#6B7280"/>
+  <text x="825" y="287" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="600">search</text>
+</svg>

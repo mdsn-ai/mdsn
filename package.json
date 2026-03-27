@@ -1,0 +1,51 @@
+{
+  "name": "mdsn",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "sdk",
+    "docs",
+    "examples",
+    "create-mdsn"
+  ],
+  "bin": {
+    "mdsn": "./bin/mdsn.js"
+  },
+  "scripts": {
+    "dev": "npm run -w @mdsn/examples guestbook:dev --",
+    "start": "npm run -w @mdsn/examples guestbook:start --",
+    "test:browser": "playwright test",
+    "framework:dev": "npm run -w @mdsnai/sdk framework:dev --",
+    "framework:start": "npm run -w @mdsnai/sdk framework:start --",
+    "framework:build": "npm run -w @mdsnai/sdk framework:build",
+    "framework:create": "npm run -w @mdsnai/sdk framework:create",
+    "typecheck:sdk": "npm run -w @mdsnai/sdk typecheck",
+    "typecheck:workspace": "tsc --noEmit -p tsconfig.check.json",
+    "typecheck": "npm run typecheck:sdk && npm run typecheck:workspace",
+    "test": "npm run -w @mdsnai/sdk test",
+    "docs:dev": "npm run -w @mdsn/docs dev --",
+    "docs:build": "npm run -w @mdsn/docs build",
+    "docs:start": "npm run -w @mdsn/docs start --",
+    "docs:check": "npm run -w @mdsn/docs check",
+    "examples:test": "npm run -w @mdsn/examples test",
+    "chat:onboarding:test": "bash ./examples/chat/onboarding-blackbox.sh"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "markdown-it": "^14.1.0",
+    "vue": "^3.5.31"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.11",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "esbuild": "^0.25.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  }
+}

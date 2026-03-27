@@ -1,0 +1,35 @@
+# MDSN
+
+MDSN (Markdown Shared Notation) is a protocol and framework for building shared human-agent interactive pages from Markdown.
+
+Official site: https://mdsn.ai
+GitHub: https://github.com/mdsn-ai
+X: https://x.com/mdsndev
+
+## Primary entry points
+
+- https://mdsn.ai/
+- https://mdsn.ai/framework
+- https://mdsn.ai/quick-start
+- https://mdsn.ai/docs
+- https://mdsn.ai/zh/docs
+- https://mdsn.ai/examples
+- https://mdsn.ai/blog
+- https://mdsn.ai/skills-app
+- https://mdsn.ai/roadmap
+
+## Framework references
+
+- https://mdsn.ai/zh/docs/site-development
+- https://mdsn.ai/zh/docs/cli-reference
+- https://mdsn.ai/zh/docs/config-reference
+- https://mdsn.ai/zh/docs/action-reference
+- https://mdsn.ai/zh/docs/sdk-reference
+
+## Representation negotiation
+
+- HTML: request with `Accept: text/html`
+- Markdown source: request with `Accept: text/markdown` or use `.md` path (for example `/docs.md`)
+- Page representations: request with `Accept: text/markdown` or `Accept: text/html`
+
+For content-negotiated resources, servers should return `Vary: Accept`.

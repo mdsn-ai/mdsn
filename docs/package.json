@@ -1,0 +1,11 @@
+{
+  "name": "@mdsn/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../bin/mdsn.js dev --cwd .",
+    "build": "node ../bin/mdsn.js build --cwd .",
+    "start": "node ../bin/mdsn.js start --cwd .",
+    "check": "cd .. && vitest run tests/docs-spec-consistency.test.ts"
+  }
+}

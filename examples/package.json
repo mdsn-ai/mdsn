@@ -1,0 +1,14 @@
+{
+  "name": "@mdsn/examples",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "guestbook:dev": "npm run -w @mdsnai/sdk build && tsx ../sdk/src/cli/entry.ts dev --cwd guestbook",
+    "guestbook:start": "npm run -w @mdsnai/sdk build && tsx ../sdk/src/cli/entry.ts start --cwd guestbook",
+    "chat:dev": "npm run -w @mdsnai/sdk build && tsx chat/server.ts",
+    "chat:start": "npm run -w @mdsnai/sdk build && tsx chat/server.ts",
+    "react-guestbook:dev": "npm run -w @mdsnai/sdk build && tsx react-guestbook/server.ts",
+    "react-guestbook:start": "npm run -w @mdsnai/sdk build && tsx react-guestbook/server.ts",
+    "test": "cd .. && vitest run tests/examples-workspace-validation.test.ts"
+  }
+}

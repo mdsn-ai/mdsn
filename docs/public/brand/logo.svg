@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 260" width="980" height="260" role="img" aria-label="MDSN.ai logo">
+  <defs>
+    <linearGradient id="logoAiGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#0891B2" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(24,40)">
+    <rect x="0" y="0" width="180" height="180" rx="42" fill="#07080F" />
+    <rect x="26" y="32" width="22" height="116" rx="7" fill="#7C3AED" />
+    <path d="M 26 32 L 48 32 L 90 98 L 68 98 Z" fill="#7C3AED" />
+    <path d="M 90 98 L 112 98 L 154 32 L 132 32 Z" fill="#0891B2" />
+    <rect x="132" y="32" width="22" height="116" rx="7" fill="#0891B2" />
+    <circle cx="90" cy="98" r="10" fill="#FFFFFF" />
+  </g>
+
+  <text x="236" y="126" font-family="'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif" font-size="88" font-weight="800" fill="#0F172A" letter-spacing="-3">MDSN</text>
+  <text x="524" y="126" font-family="'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif" font-size="88" font-weight="800" fill="url(#logoAiGradient)" letter-spacing="-3">.ai</text>
+  <text x="238" y="170" font-family="'PingFang SC', 'Noto Sans SC', 'Avenir Next', 'Segoe UI', sans-serif" font-size="34" font-weight="600" fill="#475569" letter-spacing="1">Shared pages for humans and agents</text>
+</svg>
