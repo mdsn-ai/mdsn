@@ -224,6 +224,8 @@ The current HTTP Host contract is fixed:
   - `200 text/markdown`
 - action-level failure response:
   - still `200 text/markdown` (failure guidance is in Markdown body)
+- auth/session challenge response:
+  - usually `401 text/markdown` (with a login-guidance fragment)
 
 In a custom server, the simplest path is to return the agent-facing Markdown contract directly:
 
@@ -243,7 +245,24 @@ app.post("/post", async (req, res) => {
 
 Here, `createActionContext()` is simply your adapter from the framework request into `ActionContext`.
 
-## 8. The minimum `ActionContext`
+## 8. Session Runtime Contract (Cookie-Based)
+
+Session handling is runtime behavior, not MDSN syntax.
+
+Recommended flow:
+
+1. login/register response sets cookie (`Set-Cookie`)
+2. next requests replay cookie (`Cookie`)
+3. when unauthorized, return `401 + Markdown guidance fragment`
+
+`@mdsnai/sdk/server` provides helpers:
+
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar` (for Node/agent HTTP loops)
+
+## 9. The minimum `ActionContext`
 
 The smallest commonly useful fields are:
 
@@ -254,7 +273,7 @@ The smallest commonly useful fields are:
 
 Everything else can be layered on as needed.
 
-## 9. Where the client fits
+## 10. Where the client fits
 
 This page is about the server side only.
 

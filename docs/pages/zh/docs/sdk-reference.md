@@ -71,6 +71,10 @@ layout: docs
 - `defineActions()`
 - `renderMarkdownValue()`
 - `renderMarkdownFragment()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar`
 - `parsePageDefinition()`
 
 ### 路径 C：自己接前端渲染
@@ -186,6 +190,14 @@ layout: docs
   - 把正文 Markdown 和 block 拼成合法 fragment
 - `executeActionHandler()`
   - 执行 action handler，并校验返回值是 Markdown 字符串
+- `parseCookieHeader()`
+  - 解析 `Cookie` header
+- `requireSessionFromCookie()`
+  - 基于 cookie 做会话校验并返回 401 引导片段
+- `renderAuthRequiredFragment()`
+  - 生成标准登录引导 Markdown 片段
+- `HttpCookieJar`
+  - 在 Node/agent HTTP 链路里自动保管和回放 cookie
 - `wantsHtml()`
   - 判断请求是否要 HTML
 

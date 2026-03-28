@@ -224,6 +224,8 @@ export const actions = defineActions({
   - `200 text/markdown`
 - action 业务失败响应：
   - 仍为 `200 text/markdown`（失败语义在 Markdown 正文里表达）
+- 鉴权/session 挑战响应：
+  - 通常是 `401 text/markdown`（返回登录引导片段）
 
 在自定义服务端里，最简单的做法就是直接按 agent 侧 Markdown 契约返回：
 
@@ -243,7 +245,24 @@ app.post("/post", async (req, res) => {
 
 这里的 `createActionContext()` 只是把你的请求对象整理成 `ActionContext` 需要的字段。
 
-## 8. `ActionContext` 最少要补什么
+## 8. Session 运行时契约（Cookie）
+
+session 处理属于运行时行为，不属于 MDSN 语法关键字。
+
+推荐流程：
+
+1. 登录/注册成功后返回 `Set-Cookie`
+2. 后续请求回放 `Cookie`
+3. 未登录时返回 `401 + Markdown 引导片段`
+
+`@mdsnai/sdk/server` 里可以直接用：
+
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar`（Node/agent 侧 HTTP 循环可用）
+
+## 9. `ActionContext` 最少要补什么
 
 最小字段一般是这些：
 
@@ -278,13 +297,13 @@ function createActionContext(
 
 登录、session、鉴权这些都可以在这层自己接。
 
-## 9. 跳转怎么接
+## 10. 跳转怎么接
 
 页面导航统一用块里的 `GET "<path>" -> <name>` 显式动作表达。
 
 也就是说，服务端返回的 Markdown fragment 里给出下一步 `GET` 动作，客户端执行这个动作即可进入下一页。
 
-## 10. 什么时候再加自定义前端
+## 11. 什么时候再加自定义前端
 
 如果你只是要把页面协议挂到现有服务端里：
 

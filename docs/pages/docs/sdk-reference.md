@@ -71,6 +71,10 @@ Most important APIs:
 - `defineActions()`
 - `renderMarkdownValue()`
 - `renderMarkdownFragment()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar`
 - `parsePageDefinition()`
 
 ### Path C: render the client yourself
@@ -171,6 +175,10 @@ Most important APIs:
 - `serializeBlock()`
 - `renderMarkdownFragment()`
 - `executeActionHandler()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar`
 - `wantsHtml()`
 
 `executeActionHandler()` runs your action and validates that it returns a Markdown string.

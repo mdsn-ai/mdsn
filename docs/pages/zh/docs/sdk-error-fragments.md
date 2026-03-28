@@ -1,8 +1,8 @@
 ---
-
-## title: SDK 错误提示片段
+title: SDK 错误提示片段
 description: SDK Host 层内建返回的失败提示片段清单
 layout: docs
+---
 
 # SDK 错误提示片段
 
@@ -63,4 +63,3 @@ layout: docs
 - [SDK 参考](/zh/docs/sdk-reference)
 - [服务端开发](/zh/docs/server-development)
 - [Action 参考](/zh/docs/action-reference)
-
