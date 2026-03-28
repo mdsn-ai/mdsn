@@ -5,6 +5,15 @@ export type HeaderCarrier = {
   getSetCookie?: () => string[];
 };
 
+function decodeCookieComponentSafe(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    // Keep malformed cookie values as raw text instead of throwing.
+    return value;
+  }
+}
+
 export function parseCookieHeader(cookieHeader: string | undefined): Record<string, string> {
   if (!cookieHeader) {
     return {};
@@ -19,7 +28,7 @@ export function parseCookieHeader(cookieHeader: string | undefined): Record<stri
       if (eq === -1) {
         return [part, ""] as const;
       }
-      return [part.slice(0, eq), decodeURIComponent(part.slice(eq + 1))] as const;
+      return [part.slice(0, eq), decodeCookieComponentSafe(part.slice(eq + 1))] as const;
     }));
 }
 

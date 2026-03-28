@@ -39,9 +39,7 @@ function createChatBlock(includeMore: boolean) {
   };
 }
 
-export const chatBlock = createChatBlock(true);
-
-export const loginAuthBlock = {
+const loginAuthBlock = {
   name: "auth",
   inputs: [
     { name: "email", type: "text" as const, required: true },
@@ -50,7 +48,7 @@ export const loginAuthBlock = {
   writes: [{ name: "login", target: "/login", inputs: ["email", "password"] }],
 };
 
-export const registerAuthBlock = {
+const registerAuthBlock = {
   name: "auth",
   inputs: [
     { name: "username", type: "text" as const, required: true },
@@ -58,13 +56,6 @@ export const registerAuthBlock = {
     { name: "password", type: "text" as const, required: true, secret: true },
   ],
   writes: [{ name: "register", target: "/register", inputs: ["username", "email", "password"] }],
-};
-
-export const sessionBlock = {
-  name: "session",
-  inputs: [],
-  reads: [],
-  writes: [{ name: "logout", target: "/logout", inputs: [] }],
 };
 
 function formatMessageTime(iso: string): string {

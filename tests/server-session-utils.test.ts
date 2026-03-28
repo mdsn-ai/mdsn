@@ -17,6 +17,12 @@ describe("server session helpers", () => {
     });
   });
 
+  it("keeps malformed cookie escape sequences as raw text", () => {
+    expect(parseCookieHeader("sid=%E0%A4%A")).toEqual({
+      sid: "%E0%A4%A",
+    });
+  });
+
   it("renders a default auth-required fragment with login and register actions", () => {
     const markdown = renderAuthRequiredFragment();
     expect(markdown).toContain("## Login Status");

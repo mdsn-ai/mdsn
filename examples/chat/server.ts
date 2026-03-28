@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   parseActionInputs,
   parseCookieHeader,
+  renderMarkdownFragment,
   requireSessionFromCookie,
   type ActionContext,
 } from "@mdsnai/sdk/server";
@@ -249,11 +250,20 @@ export async function startVueChatDemo(
     }
 
     res.status(200).type("text/markdown; charset=utf-8").send(
-      renderRedirectFragment(
-        "/chat",
-        "## Session Status",
-        `Session active for **${sessionResult.session.user.username}** (${sessionResult.session.user.email}).`,
-      ),
+      renderMarkdownFragment({
+        body: [
+          "## Session Status",
+          `- username: ${JSON.stringify(sessionResult.session.user.username)}`,
+          `- email: ${JSON.stringify(sessionResult.session.user.email)}`,
+          "Next step: use `enter_chat` to continue.",
+        ],
+        block: {
+          name: "next",
+          inputs: [],
+          reads: [{ name: "enter_chat", target: "/chat" }],
+          writes: [],
+        },
+      }),
     );
   });
 

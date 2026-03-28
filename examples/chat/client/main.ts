@@ -10,7 +10,6 @@ import type {
 import { parseFragment, parsePage } from "@mdsnai/sdk/web";
 import {
   extractChatMessages,
-  leadingContainers,
   resolveAuthDraftAfterFailure,
   scrollChatStreamToBottom,
 } from "./model";
@@ -79,14 +78,63 @@ function toUiRoute(location: string, route: UiRouteContext): string {
   return location;
 }
 
+function parseMarkdownScalar(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return "";
+  }
+  if (
+    trimmed.startsWith("{")
+    || trimmed.startsWith("[")
+    || trimmed.startsWith("\"")
+    || trimmed === "true"
+    || trimmed === "false"
+    || trimmed === "null"
+    || /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/u.test(trimmed)
+  ) {
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      // Fall through and keep the original text.
+    }
+  }
+  if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith("\"") && trimmed.endsWith("\""))) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+function parseMarkdownKeyValueFields(markdown: string): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const rawLine of markdown.split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+    const normalized = line.replace(/^[-*+]\s+/u, "");
+    const separator = normalized.indexOf(":");
+    if (separator <= 0) {
+      continue;
+    }
+    const name = normalized.slice(0, separator).trim();
+    if (!/^[a-zA-Z_][\w-]*$/u.test(name)) {
+      continue;
+    }
+    fields[name] = parseMarkdownScalar(normalized.slice(separator + 1));
+  }
+  return fields;
+}
+
 function parseSessionFromMarkdown(markdown: string): SessionUser | null {
-  const match = markdown.match(/Session active for \*\*(.+?)\*\* \((.+?)\)\./u);
-  if (!match) {
+  const fields = parseMarkdownKeyValueFields(markdown);
+  const username = typeof fields.username === "string" ? fields.username.trim() : "";
+  const email = typeof fields.email === "string" ? fields.email.trim() : "";
+  if (!username || !email) {
     return null;
   }
   return {
-    username: match[1] ?? "",
-    email: match[2] ?? "",
+    username,
+    email,
   };
 }
 
@@ -619,9 +667,7 @@ const App = {
 
     async function refreshFragment() {
       const refreshResponse = await requestMarkdownAction("GET", "/list", {});
-      if ("markdown" in refreshResponse) {
-        fragment.value = parseFragment(refreshResponse.markdown);
-      }
+      fragment.value = parseFragment(refreshResponse.markdown);
     }
 
     onMounted(async () => {
@@ -655,11 +701,9 @@ const App = {
         return h("main", { class: "vc-shell" }, [h("p", { class: "vc-loading" }, "Loading chat…")]);
       }
 
-      const introContainers = leadingContainers(
-        page.value.segments
-          .filter((segment) => segment.type === "container")
-          .map((segment) => segment.container),
-      );
+      const introContainers = page.value.segments
+        .filter((segment) => segment.type === "container")
+        .map((segment) => segment.container);
 
       if (routePath === "/" || routePath === "/register") {
         return h("main", { class: "vc-shell" }, [

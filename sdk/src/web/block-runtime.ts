@@ -25,13 +25,5 @@ export function replaceBlockRegionMarkup(
     `<!--mdsn:block-region:start:${escapedName}-->[\\s\\S]*?<!--mdsn:block-region:end:${escapedName}-->`,
     "g",
   );
-  if (pattern.test(html)) {
-    return html.replace(pattern, createBlockRegionMarkup(blockName, replacementInnerHtml));
-  }
-
-  const legacyPattern = new RegExp(
-    `<section class="mdsn-block-region" data-mdsn-block-region="${escapedName}">[\\s\\S]*?<\\/section>`,
-    "g",
-  );
-  return html.replace(legacyPattern, createBlockRegionMarkup(blockName, replacementInnerHtml));
+  return html.replace(pattern, createBlockRegionMarkup(blockName, replacementInnerHtml));
 }
