@@ -57,6 +57,7 @@ layout: docs
 优先看：
 
 - [服务端开发](/zh/docs/server-development)
+- [SDK 错误提示片段](/zh/docs/sdk-error-fragments)
 
 主要入口：
 
@@ -184,7 +185,7 @@ layout: docs
 - `renderMarkdownFragment()`
   - 把正文 Markdown 和 block 拼成合法 fragment
 - `executeActionHandler()`
-  - 执行 action handler 并归一化结果
+  - 执行 action handler，并校验返回值是 Markdown 字符串
 - `wantsHtml()`
   - 判断请求是否要 HTML
 
@@ -192,7 +193,6 @@ layout: docs
 
 - `ActionContext`
 - `ActionDefinition`
-- `ActionResult`
 - `SerializableBlock`
 
 ## 5. `@mdsnai/sdk/web`

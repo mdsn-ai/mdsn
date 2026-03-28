@@ -290,7 +290,7 @@ describe("examples chat flow", () => {
             password: "secret",
           }),
       });
-      expect(secondLoginResponse.status).toBe(400);
+      expect(secondLoginResponse.status).toBe(200);
       const secondLoginFragment = await secondLoginResponse.text();
       expect(secondLoginFragment).toContain("Login failed: no account matches this email and password.");
       expect(secondLoginFragment).toContain("Next step: enter the correct password and submit again, or go to register if no account exists.");
@@ -761,7 +761,7 @@ describe("examples chat flow", () => {
         body: "message: \"\"",
       });
 
-      expect(emptySend.status).toBe(400);
+      expect(emptySend.status).toBe(200);
       expect(emptySend.headers.get("content-type")).toContain("text/markdown");
       const emptySendFragment = await emptySend.text();
       expect(emptySendFragment).toContain("Send failed: a message is required before this chat action can continue.");
@@ -969,7 +969,7 @@ describe("examples chat flow", () => {
           }),
       });
 
-      expect(sendResponse.status).toBe(400);
+      expect(sendResponse.status).toBe(200);
       const failureFragment = await sendResponse.text();
       expect(failureFragment).toContain("Send failed: a message is required before this chat action can continue.");
       expect(failureFragment).toContain("Next step: enter a message and submit again.");

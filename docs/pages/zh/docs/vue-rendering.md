@@ -115,13 +115,13 @@ export const actions = defineActions({
       const message = String(ctx.inputs.message ?? "").trim();
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Guestbook Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       messages.unshift({ nickname, message });

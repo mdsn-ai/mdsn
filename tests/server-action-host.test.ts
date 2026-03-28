@@ -2,31 +2,16 @@ import { describe, expect, it } from "vitest";
 import { executeActionHandler } from "../sdk/src/server/action-host";
 
 describe("new server action host", () => {
-  it("normalizes markdown fragments returned by handlers", async () => {
+  it("returns markdown fragments returned by handlers", async () => {
     await expect(
       executeActionHandler(async () => "# Updated"),
-    ).resolves.toEqual({
-      ok: true,
-      kind: "fragment",
-      markdown: "# Updated",
-    });
+    ).resolves.toEqual("# Updated");
   });
 
-  it("preserves validation failures", async () => {
+  it("rejects non-markdown results", async () => {
+    const invalidHandler = (async () => ({ ok: false })) as unknown as (() => Promise<string>);
     await expect(
-      executeActionHandler(async () => ({
-        ok: false,
-        errorCode: "invalid_input",
-        fieldErrors: {
-          message: "Required",
-        },
-      })),
-    ).resolves.toEqual({
-      ok: false,
-      errorCode: "invalid_input",
-      fieldErrors: {
-        message: "Required",
-      },
-    });
+      executeActionHandler(invalidHandler),
+    ).rejects.toThrow("Invalid action result: expected markdown string");
   });
 });

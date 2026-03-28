@@ -1,6 +1,5 @@
 import express from "express";
 import { parsePageDefinition } from "../core/document/page-definition";
-import type { ActionFailure, ActionResult } from "../core/action";
 import type { BlockDefinition } from "../core/model/block";
 import { executeActionHandler, type ActionHandler } from "../server/action-host";
 import { parseActionInputs } from "../server/action-inputs";
@@ -135,25 +134,6 @@ function blockToSerializableBlock(block: BlockDefinition): SerializableBlock {
   };
 }
 
-function renderActionResultFragment(binding: ActionBinding, result: ActionResult): string {
-  if (result.ok && result.kind === "fragment") {
-    return result.markdown;
-  }
-
-  const failure = result as ActionFailure;
-  const fieldErrorEntries = Object.entries(failure.fieldErrors ?? {});
-  return renderMarkdownFragment({
-    body: [
-      "## Action Status",
-      failure.message ?? "This action could not be completed.",
-      ...(fieldErrorEntries.length > 0
-        ? ["### Input Hints", ...fieldErrorEntries.map(([field, message]) => `- ${field}: ${message}`)]
-        : ["Review the required fields and try again."]),
-    ],
-    block: blockToSerializableBlock(binding.block),
-  });
-}
-
 function sendActionFragment(
   reqAccept: string | undefined,
   status: number,
@@ -257,11 +237,10 @@ export function createHostedApp(options: CreateHostedAppOptions) {
           ? parseActionInputs(req.query)
           : parseActionInputs(typeof req.body === "string" ? req.body : ""),
       });
-      const markdown = renderActionResultFragment(binding, result);
       sendActionFragment(
         req.headers.accept,
-        result.ok ? 200 : 400,
-        markdown,
+        200,
+        result,
         binding,
         res,
         options,

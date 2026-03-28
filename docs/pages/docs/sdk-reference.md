@@ -57,6 +57,7 @@ Use this when:
 Read first:
 
 - [Server Development](/docs/server-development)
+- [SDK Error Fragments](/docs/sdk-error-fragments)
 
 Main package entries:
 
@@ -171,6 +172,8 @@ Most important APIs:
 - `renderMarkdownFragment()`
 - `executeActionHandler()`
 - `wantsHtml()`
+
+`executeActionHandler()` runs your action and validates that it returns a Markdown string.
 
 ## 5. `@mdsnai/sdk/web`
 

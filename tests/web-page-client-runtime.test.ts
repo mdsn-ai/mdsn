@@ -19,9 +19,6 @@ describe("new web page client runtime", () => {
 `.trim();
 
     const result = applyActionResultToPageHtml(currentHtml, "chat", {
-      ok: true,
-      kind: "fragment",
-      markdown: "## Updated\n\nSaved.",
       html: "<h2>Updated</h2><p>Saved.</p>",
     });
 
@@ -44,9 +41,6 @@ describe("new web page client runtime", () => {
 `.trim();
 
     const result = applyActionResultToPageHtml(currentHtml, "chat", {
-      ok: true,
-      kind: "fragment",
-      markdown: "## Ignored",
       html: "<h2>Updated from server</h2><p>Exact HTML</p>",
     });
 
@@ -65,17 +59,6 @@ describe("new web page client runtime", () => {
     const currentHtml = `<section class="mdsn-block-region" data-mdsn-block-region="chat"><p>Old</p></section>`;
 
     const result = applyActionResultToPageHtml(currentHtml, "chat", {
-      ok: true,
-      kind: "fragment",
-      markdown: `# Chat
-
-\`\`\`mdsn
-block chat {
-  INPUT text required -> message
-  POST "/messages" (message) -> send
-}
-\`\`\`
-`,
       html: `<h1>Chat</h1><section class="mdsn-block-panel" data-mdsn-block-panel="chat"><header><strong>chat</strong></header><div class="mdsn-block-inputs"><label>message<input id="chat::input::message" type="text" data-mdsn-input="chat::input::message" data-input-name="message" data-input-type="text" data-required="true" required /></label></div><div class="mdsn-block-actions"><button type="button" data-mdsn-write="chat::write::0" data-target="/__mdsn/actions/messages">send</button></div></section>`,
     });
 

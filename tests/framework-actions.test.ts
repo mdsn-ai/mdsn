@@ -18,44 +18,14 @@ describe("defineAction", () => {
     await expect(action.run({} as never)).resolves.toEqual("ok");
   });
 
-  it("supports failure envelopes with field errors", async () => {
+  it("returns markdown fragments directly", async () => {
     const action = defineAction({
       async run() {
-        return {
-          ok: false,
-          errorCode: "EMPTY_QUERY",
-          fieldErrors: {
-            query: "Please enter a query.",
-          },
-        };
+        return "## Done";
       },
     });
 
-    await expect(action.run({} as never)).resolves.toEqual({
-      ok: false,
-      errorCode: "EMPTY_QUERY",
-      fieldErrors: {
-        query: "Please enter a query.",
-      },
-    });
-  });
-
-  it("supports fragment success envelopes", async () => {
-    const action = defineAction({
-      async run() {
-        return {
-          ok: true,
-          kind: "fragment" as const,
-          markdown: "## Done",
-        };
-      },
-    });
-
-    await expect(action.run({} as never)).resolves.toEqual({
-      ok: true,
-      kind: "fragment",
-      markdown: "## Done",
-    });
+    await expect(action.run({} as never)).resolves.toEqual("## Done");
   });
 
   it("returns the original multi-action definition map", async () => {
@@ -91,11 +61,7 @@ describe("framework action registry", () => {
     });
     const createAction = defineAction({
       async run() {
-        return {
-          ok: true,
-          kind: "fragment" as const,
-          markdown: "# Created",
-        };
+        return "# Created";
       },
     });
 

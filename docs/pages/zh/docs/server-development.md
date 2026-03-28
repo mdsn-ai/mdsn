@@ -138,12 +138,8 @@ POST "/post" (nickname, message) -> submit
 
 ## 6. action handler 返回什么
 
-action handler 的成功返回统一使用 Markdown fragment：
-
-1. 直接返回 Markdown fragment 字符串
-2. 或返回 `{ ok: true, kind: "fragment", markdown }`
-
-失败时返回错误对象。
+action handler 统一返回 Markdown fragment。  
+当 action 不能继续时，也直接返回带“问题 + 下一步”的 Markdown fragment。
 
 可以直接用：
 
@@ -200,13 +196,13 @@ export const actions = defineActions({
       const message = String(ctx.inputs.message ?? "").trim();
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Action Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       messages.unshift({ nickname, message });
@@ -226,8 +222,8 @@ export const actions = defineActions({
   - Markdown 键值行（例如 `message: "Hello"`）
 - 成功响应：
   - `200 text/markdown`
-- 失败响应：
-  - `400 text/markdown`
+- action 业务失败响应：
+  - 仍为 `200 text/markdown`（失败语义在 Markdown 正文里表达）
 
 在自定义服务端里，最简单的做法就是直接按 agent 侧 Markdown 契约返回：
 
@@ -238,21 +234,10 @@ app.get("/list", async (req, res) => {
 });
 
 app.post("/post", async (req, res) => {
-  const result = await actions.post.run(
+  const markdown = await actions.post.run(
     createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
   );
-
-  if (typeof result === "string") {
-    res.status(200).type("text/markdown; charset=utf-8").send(result);
-    return;
-  }
-
-  res.status(400).type("text/markdown; charset=utf-8").send(
-    [
-      "## Action Status",
-      result.fieldErrors?.message ?? result.message ?? "Action failed.",
-    ].join("\\n\\n"),
-  );
+  res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 ```
 

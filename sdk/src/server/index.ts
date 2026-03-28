@@ -16,7 +16,6 @@ export type {
   ActionContext,
   ActionDefinition,
   ActionDefinitionMap,
-  ActionResult,
 } from "./action";
 export type {
   MarkdownImageValue,

@@ -1,5 +1,4 @@
 import path from "node:path";
-import type { ActionResult as HostedActionResult } from "../core/action";
 
 export type ActionContext = {
   inputs: Record<string, unknown>;
@@ -15,15 +14,7 @@ export type ActionContext = {
   };
 };
 
-export type ActionFailure = {
-  ok: false;
-  errorCode: string;
-  message?: string;
-  fieldErrors?: Record<string, string>;
-};
-
-export type ActionResult = HostedActionResult | ActionFailure;
-export type ActionReturnValue = string | ActionResult;
+export type ActionReturnValue = string;
 
 export type ActionDefinition = {
   name?: string;

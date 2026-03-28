@@ -76,20 +76,18 @@ export const actions = defineActions({
     },
   }),
   post: defineAction({
-    async run(ctx: Pick<ActionContext, "inputs">): Promise<
-      string | { ok: false; errorCode: string; fieldErrors: Record<string, string> }
-    > {
+    async run(ctx: Pick<ActionContext, "inputs">): Promise<string> {
       const nickname = String(ctx.inputs.nickname ?? "").trim().slice(0, 24) || "Guest";
       const message = String(ctx.inputs.message ?? "").trim().slice(0, 280);
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Guestbook Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       addGuestbookMessage({ nickname, message });

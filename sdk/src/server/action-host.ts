@@ -1,11 +1,12 @@
-import { normalizeActionResult, type ActionResult } from "../core/action";
-
-export type ActionHandler<Context = unknown> = (ctx: Context) => Promise<unknown> | unknown;
+export type ActionHandler<Context = unknown> = (ctx: Context) => Promise<string> | string;
 
 export async function executeActionHandler<Context>(
   handler: ActionHandler<Context>,
   ctx?: Context,
-): Promise<ActionResult> {
+): Promise<string> {
   const result = await handler(ctx as Context);
-  return normalizeActionResult(result);
+  if (typeof result !== "string") {
+    throw new Error("Invalid action result: expected markdown string");
+  }
+  return result;
 }
