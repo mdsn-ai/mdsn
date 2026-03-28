@@ -13,8 +13,6 @@ export type WebRuntimeMessages = {
   emptyImage: string;
   imageAltFallback: string;
   listItemFallback: string;
-  jsonInputEmpty: string;
-  jsonInputInvalid: string;
   missingInput: string;
   fillRequired: string;
   operationRunning: string;
@@ -41,8 +39,6 @@ export const WEB_RUNTIME_MESSAGES: Record<WebRuntimeLocale, WebRuntimeMessages> 
     emptyImage: "No image yet.",
     imageAltFallback: "image",
     listItemFallback: "item",
-    jsonInputEmpty: "JSON input cannot be empty.",
-    jsonInputInvalid: "Invalid JSON input.",
     missingInput: "Missing input: ",
     fillRequired: "Please fill: ",
     operationRunning: "Running: ",
@@ -67,8 +63,6 @@ export const WEB_RUNTIME_MESSAGES: Record<WebRuntimeLocale, WebRuntimeMessages> 
     emptyImage: "暂无图片。",
     imageAltFallback: "image",
     listItemFallback: "item",
-    jsonInputEmpty: "JSON 输入不能为空。",
-    jsonInputInvalid: "JSON 输入格式错误。",
     missingInput: "缺少输入：",
     fillRequired: "请先填写：",
     operationRunning: "执行中：",

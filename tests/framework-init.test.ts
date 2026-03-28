@@ -47,8 +47,8 @@ describe("framework starter site scaffold", () => {
     expect(starterPage).not.toContain("layout: default");
     expect(starterPage).toContain("<!-- mdsn:block guestbook -->");
     expect(starterPage).toContain("block guestbook {");
-    expect(starterPage).toContain('read refresh: "/list"');
-    expect(starterPage).toContain('write submit: "/post" (nickname, message)');
+    expect(starterPage).toContain('GET "/list" -> refresh');
+    expect(starterPage).toContain('POST "/post" (nickname, message) -> submit');
 
     expect(actionsFile).toContain('require("@mdsnai/sdk/server")');
     expect(actionsFile).toContain("defineActions");

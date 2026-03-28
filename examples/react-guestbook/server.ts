@@ -4,7 +4,7 @@ import { createServer, type Server } from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ActionContext } from "@mdsnai/sdk/server";
+import { parseActionInputs, type ActionContext } from "@mdsnai/sdk/server";
 import { actions, resetGuestbookMessagesForTest } from "./server/actions";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
@@ -92,63 +92,16 @@ function createActionContext(
   };
 }
 
-function parseActionInputs(payload: unknown): Record<string, unknown> {
-  if (typeof payload === "object" && payload && !Array.isArray(payload)) {
-    const record = payload as Record<string, unknown>;
-    if (typeof record.inputs === "object" && record.inputs && !Array.isArray(record.inputs)) {
-      return record.inputs as Record<string, unknown>;
-    }
-    return record;
-  }
-
-  if (typeof payload === "string") {
-    const inputs: Record<string, unknown> = {};
-    for (const rawLine of payload.split(/\r?\n/u)) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith("#") || line.startsWith("```")) {
-        continue;
-      }
-      const normalized = line
-        .replace(/^[-*+]\s+/u, "")
-        .replace(/^\d+\.\s+/u, "")
-        .replace(/^input\s+/iu, "");
-      const separator = normalized.indexOf(":");
-      if (separator <= 0) {
-        continue;
-      }
-      const name = normalized.slice(0, separator).trim();
-      if (!/^[a-zA-Z_][\w-]*$/u.test(name)) {
-        continue;
-      }
-      const rawValue = normalized.slice(separator + 1).trim();
-      if (!rawValue) {
-        inputs[name] = "";
-        continue;
-      }
-      try {
-        inputs[name] = JSON.parse(rawValue);
-      } catch {
-        inputs[name] = rawValue.replace(/^["']|["']$/gu, "");
-      }
-    }
-    return inputs;
-  }
-
-  return {};
-}
-
 export async function startReactGuestbookDemo(options: { port?: number } = {}): Promise<Server> {
   resetGuestbookMessagesForTest();
   const clientBundle = await buildClientBundle();
   const pageMarkdown = await readFile(pagePath, "utf8");
   const app = express();
 
-  app.use(express.json());
   app.use(express.text({
-    type: ["text/markdown", "text/plain"],
+    type: ["text/markdown"],
     limit: "1mb",
   }));
-  app.use(express.urlencoded({ extended: true }));
 
   app.get("/", (_req, res) => {
     res.status(200).type("text/html; charset=utf-8").send(renderShell());
@@ -162,14 +115,24 @@ export async function startReactGuestbookDemo(options: { port?: number } = {}): 
     res.status(200).type("text/markdown; charset=utf-8").send(pageMarkdown);
   });
 
-  app.post("/list", async (_req, res) => {
+  app.get("/list", async (_req, res) => {
     const markdown = await actions.list.run(createActionContext("/list", {}, _req));
     res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   app.post("/post", async (req, res) => {
+    const contentType = String(req.headers["content-type"] ?? "").toLowerCase();
+    if (!contentType.includes("text/markdown")) {
+      res.status(415).type("text/markdown; charset=utf-8").send([
+        "## Action Status",
+        "Unsupported content type for write action.",
+        "Use `Content-Type: text/markdown` with Markdown key-value lines.",
+      ].join("\n\n"));
+      return;
+    }
+
     const result = await actions.post.run(
-      createActionContext("/post", parseActionInputs(req.body), req),
+      createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
     );
 
     if (typeof result === "string") {
@@ -177,7 +140,27 @@ export async function startReactGuestbookDemo(options: { port?: number } = {}): 
       return;
     }
 
-    res.status(400).json(result);
+    const listFragment = await actions.list.run(createActionContext("/list", {}, req));
+    const failureMessage = (
+      typeof result === "object"
+      && result !== null
+      && "ok" in result
+      && result.ok === false
+      && "fieldErrors" in result
+      && typeof result.fieldErrors === "object"
+      && result.fieldErrors
+      && "message" in result.fieldErrors
+      && typeof result.fieldErrors.message === "string"
+    )
+      ? result.fieldErrors.message
+      : "Please enter a message.";
+
+    res.status(400).type("text/markdown; charset=utf-8").send([
+      "## Action Status",
+      failureMessage,
+      "",
+      listFragment,
+    ].join("\n\n"));
   });
 
   const server = createServer(app);

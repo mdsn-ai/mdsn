@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 import { validateDocumentStructure } from "../sdk/src/core/protocol/validation";
 
 describe("new core protocol validation", () => {
-  it("accepts a block model with static redirects and block anchors", () => {
+  it("accepts a block model with operations and block anchors", () => {
     expect(() => {
       validateDocumentStructure(
-        [],
         [
           {
             name: "login",
@@ -30,14 +29,6 @@ describe("new core protocol validation", () => {
                 order: 0,
               },
             ],
-            redirects: [
-              {
-                id: "login::redirect::1",
-                block: "login",
-                target: "/chat",
-                order: 1,
-              },
-            ],
           },
         ],
         [{ name: "login" }],
@@ -45,10 +36,9 @@ describe("new core protocol validation", () => {
     }).not.toThrow();
   });
 
-  it("rejects missing schema references and unknown block anchors", () => {
+  it("rejects unknown block anchors", () => {
     expect(() => {
       validateDocumentStructure(
-        [],
         [
           {
             name: "search",
@@ -57,15 +47,13 @@ describe("new core protocol validation", () => {
                 id: "search::input::filters",
                 block: "search",
                 name: "filters",
-                type: "json",
+                type: "text",
                 required: true,
                 secret: false,
-                schema: "filters_schema",
               },
             ],
             reads: [],
             writes: [],
-            redirects: [],
           },
         ],
         [{ name: "missing" }],

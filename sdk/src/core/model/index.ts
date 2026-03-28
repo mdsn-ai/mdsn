@@ -6,12 +6,10 @@ export type {
 export type {
   BlockDefinition,
   ReadDefinition,
-  RedirectDefinition,
   WriteDefinition,
 } from "./block";
 export type {
   InputDefinition,
   InputType,
 } from "./input";
-export type { SchemaDefinition } from "./schema";
 export type { MarkdownFragmentDefinition } from "./fragment";

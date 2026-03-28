@@ -20,12 +20,12 @@ Action 是页面里 `read` / `write` 的服务端承接层。
 
 例如：
 
-- `read refresh: "/list"`
-- `write submit: "/post" (message)`
+- `GET "/list" -> refresh`
+- `POST "/post" (message) -> submit`
 
 对应的就是：
 
-- `POST /list`
+- `GET /list`
 - `POST /post`
 
 这不是内部映射路径，也不是额外包装规则，就是页面里写出来的 target 本身。
@@ -49,7 +49,7 @@ Action 是页面里 `read` / `write` 的服务端承接层。
 例如：
 
 - `server/actions.cjs` 导出 `list`
-  - 对应 `POST /list`
+  - 对应 `GET /list`
 - `server/actions.cjs` 导出 `post`
   - 对应 `POST /post`
 
@@ -118,15 +118,15 @@ module.exports = defineActions({
 
 ## 5. 成功返回什么
 
-成功返回有两种主形态：
+成功返回统一使用 Markdown fragment：
 
-1. Markdown fragment 字符串
-2. 重定向结果
+1. 直接返回 Markdown fragment 字符串
+2. 或返回显式 fragment 包装对象
 
-重定向结果的形态是：
+显式 fragment 包装对象形态是：
 
 ```ts
-{ ok: true, kind: "redirect", location: string }
+{ ok: true, kind: "fragment", markdown: string }
 ```
 
 Markdown fragment 成功返回时：
@@ -158,31 +158,25 @@ Markdown fragment 成功返回时：
 
 在 HTTP Host 中：
 
-- `read` 使用 `POST`
+- `read` 使用 `GET`
 - `write` 使用 `POST`
 
 请求规则：
 
-- 推荐：`Content-Type: text/markdown`
-- 推荐请求体（Markdown 键值行）：
+- `Content-Type: text/markdown`
+- 请求体（Markdown 键值行）：
   - `nickname: "Guest"`
   - `message: "Hello"`
-- 兼容模式：`Content-Type: application/json`
-- 兼容请求体：`{ "inputs": { ... } }`
 
 成功响应支持协商：
 
-- `Accept: text/markdown`
-  - `200 text/markdown`
-  - 响应体是新的 `md` 片段
-- `Accept: application/json`
-  - `200 application/json`
-  - 该形式仅供 Host runtime 使用
+- `200 text/markdown`
+- 响应体是新的 `md` 片段
 
 失败响应：
 
-- `400 application/json`
-- `{ ok: false, errorCode, message?, fieldErrors? }`
+- `400 text/markdown`
+- 响应体是带下一步提示的 Markdown 片段
 
 ## 8. 服务端 Markdown helper
 

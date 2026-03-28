@@ -27,9 +27,9 @@ The most important product idea in this demo is not just that the page is intera
 The chat demo proves a full loop:
 
 1. a new visitor starts on the login page
-2. if no account exists yet, the page exposes an explicit redirect to the register page
-3. registration succeeds and redirects to `/chat`
-4. login succeeds and redirects to `/chat`
+2. if no account exists yet, the page exposes an explicit `GET "/register" -> go_register` action
+3. registration succeeds and returns `GET "/chat" -> enter_chat`
+4. login succeeds and returns `GET "/chat" -> enter_chat`
 5. the chat page supports sending messages, refreshing, loading older history, and logging out
 6. recoverable failures return new Markdown fragments instead of opaque frontend-only state
 
@@ -55,7 +55,7 @@ The login page asks for:
 - `email`
 - `password`
 
-It also exposes a separate navigation block that redirects to `/register`.
+It also exposes a separate navigation block with `GET "/register" -> go_register`.
 
 For an agent, this matters because the page does not hide registration behind client-only UI state. The page declares the current stage, the goal, and the next possible action directly.
 
@@ -67,9 +67,9 @@ The register page asks for:
 - `email`
 - `password`
 
-It also exposes a separate navigation block that redirects back to `/`.
+It also exposes a separate navigation block with `GET "/" -> go_login`.
 
-If registration succeeds, the action returns a redirect to `/chat`.
+If registration succeeds, the action returns `GET "/chat" -> enter_chat` in the returned fragment.
 
 If registration fails, the action returns a new Markdown fragment that explains:
 
@@ -110,7 +110,7 @@ The key reasons are:
 
 - page content is available as Markdown
 - the page body itself carries task and state instructions
-- `read`, `write`, and `redirect` are explicitly declared
+- `GET` and `POST` are explicitly declared
 - action targets are directly callable HTTP addresses
 - successful updates return Markdown fragments
 - recoverable failures also return Markdown fragments
@@ -145,7 +145,7 @@ The same demo works for both sides because of HTTP content negotiation:
   - `Accept: text/markdown` for agents
 - action requests
   - `Accept: text/markdown` for agent-readable fragment updates
-  - `Accept: application/json` for host runtime envelopes where needed
+  - `Accept: text/html` for host runtime fragment updates
 
 That is the technical reason the same page model can support both human-agent collaboration and direct agent operation.
 

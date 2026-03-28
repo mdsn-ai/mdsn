@@ -14,12 +14,12 @@ title: Block Rendering
 
 \`\`\`mdsn
 block results {
-  read refresh: "/api/refresh"
-  write submit: "/api/submit"
+  GET "/api/refresh" -> refresh
+  POST "/api/submit" () -> submit
 }
 
 block secondary {
-  redirect "/done"
+  GET "/done" -> finish
 }
 \`\`\`
 `;
@@ -33,7 +33,7 @@ describe("sdk block rendering", () => {
     expect(model.markdownHtml).toContain('data-mdsn-block-region="secondary"');
     expect(model.markdownHtml).toContain('data-mdsn-read="results::read::0"');
     expect(model.markdownHtml).toContain('data-mdsn-write="results::write::1"');
-    expect(model.markdownHtml).toContain('data-mdsn-redirect="secondary::redirect::0"');
+    expect(model.markdownHtml).toContain('data-mdsn-read="secondary::read::0"');
     expect(model.markdownHtml).not.toContain('data-mdsn-result=');
   });
 

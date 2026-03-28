@@ -1,21 +1,15 @@
 import { replaceBlockRegionMarkup } from "./block-runtime";
-import type { ActionFailure, FragmentActionSuccess, RedirectActionSuccess } from "../core/action";
+import type { ActionFailure, FragmentActionSuccess } from "../core/action";
 
 type AppliedFragmentResult = {
   kind: "fragment";
   html: string;
 };
 
-type AppliedRedirectResult = {
-  kind: "redirect";
-  location: string;
-};
-
-export type AppliedPageActionResult = AppliedFragmentResult | AppliedRedirectResult;
+export type AppliedPageActionResult = AppliedFragmentResult;
 
 export type PageActionTransportResult =
   | ActionFailure
-  | RedirectActionSuccess
   | (FragmentActionSuccess & { html: string });
 
 export function applyActionResultToPageHtml(
@@ -27,13 +21,6 @@ export function applyActionResultToPageHtml(
     return {
       kind: "fragment",
       html: currentHtml,
-    };
-  }
-
-  if (result.kind === "redirect") {
-    return {
-      kind: "redirect",
-      location: result.location,
     };
   }
 

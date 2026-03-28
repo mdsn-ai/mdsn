@@ -71,8 +71,8 @@ describe("new web page client runtime", () => {
 
 \`\`\`mdsn
 block chat {
-  input message!: text
-  write send: "/messages" (message)
+  INPUT text required -> message
+  POST "/messages" (message) -> send
 }
 \`\`\`
 `,
@@ -88,20 +88,5 @@ block chat {
     expect(result.html).toContain('data-mdsn-write="chat::write::0"');
     expect(result.html).toContain('data-input-name="message"');
     expect(result.html).toContain('data-target="/__mdsn/actions/messages"');
-  });
-
-  it("returns redirect actions without mutating the current html", () => {
-    const currentHtml = `<section class="mdsn-block-region" data-mdsn-block-region="chat"><p>Old</p></section>`;
-
-    const result = applyActionResultToPageHtml(currentHtml, "chat", {
-      ok: true,
-      kind: "redirect",
-      location: "/login",
-    });
-
-    expect(result).toEqual({
-      kind: "redirect",
-      location: "/login",
-    });
   });
 });

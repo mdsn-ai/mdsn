@@ -14,17 +14,39 @@ type ActionFailure = {
   fieldErrors?: Record<string, string>;
 };
 
-export const chatBlock = {
-  name: "chat",
-  inputs: [
-    { name: "message", type: "text" as const, required: true },
-  ],
-  reads: [
-    { name: "refresh", target: "/list" },
-    { name: "load_more", target: "/load-more" },
-  ],
-  writes: [{ name: "send", target: "/send", inputs: ["message"] }],
-};
+const DEFAULT_CHAT_WINDOW_LIMIT = 50;
+const MAX_CHAT_WINDOW_LIMIT = 200;
+
+function clampChatWindowLimit(value: unknown): number {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_CHAT_WINDOW_LIMIT;
+  }
+  const rounded = Math.floor(numeric);
+  if (rounded < DEFAULT_CHAT_WINDOW_LIMIT) {
+    return DEFAULT_CHAT_WINDOW_LIMIT;
+  }
+  if (rounded > MAX_CHAT_WINDOW_LIMIT) {
+    return MAX_CHAT_WINDOW_LIMIT;
+  }
+  return rounded;
+}
+
+function createChatBlock(includeMore: boolean) {
+  return {
+    name: "chat",
+    inputs: [
+      { name: "message", type: "text" as const, required: true },
+    ],
+    reads: [
+      { name: "messages", target: "/list" },
+      ...(includeMore ? [{ name: "more", target: "/load-more" }] : []),
+    ],
+    writes: [{ name: "send", target: "/send", inputs: ["message"] }],
+  };
+}
+
+export const chatBlock = createChatBlock(true);
 
 export const loginAuthBlock = {
   name: "auth",
@@ -50,7 +72,6 @@ export const sessionBlock = {
   inputs: [],
   reads: [],
   writes: [{ name: "logout", target: "/logout", inputs: [] }],
-  redirects: [],
 };
 
 function formatMessageTime(iso: string): string {
@@ -87,7 +108,9 @@ function renderChatFragment(
     contextMessage: string;
   },
 ): string {
-  const renderedMessages = storage.listRecentMessages(options.limit);
+  const limit = clampChatWindowLimit(options.limit);
+  const renderedMessages = storage.listRecentMessages(limit);
+  const includeMore = storage.countMessages() > limit;
 
   return renderMarkdownFragment({
     body: [
@@ -103,7 +126,7 @@ function renderChatFragment(
       "### Continue",
       "Use the same room to continue the shared conversation.",
     ],
-    block: chatBlock,
+    block: createChatBlock(includeMore),
   });
 }
 
@@ -129,16 +152,23 @@ export function renderRegisterFailureFragment(message: string): string {
   });
 }
 
-export function renderChatFailureFragment(storage: ChatStorage, message: string, nextStep: string): string {
+export function renderChatFailureFragment(
+  storage: ChatStorage,
+  message: string,
+  nextStep: string,
+  limit: number = DEFAULT_CHAT_WINDOW_LIMIT,
+): string {
+  const boundedLimit = clampChatWindowLimit(limit);
+  const includeMore = storage.countMessages() > boundedLimit;
   return renderMarkdownFragment({
     body: [
       "## Chat Status",
       message,
       nextStep,
       "## Conversation",
-      "This view shows the most recent 50 messages.\n\nUse `load_more` to read older messages.",
+      `This view shows up to the most recent ${boundedLimit} messages.\n\nUse \`more\` to read older messages.`,
       ...(() => {
-        const renderedMessages = storage.listRecentMessages(50);
+        const renderedMessages = storage.listRecentMessages(boundedLimit);
         return renderedMessages.length > 0
           ? [renderMarkdownValue(
             "list",
@@ -150,7 +180,7 @@ export function renderChatFailureFragment(storage: ChatStorage, message: string,
       "### Continue",
       "Use the same room to continue the shared conversation.",
     ],
-    block: chatBlock,
+    block: createChatBlock(includeMore),
   });
 }
 
@@ -159,18 +189,18 @@ export function renderRedirectFragment(
   heading: string,
   message: string,
 ): string {
+  const nextName = location === "/chat" ? "enter_chat" : location === "/" ? "go_login" : "continue_next";
   return renderMarkdownFragment({
     body: [
       heading,
       message,
-      `Next step: follow redirect to \`${location}\`.`,
+      `Next step: use \`${nextName}\` to continue.`,
     ],
     block: {
       name: "next",
       inputs: [],
-      reads: [],
+      reads: [{ name: nextName, target: location }],
       writes: [],
-      redirects: [{ target: location }],
     },
   });
 }
@@ -179,102 +209,130 @@ export function createChatActions(storage: ChatStorage) {
   return defineActions({
     register: defineAction({
       async run(ctx: Pick<ActionContext, "inputs">): Promise<
-        { ok: true; kind: "redirect"; location: string } | string | ActionFailure
+        { ok: true; kind: "fragment"; markdown: string } | ActionFailure
       > {
         const username = String(ctx.inputs.username ?? "").trim().slice(0, 32);
         const email = String(ctx.inputs.email ?? "").trim().slice(0, 120).toLowerCase();
         const password = String(ctx.inputs.password ?? "").trim().slice(0, 120);
 
         if (!username) {
-          return renderRegisterFailureFragment(
-            "Registration failed: a username is required before an account can be created.",
-          );
+          return {
+            ok: false,
+            errorCode: "EMPTY_USERNAME",
+            message: "Registration failed: a username is required before an account can be created.",
+          };
         }
 
         if (!email) {
-          return renderRegisterFailureFragment(
-            "Registration failed: an email is required before an account can be created.",
-          );
+          return {
+            ok: false,
+            errorCode: "EMPTY_EMAIL",
+            message: "Registration failed: an email is required before an account can be created.",
+          };
         }
 
         if (!password) {
-          return renderRegisterFailureFragment(
-            "Registration failed: a password is required before an account can be created.",
-          );
+          return {
+            ok: false,
+            errorCode: "EMPTY_PASSWORD",
+            message: "Registration failed: a password is required before an account can be created.",
+          };
         }
 
         try {
           storage.createUser({ username, email, password });
         } catch (error) {
           if (error instanceof Error && error.message === "IDENTITY_CONFLICT") {
-            return renderRegisterFailureFragment(
-              "Registration failed: this username or email is already registered.",
-            );
+            return {
+              ok: false,
+              errorCode: "IDENTITY_CONFLICT",
+              message: "Registration failed: this username or email is already registered.",
+            };
           }
           throw error;
         }
 
         return {
           ok: true,
-          kind: "redirect",
-          location: "/chat",
+          kind: "fragment",
+          markdown: renderRedirectFragment(
+            "/chat",
+            "## Registration Status",
+            "Registration succeeded. You are now signed in.",
+          ),
         };
       },
     }),
     login: defineAction({
       async run(ctx: Pick<ActionContext, "inputs">): Promise<
-        { ok: true; kind: "redirect"; location: string } | string | ActionFailure
+        { ok: true; kind: "fragment"; markdown: string } | ActionFailure
       > {
         const email = String(ctx.inputs.email ?? "").trim().slice(0, 120).toLowerCase();
         const password = String(ctx.inputs.password ?? "").trim().slice(0, 120);
 
         if (!email) {
-          return renderLoginFailureFragment(
-            "Login failed: an email is required before the account can be verified.",
-          );
+          return {
+            ok: false,
+            errorCode: "EMPTY_EMAIL",
+            message: "Login failed: an email is required before the account can be verified.",
+          };
         }
 
         if (!password) {
-          return renderLoginFailureFragment(
-            "Login failed: a password is required before the account can be verified.",
-          );
+          return {
+            ok: false,
+            errorCode: "EMPTY_PASSWORD",
+            message: "Login failed: a password is required before the account can be verified.",
+          };
         }
 
         const user = storage.authenticateUser({ email, password });
         if (!user) {
-          return renderLoginFailureFragment(
-            "Login failed: no account matches this email and password.",
-          );
+          return {
+            ok: false,
+            errorCode: "AUTH_FAILED",
+            message: "Login failed: no account matches this email and password.",
+          };
         }
 
         return {
           ok: true,
-          kind: "redirect",
-          location: "/chat",
+          kind: "fragment",
+          markdown: renderRedirectFragment(
+            "/chat",
+            "## Login Status",
+            "Login succeeded. Welcome back to the shared chat.",
+          ),
         };
       },
     }),
     logout: defineAction({
-      async run(): Promise<{ ok: true; kind: "redirect"; location: string }> {
+      async run(): Promise<{ ok: true; kind: "fragment"; markdown: string }> {
         return {
           ok: true,
-          kind: "redirect",
-          location: "/",
+          kind: "fragment",
+          markdown: renderRedirectFragment(
+            "/",
+            "## Logout Status",
+            "Logout succeeded. The current session has been cleared.",
+          ),
         };
       },
     }),
     list: defineAction({
-      async run(): Promise<string> {
+      async run(ctx: Pick<ActionContext, "inputs">): Promise<string> {
+        const limit = clampChatWindowLimit(ctx.inputs.windowLimit);
         return renderChatFragment(storage, {
-          limit: 50,
-          contextMessage: "This view shows the most recent 50 messages.\n\nUse `load_more` to read older messages.",
+          limit,
+          contextMessage: `This view shows up to the most recent ${limit} messages.\n\nUse \`more\` to read older messages.`,
         });
       },
     }),
     history: defineAction({
-      async run(): Promise<string> {
+      async run(ctx: Pick<ActionContext, "inputs">): Promise<string> {
+        const limit = clampChatWindowLimit(ctx.inputs.windowLimit);
         return renderChatFragment(storage, {
-          limit: 200,
+          limit,
           contextMessage: "This view includes older messages for deeper context.",
         });
       },
@@ -309,9 +367,10 @@ export function createChatActions(storage: ChatStorage) {
           userId,
           content: message,
         });
+        const limit = clampChatWindowLimit(ctx.inputs.windowLimit);
         return renderChatFragment(storage, {
-          limit: 50,
-          contextMessage: "This view shows the most recent 50 messages.\n\nUse `load_more` to read older messages.",
+          limit,
+          contextMessage: `This view shows up to the most recent ${limit} messages.\n\nUse \`more\` to read older messages.`,
         });
       },
     }),

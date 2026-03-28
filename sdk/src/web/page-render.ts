@@ -56,8 +56,8 @@ function renderInput(block: BlockDefinition): string {
         ? "password"
         : input.type === "number"
           ? "number"
-          : input.type === "file"
-            ? "file"
+          : input.type === "asset"
+            ? "url"
           : "text";
 
     if (input.type === "choice") {
@@ -65,10 +65,6 @@ function renderInput(block: BlockDefinition): string {
         .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
         .join("");
       return `<label>${escapeHtml(input.name)}<select id="${escapeHtml(input.id)}" data-mdsn-input="${escapeHtml(input.id)}" data-input-name="${escapeHtml(input.name)}" data-input-type="${escapeHtml(input.type)}"${requiredFlag}${secretFlag}${required}><option value=""></option>${options}</select></label>`;
-    }
-
-    if (input.type === "json") {
-      return `<label>${escapeHtml(input.name)}<textarea id="${escapeHtml(input.id)}" data-mdsn-input="${escapeHtml(input.id)}" data-input-name="${escapeHtml(input.name)}" data-input-type="${escapeHtml(input.type)}"${requiredFlag}${secretFlag}${required} rows="8" spellcheck="false"></textarea></label>`;
     }
 
     return `<label>${escapeHtml(input.name)}<input id="${escapeHtml(input.id)}" type="${inputType}" data-mdsn-input="${escapeHtml(input.id)}" data-input-name="${escapeHtml(input.name)}" data-input-type="${escapeHtml(input.type)}"${requiredFlag}${secretFlag}${required} /></label>`;
@@ -79,16 +75,13 @@ function renderInput(block: BlockDefinition): string {
 
 function renderActions(block: BlockDefinition, options?: CreatePageRenderOptions): string {
   const readButtons = block.reads.map((read) =>
-    `<button type="button" data-mdsn-read="${escapeHtml(read.id)}" data-target="${escapeHtml(options?.mapActionTarget?.(read.target) ?? read.target)}">${escapeHtml(read.name)}</button>`
+    `<button type="button" data-mdsn-read="${escapeHtml(read.id)}" data-op-name="${escapeHtml(read.name)}" data-target="${escapeHtml(options?.mapActionTarget?.(read.target) ?? read.target)}" data-inputs="${escapeHtml(read.inputs.join(","))}">${escapeHtml(read.name)}</button>`
   );
   const writeButtons = block.writes.map((write) =>
-    `<button type="button" data-mdsn-write="${escapeHtml(write.id)}" data-target="${escapeHtml(options?.mapActionTarget?.(write.target) ?? write.target)}">${escapeHtml(write.name)}</button>`
-  );
-  const redirectButtons = block.redirects.map((redirect) =>
-    `<button type="button" data-mdsn-redirect="${escapeHtml(redirect.id)}" data-target="${escapeHtml(options?.mapActionTarget?.(redirect.target) ?? redirect.target)}">${escapeHtml(`redirect ${redirect.target}`)}</button>`
+    `<button type="button" data-mdsn-write="${escapeHtml(write.id)}" data-op-name="${escapeHtml(write.name)}" data-target="${escapeHtml(options?.mapActionTarget?.(write.target) ?? write.target)}" data-inputs="${escapeHtml(write.inputs.join(","))}">${escapeHtml(write.name)}</button>`
   );
 
-  const buttons = [...readButtons, ...writeButtons, ...redirectButtons].join("");
+  const buttons = [...readButtons, ...writeButtons].join("");
   return buttons.length > 0 ? `<div class="mdsn-block-actions">${buttons}</div>` : "";
 }
 

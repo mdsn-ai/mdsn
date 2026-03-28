@@ -46,10 +46,10 @@ This is a minimal runnable guestbook.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -173,7 +173,7 @@ http://localhost:3000/
 
 For a stronger end-to-end validation flow, see `examples/chat/`:
 
-- login page -> `redirect` -> chat page
+- login page -> `GET "/chat" -> enter_chat` -> chat page
 - cookie session continues after login
 - multiple fresh agents can share one room context
 - a new fresh agent can read the current fragment and summarize the conversation

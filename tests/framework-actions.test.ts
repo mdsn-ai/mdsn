@@ -40,21 +40,21 @@ describe("defineAction", () => {
     });
   });
 
-  it("supports redirect success envelopes", async () => {
+  it("supports fragment success envelopes", async () => {
     const action = defineAction({
       async run() {
         return {
           ok: true,
-          kind: "redirect" as const,
-          location: "/done",
+          kind: "fragment" as const,
+          markdown: "## Done",
         };
       },
     });
 
     await expect(action.run({} as never)).resolves.toEqual({
       ok: true,
-      kind: "redirect",
-      location: "/done",
+      kind: "fragment",
+      markdown: "## Done",
     });
   });
 
@@ -93,8 +93,8 @@ describe("framework action registry", () => {
       async run() {
         return {
           ok: true,
-          kind: "redirect" as const,
-          location: "/posts/created",
+          kind: "fragment" as const,
+          markdown: "# Created",
         };
       },
     });

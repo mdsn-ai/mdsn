@@ -15,12 +15,11 @@ export function parsePageDefinition(raw: string): DocumentDefinition {
   const parsed = parseMdsnBlocks(blocks);
   const blockAnchors = extractBlockAnchors(markdownWithoutMdsn).map((name) => ({ name }));
 
-  validateDocumentStructure(parsed.schemas, parsed.blocks, blockAnchors);
+  validateDocumentStructure(parsed.blocks, blockAnchors);
 
   return {
     frontmatter,
     markdown: markdownWithoutMdsn,
-    schemas: parsed.schemas,
     blocks: parsed.blocks,
     blockAnchors,
   };

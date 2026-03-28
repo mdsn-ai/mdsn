@@ -22,6 +22,13 @@ const chatPagePath = path.join(rootDir, "pages", "chat.md");
 const clientEntry = path.join(rootDir, "client", "main.ts");
 const SESSION_COOKIE = "mdsn-chat-session";
 const defaultDbPath = path.join(rootDir, ".data", "chat.sqlite");
+const CHAT_WINDOW_DEFAULT = 50;
+const CHAT_WINDOW_STEP = 50;
+const CHAT_WINDOW_MAX = 200;
+
+type ChatViewState = {
+  windowLimit: number;
+};
 
 async function buildClientBundle(): Promise<string> {
   const result = await build({
@@ -171,12 +178,6 @@ type ActionFragmentResult = {
   markdown: string;
 };
 
-type ActionRedirectResult = {
-  ok: true;
-  kind: "redirect";
-  location: string;
-};
-
 function isActionFailureResult(value: unknown): value is ActionFailureResult {
   return !!value && typeof value === "object" && (value as { ok?: unknown }).ok === false;
 }
@@ -189,14 +190,6 @@ function isActionFragmentResult(value: unknown): value is ActionFragmentResult {
     && typeof (value as { markdown?: unknown }).markdown === "string";
 }
 
-function isActionRedirectResult(value: unknown): value is ActionRedirectResult {
-  return !!value
-    && typeof value === "object"
-    && (value as { ok?: unknown }).ok === true
-    && (value as { kind?: unknown }).kind === "redirect"
-    && typeof (value as { location?: unknown }).location === "string";
-}
-
 export async function startVueChatDemo(
   options: { host?: string; port?: number; dbPath?: string } = {},
 ): Promise<Server> {
@@ -206,8 +199,23 @@ export async function startVueChatDemo(
   const chatPageMarkdown = await readFile(chatPagePath, "utf8");
   const app = express();
   const streamClients = new Set<Response>();
+  const chatViewBySession = new Map<string, ChatViewState>();
   const storage = createChatStorage(options.dbPath ?? defaultDbPath);
   const actions = createChatActions(storage);
+
+  const ensureChatViewState = (sessionId: string): ChatViewState => {
+    const existing = chatViewBySession.get(sessionId);
+    if (existing) {
+      return existing;
+    }
+    const created: ChatViewState = { windowLimit: CHAT_WINDOW_DEFAULT };
+    chatViewBySession.set(sessionId, created);
+    return created;
+  };
+
+  const expandChatWindow = (state: ChatViewState): void => {
+    state.windowLimit = Math.min(state.windowLimit + CHAT_WINDOW_STEP, CHAT_WINDOW_MAX);
+  };
 
   app.use((req, res, next) => {
     const startedAt = Date.now();
@@ -221,21 +229,38 @@ export async function startVueChatDemo(
     next();
   });
 
-  app.use(express.json());
   app.use(express.text({
-    type: ["text/markdown", "text/plain"],
+    type: ["text/markdown"],
     limit: "1mb",
   }));
-  app.use(express.urlencoded({ extended: true }));
+
+  const ensureMarkdownWrite = (req: express.Request, res: express.Response): boolean => {
+    const contentType = String(req.headers["content-type"] ?? "").toLowerCase();
+    if (!contentType.includes("text/markdown")) {
+      res.status(415).type("text/markdown; charset=utf-8").send(
+        renderLoginFailureFragment(
+          "Unsupported content type: use `Content-Type: text/markdown` for write actions.",
+        ),
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const resolvePageMarkdownByRoute = (route: string): string => (route === "/chat"
+    ? chatPageMarkdown
+    : route === "/register"
+      ? registerPageMarkdown
+      : loginPageMarkdown);
+
+  app.get(["/web", "/web/", "/web/register", "/web/chat"], (_req, res) => {
+    res.setHeader("cache-control", "no-store");
+    res.status(200).type("text/html; charset=utf-8").send(renderShell());
+  });
 
   app.get(["/", "/register", "/chat"], (req, res) => {
     res.setHeader("cache-control", "no-store");
-    const pageMarkdown = req.path === "/chat"
-      ? chatPageMarkdown
-      : req.path === "/register"
-        ? registerPageMarkdown
-        : loginPageMarkdown;
-    res.status(200).type("text/markdown; charset=utf-8").send(pageMarkdown);
+    res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(req.path));
   });
 
   app.get("/app.js", (_req, res) => {
@@ -246,12 +271,7 @@ export async function startVueChatDemo(
   app.get("/page.md", (req, res) => {
     res.setHeader("cache-control", "no-store");
     const route = typeof req.query.route === "string" ? req.query.route : "/";
-    const pageMarkdown = route === "/chat"
-      ? chatPageMarkdown
-      : route === "/register"
-        ? registerPageMarkdown
-        : loginPageMarkdown;
-    res.status(200).type("text/markdown; charset=utf-8").send(pageMarkdown);
+    res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(route));
   });
 
   app.get("/session", (req, res) => {
@@ -291,7 +311,7 @@ export async function startVueChatDemo(
     });
   });
 
-  app.post("/list", async (req, res) => {
+  app.get("/list", async (req, res) => {
     const cookies = parseCookies(req.headers.cookie);
     const sessionId = cookies[SESSION_COOKIE];
     const session = sessionId ? storage.getSession(sessionId) : null;
@@ -303,11 +323,17 @@ export async function startVueChatDemo(
       );
       return;
     }
-    const markdown = await actions.list.run(createActionContext("/list", {}, req, parseCookies(req.headers.cookie)));
+    const state = ensureChatViewState(session.id);
+    const markdown = await actions.list.run(createActionContext(
+      "/list",
+      { windowLimit: state.windowLimit },
+      req,
+      parseCookies(req.headers.cookie),
+    ));
     res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
-  app.post("/load-more", async (req, res) => {
+  app.get("/load-more", async (req, res) => {
     const cookies = parseCookies(req.headers.cookie);
     const sessionId = cookies[SESSION_COOKIE];
     const session = sessionId ? storage.getSession(sessionId) : null;
@@ -319,27 +345,28 @@ export async function startVueChatDemo(
       );
       return;
     }
-    const markdown = await actions.history.run(createActionContext("/load-more", {}, req, parseCookies(req.headers.cookie)));
+    const state = ensureChatViewState(session.id);
+    expandChatWindow(state);
+    const markdown = await actions.history.run(createActionContext(
+      "/load-more",
+      { windowLimit: state.windowLimit },
+      req,
+      parseCookies(req.headers.cookie),
+    ));
     res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   app.post("/register", async (req, res) => {
-    const inputs = parseActionInputs(req.body);
+    if (!ensureMarkdownWrite(req, res)) {
+      return;
+    }
+
+    const inputs = parseActionInputs(typeof req.body === "string" ? req.body : "");
     const result = await actions.register.run(
       createActionContext("/register", inputs, req, parseCookies(req.headers.cookie)),
     );
 
-    if (typeof result === "string") {
-      res.status(400).type("text/markdown; charset=utf-8").send(result);
-      return;
-    }
-
     if (isActionFragmentResult(result)) {
-      res.status(400).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
-    }
-
-    if (isActionRedirectResult(result)) {
       const user = storage.authenticateUser({
         email: String(inputs.email ?? "").trim().toLowerCase(),
         password: String(inputs.password ?? ""),
@@ -353,18 +380,13 @@ export async function startVueChatDemo(
         return;
       }
       const session = storage.createSession(user.id);
+      chatViewBySession.set(session.id, { windowLimit: CHAT_WINDOW_DEFAULT });
       res.cookie(SESSION_COOKIE, session.id, {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
       });
-      res.status(200).type("text/markdown; charset=utf-8").send(
-        renderRedirectFragment(
-          "/chat",
-          "## Registration Status",
-          "Registration succeeded. You are now signed in.",
-        ),
-      );
+      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
       return;
     }
 
@@ -385,22 +407,16 @@ export async function startVueChatDemo(
   });
 
   app.post("/login", async (req, res) => {
-    const inputs = parseActionInputs(req.body);
+    if (!ensureMarkdownWrite(req, res)) {
+      return;
+    }
+
+    const inputs = parseActionInputs(typeof req.body === "string" ? req.body : "");
     const result = await actions.login.run(
       createActionContext("/login", inputs, req, parseCookies(req.headers.cookie)),
     );
 
-    if (typeof result === "string") {
-      res.status(400).type("text/markdown; charset=utf-8").send(result);
-      return;
-    }
-
     if (isActionFragmentResult(result)) {
-      res.status(400).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
-    }
-
-    if (isActionRedirectResult(result)) {
       const user = storage.authenticateUser({
         email: String(inputs.email ?? "").trim().toLowerCase(),
         password: String(inputs.password ?? ""),
@@ -414,18 +430,13 @@ export async function startVueChatDemo(
         return;
       }
       const session = storage.createSession(user.id);
+      chatViewBySession.set(session.id, { windowLimit: CHAT_WINDOW_DEFAULT });
       res.cookie(SESSION_COOKIE, session.id, {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
       });
-      res.status(200).type("text/markdown; charset=utf-8").send(
-        renderRedirectFragment(
-          "/chat",
-          "## Login Status",
-          "Login succeeded. Welcome back to the shared chat.",
-        ),
-      );
+      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
       return;
     }
 
@@ -446,10 +457,15 @@ export async function startVueChatDemo(
   });
 
   app.post("/logout", async (req, res) => {
+    if (!ensureMarkdownWrite(req, res)) {
+      return;
+    }
+
     const cookies = parseCookies(req.headers.cookie);
     const sessionId = cookies[SESSION_COOKIE];
     if (sessionId) {
       storage.deleteSession(sessionId);
+      chatViewBySession.delete(sessionId);
     }
     const result = await actions.logout.run(
       createActionContext("/logout", {}, req, cookies),
@@ -460,16 +476,23 @@ export async function startVueChatDemo(
       path: "/",
       expires: new Date(0),
     });
-    res.status(200).type("text/markdown; charset=utf-8").send(
-      renderRedirectFragment(
-        "/",
-        "## Logout Status",
-        "Logout succeeded. The current session has been cleared.",
+    if (isActionFragmentResult(result)) {
+      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
+      return;
+    }
+
+    res.status(500).type("text/markdown; charset=utf-8").send(
+      renderLoginFailureFragment(
+        "Logout failed: invalid server result.",
       ),
     );
   });
 
   app.post("/send", async (req, res) => {
+    if (!ensureMarkdownWrite(req, res)) {
+      return;
+    }
+
     const cookies = parseCookies(req.headers.cookie);
     const sessionId = cookies[SESSION_COOKIE];
     const session = sessionId ? storage.getSession(sessionId) : null;
@@ -481,13 +504,15 @@ export async function startVueChatDemo(
       );
       return;
     }
+    const state = ensureChatViewState(session.id);
 
     const inputs = {
-      ...parseActionInputs(req.body),
+      ...parseActionInputs(typeof req.body === "string" ? req.body : ""),
       userId: session.user.id,
       username: session.user.username,
       email: session.user.email,
       agent: session.user.username,
+      windowLimit: state.windowLimit,
     };
 
     const result = await actions.send.run(
@@ -519,6 +544,7 @@ export async function startVueChatDemo(
             storage,
             result.message ?? "Send failed: a message is required before this chat action can continue.",
             result.fieldErrors?.message ?? "Next step: enter a message and submit again.",
+            state.windowLimit,
           ),
         );
         return;
@@ -529,17 +555,7 @@ export async function startVueChatDemo(
           storage,
           result.message ?? "Send failed: unable to process this message.",
           result.fieldErrors?.message ?? "Next step: try sending again.",
-        ),
-      );
-      return;
-    }
-
-    if (isActionRedirectResult(result)) {
-      res.status(200).type("text/markdown; charset=utf-8").send(
-        renderRedirectFragment(
-          result.location,
-          "## Chat Status",
-          "Action completed and requested a redirect.",
+          state.windowLimit,
         ),
       );
       return;

@@ -8,7 +8,6 @@ describe("new web page render", () => {
         title: "Chat",
       },
       markdown: "# Chat\n\n<!-- mdsn:block chat -->",
-      schemas: [],
       blockAnchors: [{ name: "chat" }],
       blocks: [
         {
@@ -34,21 +33,12 @@ describe("new web page render", () => {
               order: 0,
             },
           ],
-          redirects: [
-            {
-              id: "chat::redirect::1",
-              block: "chat",
-              target: "/login",
-              order: 1,
-            },
-          ],
         },
       ],
     });
 
     expect(model.markdownHtml).toContain('data-mdsn-block-region="chat"');
     expect(model.markdownHtml).toContain('data-mdsn-write="chat::write::0"');
-    expect(model.markdownHtml).toContain('data-mdsn-redirect="chat::redirect::1"');
     expect(model.markdownHtml).toContain('data-input-name="message"');
     expect(model.bootstrap.version).toBe("vNext");
     expect(model.page.segments.map((segment) => segment.type)).toEqual(["container", "anchor"]);
@@ -62,7 +52,6 @@ describe("new web page render", () => {
           title: "Chat",
         },
         markdown: "# Chat\n\n<!-- mdsn:block chat -->",
-        schemas: [],
         blockAnchors: [{ name: "chat" }],
         blocks: [
           {
@@ -88,7 +77,6 @@ describe("new web page render", () => {
                 order: 1,
               },
             ],
-            redirects: [],
           },
         ],
       },

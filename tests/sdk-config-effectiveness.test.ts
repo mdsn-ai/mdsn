@@ -86,8 +86,8 @@ id: hello
 
 \`\`\`mdsn
 block hello {
-  input name!: text
-  read hello: "/hello" (name)
+  INPUT text required -> name
+  GET "/hello" (name) -> hello
 }
 \`\`\`
 `,
@@ -119,26 +119,15 @@ block hello {
       expect(htmlResponse.status).toBe(200);
       expect(html).toContain("<h1>Custom dirs</h1>");
 
-      const actionResponse = await fetch(`${baseUrl}/hello`, {
-        method: "POST",
+      const actionResponse = await fetch(`${baseUrl}/hello?name=MDSN`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: {
-            name: "MDSN",
-          },
-        }),
       });
 
       expect(actionResponse.status).toBe(200);
-      await expect(actionResponse.json()).resolves.toMatchObject({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Hello, MDSN!",
-        html: "<h1>Hello, MDSN!</h1>",
-      });
+      await expect(actionResponse.text()).resolves.toBe("# Hello, MDSN!");
     });
   });
 

@@ -18,17 +18,9 @@ export interface WriteDefinition {
   order: number;
 }
 
-export interface RedirectDefinition {
-  id: string;
-  block: string;
-  target: string;
-  order: number;
-}
-
 export interface BlockDefinition {
   name: string;
   inputs: InputDefinition[];
   reads: ReadDefinition[];
   writes: WriteDefinition[];
-  redirects: RedirectDefinition[];
 }

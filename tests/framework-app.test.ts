@@ -65,8 +65,8 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  GET "/search_action" (query) -> search
 }
 \`\`\`
 `,
@@ -74,7 +74,7 @@ block search {
     );
 
     writeFileSync(
-      path.join(rootDir, "server", "search.cjs"),
+      path.join(rootDir, "server", "search_action.cjs"),
       `module.exports.action = {
   async run(ctx) {
     return "# Result for " + String(ctx.inputs.query ?? "");
@@ -98,7 +98,7 @@ block search {
       expect(htmlResponse.headers.get("content-type")).toContain("text/html");
       const html = await htmlResponse.text();
       expect(html).toContain('data-mdsn-read="search::read::0"');
-      expect(html).toContain('data-target="/search"');
+      expect(html).toContain('data-target="/search_action"');
 
       const unsupportedResponse = await fetch(`${baseUrl}/search`, {
         headers: { Accept: "application/vnd.mdsn.page+json" },
@@ -128,9 +128,9 @@ This page shows MDSN examples.
 
 \`\`\`mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  write submit: "/post_message" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  POST "/post_message" (nickname, message) -> submit
 }
 \`\`\`
 \`\`\`\`
@@ -153,12 +153,12 @@ block guestbook {
       expect(htmlResponse.status).toBe(200);
       const html = await htmlResponse.text();
       expect(html).toContain('class="language-mdsn-src"');
-      expect(html).toContain("write submit");
+      expect(html).toContain("POST &quot;/post_message&quot;");
       expect(html).not.toContain("data-mdsn-block-panel");
     });
   });
 
-  it("rewrites redirect markdown targets to host routes in html output", async () => {
+  it("rewrites markdown navigation targets to host routes in html output", async () => {
     const rootDir = createTempSite();
     rootsToCleanup.push(rootDir);
     mkdirSync(path.join(rootDir, "pages", "docs"), { recursive: true });
@@ -175,7 +175,7 @@ title: Home
 
 \`\`\`mdsn
 block home {
-  redirect "/docs/index.md"
+  GET "/docs/index.md" -> open_docs
 }
 \`\`\`
 `,
@@ -195,7 +195,7 @@ block home {
         headers: { Accept: "text/html" },
       }).then((response) => response.text());
 
-      expect(html).toContain('data-mdsn-redirect="home::redirect::0"');
+      expect(html).toContain('data-mdsn-read="home::read::0"');
       expect(html).toContain('data-target="/docs"');
       expect(html).not.toContain('data-target="/docs/index.md"');
     });
@@ -217,8 +217,8 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  GET "/search_action" (query) -> search
 }
 \`\`\`
 `,
@@ -226,7 +226,7 @@ block search {
     );
 
     writeFileSync(
-      path.join(rootDir, "server", "search.cjs"),
+      path.join(rootDir, "server", "search_action.cjs"),
       `module.exports = {
   async run(ctx) {
     return "# Result for " + String(ctx.inputs.query ?? "");
@@ -238,24 +238,15 @@ block search {
     const app = createFrameworkApp({ rootDir });
 
     await withServer(app, async (baseUrl) => {
-      const response = await fetch(`${baseUrl}/search`, {
-        method: "POST",
+      const response = await fetch(`${baseUrl}/search_action?query=hello`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: { query: "hello" },
-        }),
       });
 
       expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Result for hello",
-        html: "<h1>Result for hello</h1>",
-      });
+      await expect(response.text()).resolves.toBe("# Result for hello");
     });
   });
 
@@ -275,8 +266,8 @@ title: Guestbook
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  write submit: "/post_message" (message)
+  INPUT text required -> message
+  POST "/post_message" (message) -> submit
 }
 \`\`\`
 `,
@@ -306,23 +297,16 @@ block guestbook {
       const response = await fetch(`${baseUrl}/post_message`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          "Content-Type": "text/markdown",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: { message: "" },
-        }),
+        body: 'message: ""',
       });
 
       expect(response.status).toBe(400);
-      await expect(response.json()).resolves.toEqual({
-        ok: false,
-        errorCode: "EMPTY_MESSAGE",
-        message: "Please enter a message.",
-        fieldErrors: {
-          message: "Please enter a message.",
-        },
-      });
+      const markdown = await response.text();
+      expect(markdown).toContain("## Action Status");
+      expect(markdown).toContain("Please enter a message.");
     });
   });
 
@@ -344,8 +328,8 @@ layout: default
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  GET "/search_action" (query) -> search
 }
 \`\`\`
 `,

@@ -255,8 +255,6 @@ layout: docs
 - `InputDefinition`
 - `ReadDefinition`
 - `WriteDefinition`
-- `RedirectDefinition`
-- `SchemaDefinition`
 
 ## 7. `@mdsnai/sdk/cli`
 

@@ -28,7 +28,6 @@ export type SerializableInput = {
   required?: boolean;
   secret?: boolean;
   options?: string[];
-  schema?: string;
 };
 
 export type SerializableRead = {
@@ -43,16 +42,11 @@ export type SerializableWrite = {
   inputs?: string[];
 };
 
-export type SerializableRedirect = {
-  target: string;
-};
-
 export type SerializableBlock = {
   name: string;
   inputs?: SerializableInput[];
   reads?: SerializableRead[];
   writes?: SerializableWrite[];
-  redirects?: SerializableRedirect[];
 };
 
 export type RenderMarkdownFragmentOptions = {
@@ -73,8 +67,11 @@ function escapeTableCell(value: unknown): string {
   return String(value ?? "").replace(/\|/g, "\\|").replace(/\n/g, "<br />");
 }
 
-function formatIdentifierList(inputs?: string[]): string {
-  return inputs && inputs.length > 0 ? ` (${inputs.join(", ")})` : "";
+function formatIdentifierList(inputs: string[] | undefined, options?: { always?: boolean }): string {
+  if (inputs && inputs.length > 0) {
+    return ` (${inputs.join(", ")})`;
+  }
+  return options?.always ? " ()" : "";
 }
 
 export function renderMarkdownValue(type: "text", value: string, options?: never): string;
@@ -112,23 +109,18 @@ export function serializeBlock(block: SerializableBlock): string {
   const lines = ["```mdsn", `block ${block.name} {`];
 
   for (const input of block.inputs ?? []) {
-    const requiredMarker = input.required ? "!" : "";
+    const requiredMarker = input.required ? " required" : "";
     const secretMarker = input.secret ? " secret" : "";
     const optionsLiteral = input.options ? ` ${JSON.stringify(input.options)}` : "";
-    const schemaName = input.schema ? ` ${input.schema}` : "";
-    lines.push(`  input ${input.name}${requiredMarker}: ${input.type}${secretMarker}${optionsLiteral}${schemaName}`);
+    lines.push(`  INPUT ${input.type}${requiredMarker}${secretMarker}${optionsLiteral} -> ${input.name}`);
   }
 
   for (const read of block.reads ?? []) {
-    lines.push(`  read ${read.name}: "${read.target}"${formatIdentifierList(read.inputs)}`);
+    lines.push(`  GET "${read.target}"${formatIdentifierList(read.inputs)} -> ${read.name}`);
   }
 
   for (const write of block.writes ?? []) {
-    lines.push(`  write ${write.name}: "${write.target}"${formatIdentifierList(write.inputs)}`);
-  }
-
-  for (const redirect of block.redirects ?? []) {
-    lines.push(`  redirect "${redirect.target}"`);
+    lines.push(`  POST "${write.target}"${formatIdentifierList(write.inputs, { always: true })} -> ${write.name}`);
   }
 
   lines.push("}", "```");

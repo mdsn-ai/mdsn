@@ -12,15 +12,11 @@ title: Guestbook
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-schema filters_schema {
-  "type": "object"
-}
-
 block guestbook {
-  input nickname: text
-  input message!: text
-  write submit: "/messages" (nickname, message)
-  read refresh: "/messages"
+  INPUT text -> nickname
+  INPUT text required -> message
+  POST "/messages" (nickname, message) -> submit
+  GET "/messages" -> refresh
 }
 \`\`\`
 `;
@@ -31,14 +27,6 @@ block guestbook {
       title: "Guestbook",
     });
     expect(document.blockAnchors).toEqual([{ name: "guestbook" }]);
-    expect(document.schemas).toEqual([
-      {
-        name: "filters_schema",
-        shape: {
-          type: "object",
-        },
-      },
-    ]);
     expect(document.blocks).toEqual([
       {
         name: "guestbook",
@@ -80,7 +68,6 @@ block guestbook {
             order: 0,
           },
         ],
-        redirects: [],
       },
     ]);
     expect(document.markdown).toContain("<!-- mdsn:block guestbook -->");
@@ -93,7 +80,7 @@ block guestbook {
 \`\`\`\`mdsn-src
 \`\`\`mdsn
 block guestbook {
-  input nickname: text
+  INPUT text -> nickname
 }
 \`\`\`
 \`\`\`\`

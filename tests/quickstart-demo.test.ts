@@ -62,21 +62,19 @@ describe("quickstart guestbook demo", () => {
       });
 
       const pageMarkdown = await pageResponse.text();
-      expect(pageMarkdown).toContain('write submit: "/post"');
-      expect(pageMarkdown).toContain('read refresh: "/list"');
+      expect(pageMarkdown).toContain('POST "/post" (nickname, message) -> submit');
+      expect(pageMarkdown).toContain('GET "/list" -> refresh');
 
       const postResponse = await fetch(`${baseUrl}/post`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "text/markdown",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: {
-            nickname: "hencoo",
-            message: "hello through route",
-          },
-        }),
+        body: [
+          'nickname: "hencoo"',
+          'message: "hello through route"',
+        ].join("\n"),
       });
 
       expect(postResponse.status).toBe(200);
@@ -84,14 +82,10 @@ describe("quickstart guestbook demo", () => {
       await expect(postResponse.text()).resolves.toContain("hello through route");
 
       const listResponse = await fetch(`${baseUrl}/list`, {
-        method: "POST",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: {},
-        }),
       });
 
       expect(listResponse.status).toBe(200);

@@ -59,7 +59,7 @@ title: Docs
 
 \`\`\`mdsn
 block docs {
-  redirect "/"
+  GET "/" -> go_login
 }
 \`\`\`
 `,
@@ -85,7 +85,7 @@ block docs {
       expect(htmlResponse.status).toBe(200);
       const html = await htmlResponse.text();
       expect(html).toContain('data-mdsn-block-region="docs"');
-      expect(html).toContain('data-mdsn-redirect="docs::redirect::0"');
+      expect(html).toContain('data-mdsn-read="docs::read::0"');
     });
   });
 
@@ -107,8 +107,8 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  POST "/search_action" (query) -> search
 }
 \`\`\`
 `,
@@ -116,7 +116,7 @@ block search {
     );
 
     writeFileSync(
-      path.join(rootDir, "server", "search.cjs"),
+      path.join(rootDir, "server", "search_action.cjs"),
       `module.exports.action = {
   async run(ctx) {
     return "# Result for " + String(ctx.inputs.query ?? "");
@@ -129,73 +129,41 @@ block search {
     const app = createSiteApp({ rootDir });
 
     await withServer(app, async (baseUrl) => {
-      const response = await fetch(`${baseUrl}/search`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ inputs: { query: "hello" } }),
-      });
-
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Result for hello",
-        html: "<h1>Result for hello</h1>",
-      });
-
-      const markdownPayloadResponse = await fetch(`${baseUrl}/search`, {
+      const response = await fetch(`${baseUrl}/search_action`, {
         method: "POST",
         headers: {
           "content-type": "text/markdown",
-          Accept: "application/json",
+          Accept: "text/markdown",
+        },
+        body: 'query: "hello"',
+      });
+
+      expect(response.status).toBe(200);
+      await expect(response.text()).resolves.toBe("# Result for hello");
+
+      const markdownPayloadResponse = await fetch(`${baseUrl}/search_action`, {
+        method: "POST",
+        headers: {
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
         },
         body: "query: hello-markdown",
       });
 
       expect(markdownPayloadResponse.status).toBe(200);
-      await expect(markdownPayloadResponse.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Result for hello-markdown",
-        html: "<h1>Result for hello-markdown</h1>",
-      });
+      await expect(markdownPayloadResponse.text()).resolves.toBe("# Result for hello-markdown");
 
-      const plainTextPayloadResponse = await fetch(`${baseUrl}/search`, {
+      const plainTextPayloadResponse = await fetch(`${baseUrl}/search_action`, {
         method: "POST",
         headers: {
           "content-type": "text/plain",
-          Accept: "application/json",
+          Accept: "text/markdown",
         },
         body: "query: hello-plain",
       });
 
-      expect(plainTextPayloadResponse.status).toBe(200);
-      await expect(plainTextPayloadResponse.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Result for hello-plain",
-        html: "<h1>Result for hello-plain</h1>",
-      });
-
-      const formPayloadResponse = await fetch(`${baseUrl}/search`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-          Accept: "application/json",
-        },
-        body: "query=hello-form",
-      });
-
-      expect(formPayloadResponse.status).toBe(200);
-      await expect(formPayloadResponse.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Result for hello-form",
-        html: "<h1>Result for hello-form</h1>",
-      });
+      expect(plainTextPayloadResponse.status).toBe(415);
+      await expect(plainTextPayloadResponse.text()).resolves.toContain("Unsupported content type");
     });
   });
 
@@ -217,7 +185,7 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  read search: "/search"
+  POST "/search_action" () -> search
 }
 \`\`\`
 `,
@@ -238,20 +206,17 @@ block search {
     const app = createSiteApp({ rootDir });
 
     await withServer(app, async (baseUrl) => {
-      const response = await fetch(`${baseUrl}/search`, {
+      const response = await fetch(`${baseUrl}/search_action`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
-          Accept: "application/json",
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: {} }),
+        body: "",
       });
 
       expect(response.status).toBe(404);
-      await expect(response.json()).resolves.toEqual({
-        ok: false,
-        errorCode: "NOT_FOUND",
-      });
+      await expect(response.text()).resolves.toContain("not available");
     });
   });
 
@@ -273,7 +238,7 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  read search: "/search"
+  POST "/search_action" () -> search
 }
 \`\`\`
 `,
@@ -281,7 +246,7 @@ block search {
     );
 
     writeFileSync(
-      path.join(rootDir, "server", "search.cjs"),
+      path.join(rootDir, "server", "search_action.cjs"),
       `module.exports = {
   async run() {
     return "# Result";
@@ -305,13 +270,13 @@ block search {
     const app = createSiteApp({ rootDir });
 
     await withServer(app, async (baseUrl) => {
-      const okResponse = await fetch(`${baseUrl}/search`, {
+      const okResponse = await fetch(`${baseUrl}/search_action`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
+          "content-type": "text/markdown",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: {} }),
+        body: "",
       });
 
       expect(okResponse.status).toBe(200);
@@ -320,10 +285,10 @@ block search {
       const helperResponse = await fetch(`${baseUrl}/lib/helper`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
-          Accept: "application/json",
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: {} }),
+        body: "",
       });
 
       expect(helperResponse.status).toBe(404);
@@ -349,8 +314,8 @@ title: Custom
 
 \`\`\`mdsn
 block custom {
-  input name!: text
-  read hello: "/hello" (name)
+  INPUT text required -> name
+  POST "/hello" (name) -> hello
 }
 \`\`\`
 `,
@@ -393,19 +358,14 @@ block custom {
       const actionResponse = await fetch(`${baseUrl}/hello`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
-          Accept: "application/json",
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: { name: "MDSN" } }),
+        body: 'name: "MDSN"',
       });
 
       expect(actionResponse.status).toBe(200);
-      await expect(actionResponse.json()).resolves.toEqual({
-        ok: true,
-        kind: "fragment",
-        markdown: "# Hello MDSN",
-        html: "<h1>Hello MDSN</h1>",
-      });
+      await expect(actionResponse.text()).resolves.toBe("# Hello MDSN");
     });
   });
 
@@ -427,8 +387,8 @@ Visit https://example.com -- "quote"
 
 \`\`\`mdsn
 block docs {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  GET "/search" (query) -> search
 }
 \`\`\`
 `,
@@ -505,9 +465,9 @@ title: Guestbook
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (message)
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (message) -> submit
 }
 \`\`\`
 `,
@@ -540,12 +500,10 @@ block guestbook {
 
     await withServer(app, async (baseUrl) => {
       const listResponse = await fetch(`${baseUrl}/list`, {
-        method: "POST",
+        method: "GET",
         headers: {
-          "content-type": "application/json",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: {} }),
       });
       expect(listResponse.status).toBe(200);
       await expect(listResponse.text()).resolves.toContain("# Empty");
@@ -553,10 +511,10 @@ block guestbook {
       const postResponse = await fetch(`${baseUrl}/post`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
+          "content-type": "text/markdown",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: { message: "Hello" } }),
+        body: 'message: "Hello"',
       });
       expect(postResponse.status).toBe(200);
       await expect(postResponse.text()).resolves.toContain("# Updated");

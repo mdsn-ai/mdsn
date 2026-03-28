@@ -49,10 +49,10 @@ This is a minimal runnable guestbook.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -168,7 +168,7 @@ async function boot() {
   const pageResponse = await fetch("/page.md");
   pageSource.value = await pageResponse.text();
 
-  const fragmentResponse = await postMarkdownAction("/list", {});
+  const fragmentResponse = await callMarkdownAction("GET", "/list", {});
   if (typeof fragmentResponse === "string") {
     fragment.value = parseFragment(fragmentResponse);
   }
@@ -255,22 +255,24 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
 然后按当前 HTTP 契约调用：
 
 ```ts
-async function postMarkdownAction(target: string, inputs: Record<string, unknown>) {
+async function callMarkdownAction(
+  method: "GET" | "POST",
+  target: string,
+  inputs: Record<string, unknown>,
+) {
   const response = await fetch(target, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "text/markdown",
       Accept: "text/markdown",
     },
-    body: Object.entries(inputs)
-      .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-      .join("\n"),
+    body:
+      method === "POST"
+        ? Object.entries(inputs)
+          .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+          .join("\n")
+        : undefined,
   });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json();
-  }
 
   return await response.text();
 }
@@ -279,7 +281,8 @@ async function postMarkdownAction(target: string, inputs: Record<string, unknown
 这里对应的就是：
 
 - target 直接是页面里声明的地址
-- `read` / `write` 在 HTTP Host 中都使用 `POST`
+- `read` 使用 `GET`
+- `write` 使用 `POST`
 - 成功响应是新的 Markdown fragment
 
 ## 7. 页面布局由 Vue 决定
@@ -325,7 +328,7 @@ SDK 不再替你锁死布局。
    - 取 `/page.md`
    - 取 `/list`
 2. `refresh()`
-   - `POST /list`
+   - `GET /list`
    - `parseFragment()`
 3. `submit()`
    - `POST /post`
@@ -350,7 +353,7 @@ SDK 不再替你锁死布局。
 它在这个基础上又加了：
 
 - 登录页
-- `redirect`
+- `GET`
 - cookie session
 - SSE 实时刷新
 - 聊天气泡式布局

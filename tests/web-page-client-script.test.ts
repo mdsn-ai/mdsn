@@ -88,10 +88,6 @@ class FakeDocument {
       return this.elements.filter((element) => element.dataset.mdsnWrite !== undefined);
     }
 
-    if (selector === "[data-mdsn-redirect]") {
-      return this.elements.filter((element) => element.dataset.mdsnRedirect !== undefined);
-    }
-
     return [];
   }
 }
@@ -111,7 +107,6 @@ describe("new web page client script", () => {
           title: "Chat",
         },
         markdown: "# Chat\n\n<!-- mdsn:block chat -->",
-        schemas: [],
         blockAnchors: [{ name: "chat" }],
         blocks: [
           {
@@ -137,7 +132,6 @@ describe("new web page client script", () => {
                 order: 0,
               },
             ],
-            redirects: [],
           },
         ],
         inputState: {
@@ -197,13 +191,13 @@ describe("new web page client script", () => {
       fetch: async (url: string, options?: { body?: string }) => {
         fetchCalls.push({ url, body: options?.body });
         return {
-          async json() {
-            return {
-              ok: true,
-              kind: "fragment",
-              markdown: "## Updated\n\nSaved.",
-              html: "<h2>Updated</h2><p>Saved from server.</p>",
-            };
+          headers: {
+            get(name: string) {
+              return name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : null;
+            },
+          },
+          async text() {
+            return "<h2>Updated</h2><p>Saved from server.</p>";
           },
         };
       },
@@ -238,7 +232,6 @@ describe("new web page client script", () => {
           title: "Guestbook",
         },
         markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
-        schemas: [],
         blockAnchors: [{ name: "guestbook" }],
         blocks: [
           {
@@ -255,7 +248,6 @@ describe("new web page client script", () => {
               },
             ],
             writes: [],
-            redirects: [],
           },
         ],
         inputState: {},
@@ -302,13 +294,13 @@ describe("new web page client script", () => {
         },
       },
       fetch: async () => ({
-        async json() {
-          return {
-            ok: true,
-            kind: "fragment",
-            markdown: "## 最新留言\n\n- **嗷嗷**: 嗷嗷\n- **你好**: 你好",
-            html: "<h2>最新留言</h2><ul><li><strong>嗷嗷</strong>: 嗷嗷</li><li><strong>你好</strong>: 你好</li></ul>",
-          };
+        headers: {
+          get(name: string) {
+            return name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : null;
+          },
+        },
+        async text() {
+          return "<h2>最新留言</h2><ul><li><strong>嗷嗷</strong>: 嗷嗷</li><li><strong>你好</strong>: 你好</li></ul>";
         },
       }),
       HTMLElement: FakeHTMLElement,
@@ -337,7 +329,6 @@ describe("new web page client script", () => {
           title: "Guestbook",
         },
         markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
-        schemas: [],
         blockAnchors: [{ name: "guestbook" }],
         blocks: [
           {
@@ -363,7 +354,6 @@ describe("new web page client script", () => {
                 order: 0,
               },
             ],
-            redirects: [],
           },
         ],
         inputState: {
@@ -420,21 +410,13 @@ describe("new web page client script", () => {
         },
       },
       fetch: async () => ({
-        async json() {
-          return {
-            ok: true,
-            kind: "fragment",
-            markdown: `## Latest
-
-\`\`\`mdsn
-block guestbook {
-  input message!: text
-  write submit: "/guestbook/post" (message)
-}
-\`\`\`
-`,
-            html: `<h2>Latest</h2><section class="mdsn-block-panel" data-mdsn-block-panel="guestbook"><header><strong>guestbook</strong></header><div class="mdsn-block-inputs"><label>message<input id="guestbook::input::message" type="text" data-mdsn-input="guestbook::input::message" data-input-name="message" data-input-type="text" data-required="true" required /></label></div><div class="mdsn-block-actions"><button type="button" data-mdsn-write="guestbook::write::0" data-target="/__mdsn/actions/guestbook/post">submit</button></div></section>`,
-          };
+        headers: {
+          get(name: string) {
+            return name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : null;
+          },
+        },
+        async text() {
+          return `<h2>Latest</h2><section class="mdsn-block-panel" data-mdsn-block-panel="guestbook"><header><strong>guestbook</strong></header><div class="mdsn-block-inputs"><label>message<input id="guestbook::input::message" type="text" data-mdsn-input="guestbook::input::message" data-input-name="message" data-input-type="text" data-required="true" required /></label></div><div class="mdsn-block-actions"><button type="button" data-mdsn-write="guestbook::write::0" data-op-name="submit" data-target="/__mdsn/actions/guestbook/post" data-inputs="message">submit</button></div></section>`;
         },
       }),
       HTMLElement: FakeHTMLElement,
@@ -462,7 +444,6 @@ block guestbook {
           title: "Guestbook",
         },
         markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
-        schemas: [],
         blockAnchors: [{ name: "guestbook" }],
         blocks: [
           {
@@ -488,7 +469,6 @@ block guestbook {
                 order: 0,
               },
             ],
-            redirects: [],
           },
         ],
         inputState: {
@@ -556,6 +536,9 @@ block guestbook {
             id: "guestbook::input::message",
             dataset: {
               mdsnInput: "guestbook::input::message",
+              inputName: "message",
+              inputType: "text",
+              required: "true",
             },
             value: "second",
           });
@@ -563,6 +546,9 @@ block guestbook {
           latestButton = new FakeHTMLButtonElement({
             dataset: {
               mdsnWrite: "guestbook::write::0",
+              opName: "send",
+              target: "/__mdsn/actions/guestbook/post",
+              inputs: "message",
             },
           });
 
@@ -570,21 +556,13 @@ block guestbook {
         }
 
         return {
-          async json() {
-            return {
-              ok: true,
-              kind: "fragment",
-              markdown: `## Latest
-
-\`\`\`mdsn
-block guestbook {
-  input message!: text
-  write send: "/guestbook/post" (message)
-}
-\`\`\`
-`,
-              html: `<h2>Latest</h2><section class="mdsn-block-panel" data-mdsn-block-panel="guestbook"><header><strong>guestbook</strong></header><div class="mdsn-block-inputs"><label>message<input id="guestbook::input::message" type="text" data-mdsn-input="guestbook::input::message" data-input-name="message" data-input-type="text" data-required="true" required /></label></div><div class="mdsn-block-actions"><button type="button" data-mdsn-write="guestbook::write::0" data-target="/__mdsn/actions/guestbook/post">send</button></div></section>`,
-            };
+          headers: {
+            get(name: string) {
+              return name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : null;
+            },
+          },
+          async text() {
+            return `<h2>Latest</h2><section class="mdsn-block-panel" data-mdsn-block-panel="guestbook"><header><strong>guestbook</strong></header><div class="mdsn-block-inputs"><label>message<input id="guestbook::input::message" type="text" data-mdsn-input="guestbook::input::message" data-input-name="message" data-input-type="text" data-required="true" required /></label></div><div class="mdsn-block-actions"><button type="button" data-mdsn-write="guestbook::write::0" data-op-name="send" data-target="/__mdsn/actions/guestbook/post" data-inputs="message">send</button></div></section>`;
           },
         };
       },

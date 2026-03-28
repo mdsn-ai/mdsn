@@ -15,9 +15,9 @@ describe("vue chat model", () => {
 
 \`\`\`mdsn
 block chat {
-  input message!: text
-  read refresh: "/list"
-  write send: "/send" (message)
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/send" (message) -> send
 }
 \`\`\`
 `);

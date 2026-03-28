@@ -12,8 +12,8 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
+  INPUT text required -> query
+  GET "/search" (query) -> search
 }
 \`\`\`
 `;
@@ -52,8 +52,8 @@ Visit https://example.com -- "quote"
 
 \`\`\`mdsn
 block copy {
-  input name!: text
-  read hello: "/hello" (name)
+  INPUT text required -> name
+  GET "/hello" (name) -> hello
 }
 \`\`\`
 `, {

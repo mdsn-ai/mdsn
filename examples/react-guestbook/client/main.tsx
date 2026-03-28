@@ -9,13 +9,6 @@ import type {
 } from "@mdsnai/sdk/web";
 import { parseFragment, parsePage } from "@mdsnai/sdk/web";
 
-type ActionFailure = {
-  ok: false;
-  errorCode: string;
-  fieldErrors?: Record<string, string>;
-  message?: string;
-};
-
 function MarkdownInlines({ nodes }: { nodes: MarkdownInlineNode[] }) {
   return (
     <>
@@ -131,21 +124,19 @@ function serializeInputsAsMarkdown(inputs: Record<string, unknown>): string {
     .join("\n");
 }
 
-async function postMarkdownAction(target: string, inputs: Record<string, unknown>): Promise<string | ActionFailure> {
+async function callMarkdownAction(
+  method: "GET" | "POST",
+  target: string,
+  inputs: Record<string, unknown>,
+): Promise<string> {
   const response = await fetch(target, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "text/markdown",
       Accept: "text/markdown",
     },
-    body: serializeInputsAsMarkdown(inputs),
+    body: method === "POST" ? serializeInputsAsMarkdown(inputs) : undefined,
   });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json() as ActionFailure;
-  }
-
   return await response.text();
 }
 
@@ -166,13 +157,8 @@ function GuestbookBlock(props: {
     if (!target) return;
     setBusy(true);
     setError(null);
-    const result = await postMarkdownAction(target, {});
+    const result = await callMarkdownAction("GET", target, {});
     setBusy(false);
-
-    if (typeof result !== "string") {
-      setError(result.message ?? result.errorCode);
-      return;
-    }
 
     startTransition(() => {
       props.onFragment(parseFragment(result));
@@ -185,13 +171,8 @@ function GuestbookBlock(props: {
     if (!target) return;
     setBusy(true);
     setError(null);
-    const result = await postMarkdownAction(target, { nickname, message });
+    const result = await callMarkdownAction("POST", target, { nickname, message });
     setBusy(false);
-
-    if (typeof result !== "string") {
-      setError(result.fieldErrors?.message ?? result.message ?? result.errorCode);
-      return;
-    }
 
     setMessage("");
     startTransition(() => {
@@ -249,11 +230,9 @@ function App() {
       if (cancelled) return;
       setPageSource(pageMarkdown);
 
-      const refreshResponse = await postMarkdownAction("/list", {});
+      const refreshResponse = await callMarkdownAction("GET", "/list", {});
       if (cancelled) return;
-      if (typeof refreshResponse === "string") {
-        setFragment(parseFragment(refreshResponse));
-      }
+      setFragment(parseFragment(refreshResponse));
 
       setLoading(false);
     }

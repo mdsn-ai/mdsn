@@ -11,26 +11,19 @@ title: Mapping
 <!-- mdsn:block profile -->
 
 \`\`\`mdsn
-schema payload_schema {
-  "type": "object",
-  "properties": {
-    "enabled": { "type": "boolean" }
-  }
-}
-
 block profile {
-  input password!: text secret
-  input role!: choice ["admin", "user"]
-  input payload!: json payload_schema
-  read load: "/load" (password)
-  write submit: "/submit" (password, role, payload)
-  redirect "/done"
+  INPUT text secret required -> password
+  INPUT choice ["admin", "user"] required -> role
+  INPUT asset required -> avatar
+  GET "/load" (password) -> load
+  POST "/submit" (password, role, avatar) -> submit
+  GET "/done" -> finish
 }
 \`\`\`
 `;
 
 describe("sdk html mapping", () => {
-  it("maps block, read, write, and redirect definitions into rendered html", () => {
+  it("maps block, read, and write definitions into rendered html", () => {
     const document = parsePageDefinition(DEFINITIONS_PAGE);
     const model = createRenderModel(document, {
       mapTarget: (target) => `/__mdsn/actions${target}`,
@@ -41,7 +34,7 @@ describe("sdk html mapping", () => {
     expect(model.markdownHtml).toContain('data-mdsn-block-panel="profile"');
     expect(model.markdownHtml).toContain('data-mdsn-read="profile::read::0"');
     expect(model.markdownHtml).toContain('data-mdsn-write="profile::write::1"');
-    expect(model.markdownHtml).toContain('data-mdsn-redirect="profile::redirect::2"');
+    expect(model.markdownHtml).toContain('data-mdsn-read="profile::read::2"');
     expect(model.markdownHtml).toContain('data-target="/__mdsn/actions/load"');
     expect(model.markdownHtml).toContain('data-target="/__mdsn/actions/submit"');
     expect(model.markdownHtml).toContain('data-target="/__mdsn/actions/done"');
@@ -49,22 +42,16 @@ describe("sdk html mapping", () => {
     expect(html).toContain('id="mdsn-bootstrap"');
   });
 
-  it("keeps schema details out of direct dom output while preserving bootstrap metadata", () => {
+  it("keeps type-only controls in dom while preserving block metadata", () => {
     const document = parsePageDefinition(DEFINITIONS_PAGE);
     const model = createRenderModel(document);
 
-    expect(model.markdownHtml).not.toContain("payload_schema");
+    expect(model.markdownHtml).toContain('data-input-type="asset"');
     expect(model.markdownHtml).not.toContain('data-mdsn-result=');
-    expect(model.bootstrap.schemas).toEqual([
-      {
-        name: "payload_schema",
-        shape: {
-          type: "object",
-          properties: {
-            enabled: { type: "boolean" },
-          },
-        },
-      },
+    expect(model.bootstrap.blocks[0]?.inputs.map((input) => input.type)).toEqual([
+      "text",
+      "choice",
+      "asset",
     ]);
   });
 });

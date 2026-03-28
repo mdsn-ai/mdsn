@@ -49,7 +49,7 @@ description: A runnable MDSN guestbook starter
 
 Start with a working guestbook and reshape it into your own app.
 
-- \`read\` / \`write\` both return Markdown fragments
+- \`GET\` / \`POST\` both return Markdown fragments
 - the Host only replaces the current \`guestbook\` block region
 - page content stays static while the block keeps updating
 
@@ -57,10 +57,10 @@ Start with a working guestbook and reshape it into your own app.
 
 \`\`\`mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 \`\`\`
 `,

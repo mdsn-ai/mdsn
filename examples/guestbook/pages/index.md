@@ -9,7 +9,7 @@ description: Guestbook example built on the current protocol
 
 This is a minimal runnable guestbook example.
 
-- `read` and `write` return fresh Markdown fragments
+- `GET` and `POST` return fresh Markdown fragments
 - the Host replaces only the current `guestbook` block region
 - the main page body stays unchanged
 
@@ -17,9 +17,9 @@ This is a minimal runnable guestbook example.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```

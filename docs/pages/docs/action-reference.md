@@ -20,12 +20,12 @@ The target declared in the page is the directly callable HTTP address.
 
 For example:
 
-- `read refresh: "/list"`
-- `write submit: "/post" (message)`
+- `GET "/list" -> refresh`
+- `POST "/post" (message) -> submit`
 
 These become:
 
-- `POST /list`
+- `GET /list`
 - `POST /post`
 
 This is not an internal runtime path. It is the target written in the page itself.
@@ -49,7 +49,7 @@ The most common starter shape is:
 For example:
 
 - `server/actions.cjs` exporting `list`
-  - maps to `POST /list`
+  - maps to `GET /list`
 - `server/actions.cjs` exporting `post`
   - maps to `POST /post`
 
@@ -110,15 +110,15 @@ The ones you will use most often are:
 
 ## 5. Successful return values
 
-Successful returns have two main forms:
+Successful returns use a Markdown fragment payload:
 
 1. a Markdown fragment string
-2. a redirect result
+2. or an explicit fragment envelope
 
-A redirect result looks like this:
+An explicit fragment envelope looks like this:
 
 ```ts
-{ ok: true, kind: "redirect", location: string }
+{ ok: true, kind: "fragment", markdown: string }
 ```
 
 When an action returns a Markdown fragment string:
@@ -148,31 +148,25 @@ The page runtime reads these fields first:
 
 In HTTP Host:
 
-- `read` uses `POST`
+- `read` uses `GET`
 - `write` uses `POST`
 
 Request rules:
 
-- preferred: `Content-Type: text/markdown`
-- preferred body format (Markdown key-value lines):
+- `Content-Type: text/markdown`
+- body format (Markdown key-value lines):
   - `nickname: "Guest"`
   - `message: "Hello"`
-- compatibility mode: `Content-Type: application/json`
-- compatibility body format: `{ "inputs": { ... } }`
 
 Successful responses:
 
-- `Accept: text/markdown`
-  - `200 text/markdown`
-  - body is the new `md` fragment
-- `Accept: application/json`
-  - `200 application/json`
-  - this form exists for Host runtime use
+- `200 text/markdown`
+- body is the new `md` fragment
 
 Failure responses:
 
-- `400 application/json`
-- `{ ok: false, errorCode, message?, fieldErrors? }`
+- `400 text/markdown`
+- body is a markdown fragment with actionable guidance
 
 ## 8. Server-side Markdown helpers
 

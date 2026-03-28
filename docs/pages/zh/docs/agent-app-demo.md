@@ -30,8 +30,8 @@ layout: docs
 
 1. 新访客先进入登录页
 2. 如果还没有账号，页面会显式给出跳转到注册页的动作
-3. 注册成功后会 `redirect` 到 `/chat`
-4. 登录成功后也会 `redirect` 到 `/chat`
+3. 注册成功后会返回 `GET "/chat" -> enter_chat`
+4. 登录成功后也会返回 `GET "/chat" -> enter_chat`
 5. 聊天页支持发消息、刷新、加载更多历史、退出登录
 6. 可恢复失败会返回新的 Markdown fragment，而不是只停留在前端私有状态里
 
@@ -71,7 +71,7 @@ layout: docs
 
 它同样暴露了一个导航 block，可以跳回 `/`。
 
-如果注册成功，action 会返回一个 `redirect /chat`。
+如果注册成功，action 返回的 fragment 会包含 `GET "/chat" -> enter_chat`。
 
 如果注册失败，action 会返回一个新的 Markdown fragment，直接说明：
 
@@ -112,7 +112,7 @@ layout: docs
 
 - 页面内容可以直接以 Markdown 形式读取
 - 页面正文本身就携带任务和状态说明
-- `read`、`write`、`redirect` 都是显式声明的
+- `GET`、`POST` 都是显式声明的
 - action target 是可直接调用的 HTTP 地址
 - 成功更新返回 Markdown fragment
 - 可恢复失败也返回 Markdown fragment
@@ -147,7 +147,7 @@ layout: docs
   - Agent 使用 `Accept: text/markdown`
 - action 请求
   - Agent 用 `Accept: text/markdown` 获取 fragment 更新
-  - Host runtime 在需要时用 `Accept: application/json`
+  - Host runtime 用 `Accept: text/html` 获取片段更新
 
 也正是因为这层内容协商成立，同一个页面模型才能同时支持：
 
