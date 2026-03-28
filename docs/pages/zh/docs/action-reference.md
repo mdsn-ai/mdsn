@@ -118,16 +118,7 @@ module.exports = defineActions({
 
 ## 5. 成功返回什么
 
-成功返回统一使用 Markdown fragment：
-
-1. 直接返回 Markdown fragment 字符串
-2. 或返回显式 fragment 包装对象
-
-显式 fragment 包装对象形态是：
-
-```ts
-{ ok: true, kind: "fragment", markdown: string }
-```
+action 成功返回统一使用 Markdown fragment 字符串。
 
 Markdown fragment 成功返回时：
 
@@ -135,24 +126,13 @@ Markdown fragment 成功返回时：
 - 返回片段可以包含普通 Markdown
 - 返回片段至多包含一个可执行 `mdsn` 代码块
 
-## 6. 失败返回什么
+## 6. action 不能继续时返回什么
 
-失败返回是错误对象：
+直接返回一个 Markdown fragment，明确写清：
 
-```ts
-{
-  ok: false,
-  errorCode: string,
-  message?: string,
-  fieldErrors?: Record<string, string>
-}
-```
-
-页面 runtime 会优先读取：
-
-- `message`
-- `errorCode`
-- `fieldErrors`
+- 当前问题是什么
+- 下一步该做什么
+- 下一步对应哪个操作（通过 block 内动作声明）
 
 ## 7. HTTP 契约
 
@@ -168,15 +148,12 @@ Markdown fragment 成功返回时：
   - `nickname: "Guest"`
   - `message: "Hello"`
 
-成功响应支持协商：
+action 响应：
 
 - `200 text/markdown`
 - 响应体是新的 `md` 片段
 
-失败响应：
-
-- `400 text/markdown`
-- 响应体是带下一步提示的 Markdown 片段
+协议/运行时错误（例如 action 路由不存在、content-type 错误、未捕获异常）会返回 4xx/5xx，并同样给出 Markdown 提示。
 
 ## 8. 服务端 Markdown helper
 

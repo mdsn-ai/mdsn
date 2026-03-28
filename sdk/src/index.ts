@@ -36,5 +36,4 @@ export { defineAction } from "./server";
 export type {
   ActionContext,
   ActionDefinition,
-  ActionResult,
 } from "./server";

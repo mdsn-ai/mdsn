@@ -1,6 +1,5 @@
 import type {
   MarkdownBlockNode,
-  MarkdownContainer,
   MarkdownInlineNode,
   ParsedFragment,
 } from "@mdsnai/sdk/web";
@@ -102,24 +101,12 @@ export function extractChatMessages(fragment: ParsedFragment): ChatMessage[] {
   return messages;
 }
 
-export function leadingContainers(containers: MarkdownContainer[]): MarkdownContainer[] {
-  return containers;
-}
-
 export function scrollChatStreamToBottom(stream: ScrollableLike | null | undefined): void {
   if (!stream) {
     return;
   }
 
   stream.scrollTop = stream.scrollHeight;
-}
-
-export function scrollChatStreamToTop(stream: ScrollableLike | null | undefined): void {
-  if (!stream) {
-    return;
-  }
-
-  stream.scrollTop = 0;
 }
 
 export function resolveAuthDraftAfterFailure(mode: AuthMode, draft: AuthDraft): AuthDraft {

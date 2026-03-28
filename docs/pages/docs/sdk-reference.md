@@ -57,6 +57,7 @@ Use this when:
 Read first:
 
 - [Server Development](/docs/server-development)
+- [SDK Error Fragments](/docs/sdk-error-fragments)
 
 Main package entries:
 
@@ -70,6 +71,14 @@ Most important APIs:
 - `defineActions()`
 - `renderMarkdownValue()`
 - `renderMarkdownFragment()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
+- `HttpCookieJar`
 - `parsePageDefinition()`
 
 ### Path C: render the client yourself
@@ -170,7 +179,19 @@ Most important APIs:
 - `serializeBlock()`
 - `renderMarkdownFragment()`
 - `executeActionHandler()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
+- `HttpCookieJar`
 - `wantsHtml()`
+
+`executeActionHandler()` runs your action and validates that it returns a Markdown string.
+
+`createFrameworkApp()` also accepts `errorFragments` so app-level framework errors can reuse your own wording without changing the HTTP status.
 
 ## 5. `@mdsnai/sdk/web`
 

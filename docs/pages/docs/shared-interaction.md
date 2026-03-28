@@ -84,7 +84,30 @@ That means:
 
 That shared transport is what makes MDSN suitable for agent apps, skills apps, and other human-agent collaboration surfaces.
 
-## 4. What a full interaction chain looks like
+## 4. Session is a runtime contract, not syntax
+
+MDSN keeps interaction syntax minimal:
+
+- `BLOCK`
+- `INPUT`
+- `GET`
+- `POST`
+
+Session/auth state is handled at HTTP runtime level.
+
+Typical pattern:
+
+- server sets `Set-Cookie` after login/register
+- client/agent replays `Cookie` on follow-up actions
+- unauthorized requests return `401 + Markdown guidance fragment`
+
+This means:
+
+- no extra session keyword in MDSN syntax
+- session remains explicit in transport behavior
+- agent can still continue from Markdown prompts
+
+## 5. What a full interaction chain looks like
 
 For a minimal guestbook page:
 
@@ -118,7 +141,7 @@ For a browser, the chain looks like this:
 
 The transport forms differ, but the page model does not.
 
-## 5. Why this is “shared interaction”
+## 6. Why this is “shared interaction”
 
 Shared interaction is not just:
 
@@ -142,7 +165,7 @@ It defines:
 - two delivery forms
 - one executable interaction structure
 
-## 6. How this relates to the protocol
+## 7. How this relates to the protocol
 
 This is directly tied to the current MDSN model:
 

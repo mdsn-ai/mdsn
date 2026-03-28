@@ -56,7 +56,7 @@ describe("framework starter site scaffold", () => {
     expect(actionsFile).toContain("renderMarkdownValue");
     expect(actionsFile).toContain("listGuestbookMessages");
     expect(actionsFile).toContain("addGuestbookMessage");
-    expect(actionsFile).toContain("EMPTY_MESSAGE");
+    expect(actionsFile).toContain("Please enter a message before submitting.");
     expect(actionsFile).toContain('name: "guestbook"');
     expect(packageJson).toContain('"dev": "mdsn dev"');
     expect(packageJson).toContain('"@mdsnai/sdk"');

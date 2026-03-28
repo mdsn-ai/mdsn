@@ -250,7 +250,7 @@ block search {
     });
   });
 
-  it("preserves failure envelopes from action routes", async () => {
+  it("returns actionable markdown when an action cannot proceed", async () => {
     const rootDir = createTempSite();
     rootsToCleanup.push(rootDir);
 
@@ -278,14 +278,7 @@ block guestbook {
       path.join(rootDir, "server", "post_message.cjs"),
       `module.exports = {
   async run() {
-    return {
-      ok: false,
-      errorCode: "EMPTY_MESSAGE",
-      message: "Please enter a message.",
-      fieldErrors: {
-        message: "Please enter a message.",
-      },
-    };
+    return "## Action Status\\n\\nPlease enter a message.";
   },
 };`,
       "utf8",
@@ -303,7 +296,7 @@ block guestbook {
         body: 'message: ""',
       });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200);
       const markdown = await response.text();
       expect(markdown).toContain("## Action Status");
       expect(markdown).toContain("Please enter a message.");

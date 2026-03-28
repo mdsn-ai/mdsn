@@ -138,12 +138,8 @@ POST "/post" (nickname, message) -> submit
 
 ## 6. action handler 返回什么
 
-action handler 的成功返回统一使用 Markdown fragment：
-
-1. 直接返回 Markdown fragment 字符串
-2. 或返回 `{ ok: true, kind: "fragment", markdown }`
-
-失败时返回错误对象。
+action handler 统一返回 Markdown fragment。  
+当 action 不能继续时，也直接返回带“问题 + 下一步”的 Markdown fragment。
 
 可以直接用：
 
@@ -200,13 +196,13 @@ export const actions = defineActions({
       const message = String(ctx.inputs.message ?? "").trim();
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Action Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       messages.unshift({ nickname, message });
@@ -226,8 +222,10 @@ export const actions = defineActions({
   - Markdown 键值行（例如 `message: "Hello"`）
 - 成功响应：
   - `200 text/markdown`
-- 失败响应：
-  - `400 text/markdown`
+- action 业务失败响应：
+  - 仍为 `200 text/markdown`（失败语义在 Markdown 正文里表达）
+- 鉴权/session 挑战响应：
+  - 通常是 `401 text/markdown`（返回登录引导片段）
 
 在自定义服务端里，最简单的做法就是直接按 agent 侧 Markdown 契约返回：
 
@@ -238,27 +236,33 @@ app.get("/list", async (req, res) => {
 });
 
 app.post("/post", async (req, res) => {
-  const result = await actions.post.run(
+  const markdown = await actions.post.run(
     createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
   );
-
-  if (typeof result === "string") {
-    res.status(200).type("text/markdown; charset=utf-8").send(result);
-    return;
-  }
-
-  res.status(400).type("text/markdown; charset=utf-8").send(
-    [
-      "## Action Status",
-      result.fieldErrors?.message ?? result.message ?? "Action failed.",
-    ].join("\\n\\n"),
-  );
+  res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 ```
 
 这里的 `createActionContext()` 只是把你的请求对象整理成 `ActionContext` 需要的字段。
 
-## 8. `ActionContext` 最少要补什么
+## 8. Session 运行时契约（Cookie）
+
+session 处理属于运行时行为，不属于 MDSN 语法关键字。
+
+推荐流程：
+
+1. 登录/注册成功后返回 `Set-Cookie`
+2. 后续请求回放 `Cookie`
+3. 未登录时返回 `401 + Markdown 引导片段`
+
+`@mdsnai/sdk/server` 里可以直接用：
+
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar`（Node/agent 侧 HTTP 循环可用）
+
+## 9. `ActionContext` 最少要补什么
 
 最小字段一般是这些：
 
@@ -293,13 +297,13 @@ function createActionContext(
 
 登录、session、鉴权这些都可以在这层自己接。
 
-## 9. 跳转怎么接
+## 10. 跳转怎么接
 
 页面导航统一用块里的 `GET "<path>" -> <name>` 显式动作表达。
 
 也就是说，服务端返回的 Markdown fragment 里给出下一步 `GET` 动作，客户端执行这个动作即可进入下一页。
 
-## 10. 什么时候再加自定义前端
+## 11. 什么时候再加自定义前端
 
 如果你只是要把页面协议挂到现有服务端里：
 

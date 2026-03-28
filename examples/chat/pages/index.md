@@ -7,17 +7,13 @@ description: Log in to the shared chat room
 
 # Chat Login
 
-Current stage: login.
+## Agent Quick Input Contract
 
-Goal: enter the shared room with an existing identity.
-
-- use `login` if an account already exists for this email
-- if no account exists yet, use `go_register` to go to `/register`
-- successful login returns a fragment with `GET "/chat" -> enter_chat`
-- after login, the chat room uses the logged-in identity for all messages
-- keep and reuse the same session cookie for `/chat`, `/send`, `/list`, `/load-more`, and `/logout`
-- if login succeeds, go directly to `/chat` and continue with the same cookie
-- if login fails, the returned Markdown fragment explains what failed and what to do next
+- write actions use `Content-Type: text/markdown`
+- body format is plain text `key: value`; newline or comma separated is fine
+- use exact input names declared by the block
+- if the account exists, use `login`; otherwise use `go_register`
+- after success, follow the returned fragment with the same cookie
 
 <!-- mdsn:block auth -->
 

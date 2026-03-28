@@ -215,7 +215,8 @@ describe("new web page client script", () => {
 
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0]?.url).toBe("/messages");
-    expect(fetchCalls[0]?.body).toContain('- message: "hello"');
+    expect(fetchCalls[0]?.body).toContain('message: "hello"');
+    expect(fetchCalls[0]?.body).not.toContain('- message: "hello"');
     expect(fetchCalls[0]?.body).not.toContain("pathname");
     expect(fetchCalls[0]?.body).not.toContain("block");
     expect(root.innerHTML).toContain("<h2>Updated</h2>");

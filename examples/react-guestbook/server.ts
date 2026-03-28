@@ -131,36 +131,10 @@ export async function startReactGuestbookDemo(options: { port?: number } = {}): 
       return;
     }
 
-    const result = await actions.post.run(
+    const markdown = await actions.post.run(
       createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
     );
-
-    if (typeof result === "string") {
-      res.status(200).type("text/markdown; charset=utf-8").send(result);
-      return;
-    }
-
-    const listFragment = await actions.list.run(createActionContext("/list", {}, req));
-    const failureMessage = (
-      typeof result === "object"
-      && result !== null
-      && "ok" in result
-      && result.ok === false
-      && "fieldErrors" in result
-      && typeof result.fieldErrors === "object"
-      && result.fieldErrors
-      && "message" in result.fieldErrors
-      && typeof result.fieldErrors.message === "string"
-    )
-      ? result.fieldErrors.message
-      : "Please enter a message.";
-
-    res.status(400).type("text/markdown; charset=utf-8").send([
-      "## Action Status",
-      failureMessage,
-      "",
-      listFragment,
-    ].join("\n\n"));
+    res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   const server = createServer(app);

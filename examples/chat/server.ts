@@ -5,13 +5,17 @@ import { createServer, type Server } from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseActionInputs, type ActionContext } from "@mdsnai/sdk/server";
+import {
+  parseActionInputs,
+  parseCookieHeader,
+  renderUnsupportedContentTypeFragment,
+  renderMarkdownFragment,
+  requireSessionFromCookie,
+  type ActionContext,
+} from "@mdsnai/sdk/server";
 import {
   createChatActions,
-  renderChatFailureFragment,
   renderLoginFailureFragment,
-  renderRedirectFragment,
-  renderRegisterFailureFragment,
 } from "./server/actions";
 import { createChatStorage } from "./server/storage";
 
@@ -139,55 +143,12 @@ function createActionContext(
   };
 }
 
-function parseCookies(cookieHeader: string | undefined): Record<string, string> {
-  if (!cookieHeader) {
-    return {};
-  }
-
-  return Object.fromEntries(cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const eq = part.indexOf("=");
-      if (eq === -1) {
-        return [part, ""] as const;
-      }
-      return [part.slice(0, eq), decodeURIComponent(part.slice(eq + 1))] as const;
-    }));
-}
-
 function summarizeSessionForLog(cookieHeader: string | undefined): string {
-  const sessionId = parseCookies(cookieHeader)[SESSION_COOKIE];
+  const sessionId = parseCookieHeader(cookieHeader)[SESSION_COOKIE];
   if (!sessionId) {
     return "-";
   }
   return `${sessionId.slice(0, 8)}...`;
-}
-
-type ActionFailureResult = {
-  ok: false;
-  errorCode: string;
-  message?: string;
-  fieldErrors?: Record<string, string>;
-};
-
-type ActionFragmentResult = {
-  ok: true;
-  kind: "fragment";
-  markdown: string;
-};
-
-function isActionFailureResult(value: unknown): value is ActionFailureResult {
-  return !!value && typeof value === "object" && (value as { ok?: unknown }).ok === false;
-}
-
-function isActionFragmentResult(value: unknown): value is ActionFragmentResult {
-  return !!value
-    && typeof value === "object"
-    && (value as { ok?: unknown }).ok === true
-    && (value as { kind?: unknown }).kind === "fragment"
-    && typeof (value as { markdown?: unknown }).markdown === "string";
 }
 
 export async function startVueChatDemo(
@@ -238,9 +199,10 @@ export async function startVueChatDemo(
     const contentType = String(req.headers["content-type"] ?? "").toLowerCase();
     if (!contentType.includes("text/markdown")) {
       res.status(415).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Unsupported content type: use `Content-Type: text/markdown` for write actions.",
-        ),
+        renderUnsupportedContentTypeFragment({
+          message: "Unsupported content type for write action.",
+          nextStep: "Next step: resend the same write action with `Content-Type: text/markdown` and a plain-text `key: value` body.",
+        }),
       );
       return false;
     }
@@ -253,14 +215,34 @@ export async function startVueChatDemo(
       ? registerPageMarkdown
       : loginPageMarkdown);
 
+  const requireChatPageSession = (req: express.Request) => requireSessionFromCookie({
+    cookieHeader: req.headers.cookie,
+    cookieName: SESSION_COOKIE,
+    resolveSession: (sessionId) => storage.getSession(sessionId),
+    unauthorizedMarkdown: renderLoginFailureFragment(
+      "Please log in before entering the chat room.",
+    ),
+  });
+
   app.get(["/web", "/web/", "/web/register", "/web/chat"], (_req, res) => {
     res.setHeader("cache-control", "no-store");
     res.status(200).type("text/html; charset=utf-8").send(renderShell());
   });
 
-  app.get(["/", "/register", "/chat"], (req, res) => {
+  app.get(["/", "/register"], (req, res) => {
     res.setHeader("cache-control", "no-store");
     res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(req.path));
+  });
+
+  app.get("/chat", (req, res) => {
+    const sessionResult = requireChatPageSession(req);
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
+      return;
+    }
+
+    res.setHeader("cache-control", "no-store");
+    res.status(200).type("text/markdown; charset=utf-8").send(chatPageMarkdown);
   });
 
   app.get("/app.js", (_req, res) => {
@@ -271,28 +253,45 @@ export async function startVueChatDemo(
   app.get("/page.md", (req, res) => {
     res.setHeader("cache-control", "no-store");
     const route = typeof req.query.route === "string" ? req.query.route : "/";
+    if (route === "/chat") {
+      const sessionResult = requireChatPageSession(req);
+      if (!sessionResult.ok) {
+        res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
+        return;
+      }
+    }
     res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(route));
   });
 
   app.get("/session", (req, res) => {
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionId = cookies[SESSION_COOKIE];
-    const session = sessionId ? storage.getSession(sessionId) : null;
-    if (!session) {
-      res.status(401).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Login required: sign in to continue this session.",
-        ),
-      );
+    const sessionResult = requireSessionFromCookie({
+      cookieHeader: req.headers.cookie,
+      cookieName: SESSION_COOKIE,
+      resolveSession: (sessionId) => storage.getSession(sessionId),
+      unauthorizedMarkdown: renderLoginFailureFragment(
+        "Login required: sign in to continue this session.",
+      ),
+    });
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
       return;
     }
 
     res.status(200).type("text/markdown; charset=utf-8").send(
-      renderRedirectFragment(
-        "/chat",
-        "## Session Status",
-        `Session active for **${session.user.username}** (${session.user.email}).`,
-      ),
+      renderMarkdownFragment({
+        body: [
+          "## Session Status",
+          `username: ${JSON.stringify(sessionResult.session.user.username)}`,
+          `email: ${JSON.stringify(sessionResult.session.user.email)}`,
+          "Next step: use `enter_chat` to continue.",
+        ],
+        block: {
+          name: "next",
+          inputs: [],
+          reads: [{ name: "enter_chat", target: "/chat" }],
+          writes: [],
+        },
+      }),
     );
   });
 
@@ -312,46 +311,48 @@ export async function startVueChatDemo(
   });
 
   app.get("/list", async (req, res) => {
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionId = cookies[SESSION_COOKIE];
-    const session = sessionId ? storage.getSession(sessionId) : null;
-    if (!session) {
-      res.status(401).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Please log in before reading room messages.",
-        ),
-      );
+    const sessionResult = requireSessionFromCookie({
+      cookieHeader: req.headers.cookie,
+      cookieName: SESSION_COOKIE,
+      resolveSession: (sessionId) => storage.getSession(sessionId),
+      unauthorizedMarkdown: renderLoginFailureFragment(
+        "Please log in before reading room messages.",
+      ),
+    });
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
       return;
     }
-    const state = ensureChatViewState(session.id);
+    const state = ensureChatViewState(sessionResult.session.id);
     const markdown = await actions.list.run(createActionContext(
       "/list",
       { windowLimit: state.windowLimit },
       req,
-      parseCookies(req.headers.cookie),
+      sessionResult.cookies,
     ));
     res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   app.get("/load-more", async (req, res) => {
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionId = cookies[SESSION_COOKIE];
-    const session = sessionId ? storage.getSession(sessionId) : null;
-    if (!session) {
-      res.status(401).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Please log in before loading older room messages.",
-        ),
-      );
+    const sessionResult = requireSessionFromCookie({
+      cookieHeader: req.headers.cookie,
+      cookieName: SESSION_COOKIE,
+      resolveSession: (sessionId) => storage.getSession(sessionId),
+      unauthorizedMarkdown: renderLoginFailureFragment(
+        "Please log in before loading older room messages.",
+      ),
+    });
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
       return;
     }
-    const state = ensureChatViewState(session.id);
+    const state = ensureChatViewState(sessionResult.session.id);
     expandChatWindow(state);
     const markdown = await actions.history.run(createActionContext(
       "/load-more",
       { windowLimit: state.windowLimit },
       req,
-      parseCookies(req.headers.cookie),
+      sessionResult.cookies,
     ));
     res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
@@ -362,23 +363,15 @@ export async function startVueChatDemo(
     }
 
     const inputs = parseActionInputs(typeof req.body === "string" ? req.body : "");
-    const result = await actions.register.run(
-      createActionContext("/register", inputs, req, parseCookies(req.headers.cookie)),
+    const markdown = await actions.register.run(
+      createActionContext("/register", inputs, req, parseCookieHeader(req.headers.cookie)),
     );
 
-    if (isActionFragmentResult(result)) {
-      const user = storage.authenticateUser({
-        email: String(inputs.email ?? "").trim().toLowerCase(),
-        password: String(inputs.password ?? ""),
-      });
-      if (!user) {
-        res.status(500).type("text/markdown; charset=utf-8").send(
-          renderRegisterFailureFragment(
-            "Registration succeeded but session setup failed. Please log in with the same credentials.",
-          ),
-        );
-        return;
-      }
+    const user = storage.authenticateUser({
+      email: String(inputs.email ?? "").trim().toLowerCase(),
+      password: String(inputs.password ?? ""),
+    });
+    if (user) {
       const session = storage.createSession(user.id);
       chatViewBySession.set(session.id, { windowLimit: CHAT_WINDOW_DEFAULT });
       res.cookie(SESSION_COOKIE, session.id, {
@@ -386,24 +379,8 @@ export async function startVueChatDemo(
         sameSite: "lax",
         path: "/",
       });
-      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
     }
-
-    if (isActionFailureResult(result)) {
-      res.status(400).type("text/markdown; charset=utf-8").send(
-        renderRegisterFailureFragment(
-          result.message ?? "Registration failed: please review your inputs and try again.",
-        ),
-      );
-      return;
-    }
-
-    res.status(500).type("text/markdown; charset=utf-8").send(
-      renderRegisterFailureFragment(
-        "Registration failed: invalid server result.",
-      ),
-    );
+    res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   app.post("/login", async (req, res) => {
@@ -412,23 +389,15 @@ export async function startVueChatDemo(
     }
 
     const inputs = parseActionInputs(typeof req.body === "string" ? req.body : "");
-    const result = await actions.login.run(
-      createActionContext("/login", inputs, req, parseCookies(req.headers.cookie)),
+    const markdown = await actions.login.run(
+      createActionContext("/login", inputs, req, parseCookieHeader(req.headers.cookie)),
     );
 
-    if (isActionFragmentResult(result)) {
-      const user = storage.authenticateUser({
-        email: String(inputs.email ?? "").trim().toLowerCase(),
-        password: String(inputs.password ?? ""),
-      });
-      if (!user) {
-        res.status(401).type("text/markdown; charset=utf-8").send(
-          renderLoginFailureFragment(
-            "Login failed: no matching account was found for this email and password.",
-          ),
-        );
-        return;
-      }
+    const user = storage.authenticateUser({
+      email: String(inputs.email ?? "").trim().toLowerCase(),
+      password: String(inputs.password ?? ""),
+    });
+    if (user) {
       const session = storage.createSession(user.id);
       chatViewBySession.set(session.id, { windowLimit: CHAT_WINDOW_DEFAULT });
       res.cookie(SESSION_COOKIE, session.id, {
@@ -436,24 +405,8 @@ export async function startVueChatDemo(
         sameSite: "lax",
         path: "/",
       });
-      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
     }
-
-    if (isActionFailureResult(result)) {
-      res.status(400).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          result.message ?? "Login failed: please review your credentials and try again.",
-        ),
-      );
-      return;
-    }
-
-    res.status(500).type("text/markdown; charset=utf-8").send(
-      renderLoginFailureFragment(
-        "Login failed: invalid server result.",
-      ),
-    );
+    res.status(200).type("text/markdown; charset=utf-8").send(markdown);
   });
 
   app.post("/logout", async (req, res) => {
@@ -461,7 +414,7 @@ export async function startVueChatDemo(
       return;
     }
 
-    const cookies = parseCookies(req.headers.cookie);
+    const cookies = parseCookieHeader(req.headers.cookie);
     const sessionId = cookies[SESSION_COOKIE];
     if (sessionId) {
       storage.deleteSession(sessionId);
@@ -476,16 +429,7 @@ export async function startVueChatDemo(
       path: "/",
       expires: new Date(0),
     });
-    if (isActionFragmentResult(result)) {
-      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
-    }
-
-    res.status(500).type("text/markdown; charset=utf-8").send(
-      renderLoginFailureFragment(
-        "Logout failed: invalid server result.",
-      ),
-    );
+    res.status(200).type("text/markdown; charset=utf-8").send(result);
   });
 
   app.post("/send", async (req, res) => {
@@ -493,81 +437,41 @@ export async function startVueChatDemo(
       return;
     }
 
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionId = cookies[SESSION_COOKIE];
-    const session = sessionId ? storage.getSession(sessionId) : null;
-    if (!session) {
-      res.status(401).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Please log in before sending messages.",
-        ),
-      );
+    const sessionResult = requireSessionFromCookie({
+      cookieHeader: req.headers.cookie,
+      cookieName: SESSION_COOKIE,
+      resolveSession: (sessionId) => storage.getSession(sessionId),
+      unauthorizedMarkdown: renderLoginFailureFragment(
+        "Please log in before sending messages.",
+      ),
+    });
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
       return;
     }
-    const state = ensureChatViewState(session.id);
+    const state = ensureChatViewState(sessionResult.session.id);
 
     const inputs = {
       ...parseActionInputs(typeof req.body === "string" ? req.body : ""),
-      userId: session.user.id,
-      username: session.user.username,
-      email: session.user.email,
-      agent: session.user.username,
+      userId: sessionResult.session.user.id,
+      username: sessionResult.session.user.username,
+      email: sessionResult.session.user.email,
+      agent: sessionResult.session.user.username,
       windowLimit: state.windowLimit,
     };
 
+    const beforeCount = storage.countMessages();
     const result = await actions.send.run(
-      createActionContext("/send", inputs, req, cookies),
+      createActionContext("/send", inputs, req, sessionResult.cookies),
     );
-
-    if (typeof result === "string") {
+    const afterCount = storage.countMessages();
+    if (afterCount > beforeCount) {
       for (const client of streamClients) {
         client.write("event: refresh\n");
         client.write("data: chat\n\n");
       }
-      res.status(200).type("text/markdown; charset=utf-8").send(result);
-      return;
     }
-
-    if (isActionFragmentResult(result)) {
-      for (const client of streamClients) {
-        client.write("event: refresh\n");
-        client.write("data: chat\n\n");
-      }
-      res.status(200).type("text/markdown; charset=utf-8").send(result.markdown);
-      return;
-    }
-
-    if (isActionFailureResult(result)) {
-      if (result.errorCode === "EMPTY_MESSAGE") {
-        res.status(400).type("text/markdown; charset=utf-8").send(
-          renderChatFailureFragment(
-            storage,
-            result.message ?? "Send failed: a message is required before this chat action can continue.",
-            result.fieldErrors?.message ?? "Next step: enter a message and submit again.",
-            state.windowLimit,
-          ),
-        );
-        return;
-      }
-
-      res.status(400).type("text/markdown; charset=utf-8").send(
-        renderChatFailureFragment(
-          storage,
-          result.message ?? "Send failed: unable to process this message.",
-          result.fieldErrors?.message ?? "Next step: try sending again.",
-          state.windowLimit,
-        ),
-      );
-      return;
-    }
-
-    res.status(500).type("text/markdown; charset=utf-8").send(
-      renderChatFailureFragment(
-        storage,
-        "Send failed: invalid server result.",
-        "Next step: try sending again.",
-      ),
-    );
+    res.status(200).type("text/markdown; charset=utf-8").send(result);
   });
 
   const server = createServer(app);

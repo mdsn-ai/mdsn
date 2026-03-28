@@ -142,4 +142,102 @@ block sync {
       await expect(writeResponse.text()).resolves.toBe("# from-post");
     });
   });
+
+  it("allows hosted action error fragments to be overridden per app", async () => {
+    const app = createHostedApp({
+      pages,
+      actions: {
+        explode: async () => {
+          throw new Error("kaboom");
+        },
+      },
+      errorFragments: {
+        actionNotAvailable: () => "# Missing action\n\nnext: contact the app owner",
+        unsupportedContentType: () => "# Wrong content type\n\nnext: resend as markdown",
+        internalError: ({ error }) => `# Runtime issue\n\nreason: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    });
+
+    await withServer(app, async (baseUrl) => {
+      const missingResponse = await fetch(`${baseUrl}/done`, {
+        method: "GET",
+        headers: { Accept: "text/markdown" },
+      });
+      expect(missingResponse.status).toBe(404);
+      await expect(missingResponse.text()).resolves.toContain("# Missing action");
+
+      const writePages = {
+        "/writer": `---
+title: Writer
+---
+
+<!-- mdsn:block writer -->
+
+\`\`\`mdsn
+block writer {
+  INPUT text required -> query
+  POST "/writer_action" (query) -> send
+}
+\`\`\`
+`,
+      };
+      const wrongTypeApp = createHostedApp({
+        pages: writePages,
+        actions: {
+          writer_action: async () => "# ok",
+        },
+        errorFragments: {
+          unsupportedContentType: () => "# Wrong content type\n\nnext: resend as markdown",
+        },
+      });
+
+      await withServer(wrongTypeApp, async (writeBaseUrl) => {
+        const wrongTypeResponse = await fetch(`${writeBaseUrl}/writer_action`, {
+          method: "POST",
+          headers: {
+            "content-type": "text/plain",
+            Accept: "text/markdown",
+          },
+          body: "query: nope",
+        });
+        expect(wrongTypeResponse.status).toBe(415);
+        await expect(wrongTypeResponse.text()).resolves.toContain("# Wrong content type");
+      });
+
+      const errorPages = {
+        "/explode": `---
+title: Explode
+---
+
+<!-- mdsn:block explode -->
+
+\`\`\`mdsn
+block explode {
+  GET "/explode_action" -> run
+}
+\`\`\`
+`,
+      };
+      const errorApp = createHostedApp({
+        pages: errorPages,
+        actions: {
+          explode_action: async () => {
+            throw new Error("kaboom");
+          },
+        },
+        errorFragments: {
+          internalError: ({ error }) => `# Runtime issue\n\nreason: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      });
+
+      await withServer(errorApp, async (errorBaseUrl) => {
+        const errorResponse = await fetch(`${errorBaseUrl}/explode_action`, {
+          method: "GET",
+          headers: { Accept: "text/markdown" },
+        });
+        expect(errorResponse.status).toBe(500);
+        await expect(errorResponse.text()).resolves.toContain("# Runtime issue");
+      });
+    });
+  });
 });

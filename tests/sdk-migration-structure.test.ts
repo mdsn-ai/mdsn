@@ -11,7 +11,7 @@ describe("phase b migration structure", () => {
     expect(existsSync(rootPath("sdk", "src", "core", "index.ts"))).toBe(true);
     expect(existsSync(rootPath("sdk", "src", "core", "document", "page-definition.ts"))).toBe(true);
     expect(existsSync(rootPath("sdk", "src", "core", "protocol", "mdsn.ts"))).toBe(true);
-    expect(existsSync(rootPath("sdk", "src", "core", "action", "execution.ts"))).toBe(true);
+    expect(existsSync(rootPath("sdk", "src", "core", "action", "execution.ts"))).toBe(false);
     expect(existsSync(rootPath("sdk", "src", "web", "index.ts"))).toBe(true);
     expect(existsSync(rootPath("sdk", "src", "server", "index.ts"))).toBe(true);
     expect(existsSync(rootPath("sdk", "src", "server", "page-host.ts"))).toBe(true);

@@ -42,6 +42,10 @@ describe("sdk layered exports", () => {
     expect(typeof server.renderMarkdownValue).toBe("function");
     expect(typeof server.serializeBlock).toBe("function");
     expect(typeof server.renderMarkdownFragment).toBe("function");
+    expect(typeof server.renderErrorFragment).toBe("function");
+    expect(typeof server.renderActionNotAvailableFragment).toBe("function");
+    expect(typeof server.renderUnsupportedContentTypeFragment).toBe("function");
+    expect(typeof server.renderInternalErrorFragment).toBe("function");
     expect(typeof server.wantsHtml).toBe("function");
     expect(typeof framework.createFrameworkApp).toBe("function");
     expect(typeof framework.defineConfig).toBe("function");

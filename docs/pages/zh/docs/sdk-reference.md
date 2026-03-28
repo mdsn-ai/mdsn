@@ -57,6 +57,7 @@ layout: docs
 优先看：
 
 - [服务端开发](/zh/docs/server-development)
+- [SDK 错误提示片段](/zh/docs/sdk-error-fragments)
 
 主要入口：
 
@@ -70,6 +71,14 @@ layout: docs
 - `defineActions()`
 - `renderMarkdownValue()`
 - `renderMarkdownFragment()`
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
+- `HttpCookieJar`
 - `parsePageDefinition()`
 
 ### 路径 C：自己接前端渲染
@@ -184,7 +193,23 @@ layout: docs
 - `renderMarkdownFragment()`
   - 把正文 Markdown 和 block 拼成合法 fragment
 - `executeActionHandler()`
-  - 执行 action handler 并归一化结果
+  - 执行 action handler，并校验返回值是 Markdown 字符串
+- `parseCookieHeader()`
+  - 解析 `Cookie` header
+- `requireSessionFromCookie()`
+  - 基于 cookie 做会话校验并返回 401 引导片段
+- `renderAuthRequiredFragment()`
+  - 生成标准登录引导 Markdown 片段
+- `renderErrorFragment()`
+  - 生成通用错误 Markdown 片段
+- `renderActionNotAvailableFragment()`
+  - 生成默认 `404` action 不可用提示片段
+- `renderUnsupportedContentTypeFragment()`
+  - 生成默认 `415` content-type 提示片段
+- `renderInternalErrorFragment()`
+  - 生成默认 `500` 内部错误提示片段
+- `HttpCookieJar`
+  - 在 Node/agent HTTP 链路里自动保管和回放 cookie
 - `wantsHtml()`
   - 判断请求是否要 HTML
 
@@ -192,8 +217,9 @@ layout: docs
 
 - `ActionContext`
 - `ActionDefinition`
-- `ActionResult`
 - `SerializableBlock`
+
+`createFrameworkApp()` 现在也支持 `errorFragments`，应用层可以不改 HTTP 状态，只重写默认提示词。
 
 ## 5. `@mdsnai/sdk/web`
 

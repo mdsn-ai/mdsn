@@ -137,6 +137,7 @@ export interface CreateSiteAppOptions {
   rootDir: string;
   config?: MdsnConfig;
   actions?: CreateHostedAppOptions["actions"];
+  errorFragments?: CreateHostedAppOptions["errorFragments"];
 }
 
 export function createSiteApp(options: CreateSiteAppOptions) {
@@ -164,6 +165,7 @@ export function createSiteApp(options: CreateSiteAppOptions) {
     pages,
     actions,
     publicDir,
+    errorFragments: options.errorFragments,
     render: {
       siteTitle: resolvedConfig.site.title,
       siteDescription: resolvedConfig.site.description,

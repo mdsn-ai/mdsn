@@ -13,7 +13,7 @@ let activeDbDir: string | null = null;
 function toMarkdownInputs(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join("\n");
+    .join(", ");
 }
 
 async function withServer(
@@ -275,6 +275,8 @@ describe("examples chat flow", () => {
       });
       expect(firstSend.status).toBe(200);
       const firstFragment = await firstSend.text();
+      expect(firstFragment).toContain("send_status: success");
+      expect(firstFragment).toContain("sent_message_id:");
       expect(firstFragment).toContain("AgentAlpha");
       expect(firstFragment).toContain("第一条：我先开场");
       expect(firstFragment).toContain("block chat");
@@ -290,7 +292,7 @@ describe("examples chat flow", () => {
             password: "secret",
           }),
       });
-      expect(secondLoginResponse.status).toBe(400);
+      expect(secondLoginResponse.status).toBe(200);
       const secondLoginFragment = await secondLoginResponse.text();
       expect(secondLoginFragment).toContain("Login failed: no account matches this email and password.");
       expect(secondLoginFragment).toContain("Next step: enter the correct password and submit again, or go to register if no account exists.");
@@ -324,6 +326,8 @@ describe("examples chat flow", () => {
       });
       expect(secondSend.status).toBe(200);
       const secondFragment = await secondSend.text();
+      expect(secondFragment).toContain("send_status: success");
+      expect(secondFragment).toContain("sent_message_id:");
       expect(secondFragment).toContain("AgentAlpha");
       expect(secondFragment).toContain("第二条：我接着回复");
       expect(secondFragment).toContain("AgentBeta");
@@ -369,6 +373,26 @@ describe("examples chat flow", () => {
     });
   });
 
+  it("returns a markdown guidance fragment when write content-type is wrong", async () => {
+    await withServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/login`, {
+        method: "POST",
+        headers: {
+          "content-type": "text/plain",
+          Accept: "text/markdown",
+        },
+        body: "email: agent@example.com, password: secret",
+      });
+
+      expect(response.status).toBe(415);
+      expect(response.headers.get("content-type")).toContain("text/markdown");
+      const markdown = await response.text();
+      expect(markdown).toContain("## Action Status");
+      expect(markdown).toContain("Unsupported content type for write action.");
+      expect(markdown).toContain("Content-Type: text/markdown");
+    });
+  });
+
   it("accepts markdown action payloads for register and send", async () => {
     await withServer(async (baseUrl) => {
       const registerResponse = await fetch(`${baseUrl}/register`, {
@@ -404,6 +428,9 @@ describe("examples chat flow", () => {
 
       expect(sendResponse.status).toBe(200);
       const sendFragment = await sendResponse.text();
+      expect(sendFragment.trimStart().startsWith("send_status: success")).toBe(true);
+      expect(sendFragment).toContain("send_status: success");
+      expect(sendFragment).toContain("sent_message_id:");
       expect(sendFragment).toContain("MarkdownAgent");
       expect(sendFragment).toContain("Hello from markdown payload");
       expect(sendFragment).toContain("block chat");
@@ -551,6 +578,38 @@ describe("examples chat flow", () => {
       const listJsonBody = await listJson.text();
       expect(listJsonBody).toContain("Please log in before reading room messages.");
       expect(listJsonBody).toContain('POST "/login" (email, password) -> login');
+    });
+  });
+
+  it("requires login before reading the chat page", async () => {
+    await withServer(async (baseUrl) => {
+      const chatPage = await fetch(`${baseUrl}/chat`, {
+        method: "GET",
+        headers: {
+          Accept: "text/markdown",
+        },
+      });
+
+      expect(chatPage.status).toBe(401);
+      expect(chatPage.headers.get("content-type")).toContain("text/markdown");
+      const chatPageBody = await chatPage.text();
+      expect(chatPageBody).toContain("## Login Status");
+      expect(chatPageBody).toContain("Please log in before entering the chat room.");
+      expect(chatPageBody).toContain('POST "/login" (email, password) -> login');
+
+      const chatMarkdownPage = await fetch(`${baseUrl}/page.md?route=/chat`, {
+        method: "GET",
+        headers: {
+          Accept: "text/markdown",
+        },
+      });
+
+      expect(chatMarkdownPage.status).toBe(401);
+      expect(chatMarkdownPage.headers.get("content-type")).toContain("text/markdown");
+      const chatMarkdownBody = await chatMarkdownPage.text();
+      expect(chatMarkdownBody).toContain("## Login Status");
+      expect(chatMarkdownBody).toContain("Please log in before entering the chat room.");
+      expect(chatMarkdownBody).toContain('POST "/login" (email, password) -> login');
     });
   });
 
@@ -761,11 +820,12 @@ describe("examples chat flow", () => {
         body: "message: \"\"",
       });
 
-      expect(emptySend.status).toBe(400);
+      expect(emptySend.status).toBe(200);
       expect(emptySend.headers.get("content-type")).toContain("text/markdown");
       const emptySendFragment = await emptySend.text();
-      expect(emptySendFragment).toContain("Send failed: a message is required before this chat action can continue.");
-      expect(emptySendFragment).toContain("Next step: enter a message and submit again.");
+      expect(emptySendFragment).toContain("send_status: failed");
+      expect(emptySendFragment).toContain("Send failed: `message` is required.");
+      expect(emptySendFragment).toContain("Next step: call `send` with `Content-Type: text/markdown` and body `message: \"hello\"`.");
       expect(emptySendFragment).toContain("block chat");
 
       const recoveredSend = await fetch(`${baseUrl}/send`, {
@@ -781,6 +841,8 @@ describe("examples chat flow", () => {
       expect(recoveredSend.status).toBe(200);
       expect(recoveredSend.headers.get("content-type")).toContain("text/markdown");
       const recoveredSendFragment = await recoveredSend.text();
+      expect(recoveredSendFragment).toContain("send_status: success");
+      expect(recoveredSendFragment).toContain("sent_message_id:");
       expect(recoveredSendFragment).toContain("MarkdownBlackbox");
       expect(recoveredSendFragment).toContain("Markdown\\-only recovery works");
       expect(recoveredSendFragment).toContain("block chat");
@@ -969,10 +1031,12 @@ describe("examples chat flow", () => {
           }),
       });
 
-      expect(sendResponse.status).toBe(400);
+      expect(sendResponse.status).toBe(200);
       const failureFragment = await sendResponse.text();
-      expect(failureFragment).toContain("Send failed: a message is required before this chat action can continue.");
-      expect(failureFragment).toContain("Next step: enter a message and submit again.");
+      expect(failureFragment.trimStart().startsWith("send_status: failed")).toBe(true);
+      expect(failureFragment).toContain("send_status: failed");
+      expect(failureFragment).toContain("Send failed: `message` is required.");
+      expect(failureFragment).toContain("Next step: call `send` with `Content-Type: text/markdown` and body `message: \"hello\"`.");
       expect(failureFragment).toContain("This view shows up to the most recent 50 messages.");
       expect(failureFragment).toContain('POST "/send" (message) -> send');
       expect(failureFragment).toContain("block chat");

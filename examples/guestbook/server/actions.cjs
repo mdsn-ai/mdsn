@@ -66,13 +66,13 @@ module.exports = defineActions({
       const message = String(ctx.inputs.message ?? "").trim().slice(0, 280);
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Guestbook Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       addGuestbookMessage({

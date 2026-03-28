@@ -84,7 +84,30 @@ message: "Hello"
 
 这种共享承载方式，正是 skills apps、agent apps 和 human-agent collaboration 页面成立的前提。
 
-## 4. 一条完整链路长什么样
+## 4. session 是运行时契约，不是语法关键字
+
+MDSN 协议语法保持极简：
+
+- `BLOCK`
+- `INPUT`
+- `GET`
+- `POST`
+
+session / auth 状态不放进语法关键字，而是放在 HTTP 运行时里处理。
+
+常见做法：
+
+- 登录/注册成功后服务端返回 `Set-Cookie`
+- 后续请求由客户端/agent 回放 `Cookie`
+- 未登录时返回 `401 + Markdown 引导片段`
+
+也就是说：
+
+- 不需要新增 session 语法
+- 会话状态在传输层行为里显式表达
+- agent 仍然靠 Markdown 提示继续下一步
+
+## 5. 一条完整链路长什么样
 
 以一个最小 guestbook 为例：
 
@@ -120,7 +143,7 @@ block guestbook {
 
 两边的区别只是承载形式不同，不是协议模型不同。
 
-## 5. 这为什么是“共享交互”
+## 6. 这为什么是“共享交互”
 
 共享交互成立的前提，不是“人和 Agent 都能访问同一个网址”。
 
@@ -139,7 +162,7 @@ block guestbook {
 - 两种承载形式
 - 一套可继续执行的交互结构
 
-## 6. 和协议模型的关系
+## 7. 和协议模型的关系
 
 这件事和当前 MDSN 模型是连在一起的：
 

@@ -138,12 +138,8 @@ There is no hidden internal route here. The declared target is the route.
 
 ## 6. What handlers return
 
-Successful action returns use Markdown fragments:
-
-1. a Markdown fragment string
-2. or `{ ok: true, kind: "fragment", markdown }`
-
-Failure returns are error objects.
+Action handlers return Markdown fragments.  
+When the action cannot continue, return a Markdown fragment that explains the issue and the next step.
 
 You usually start with:
 
@@ -200,13 +196,13 @@ export const actions = defineActions({
       const message = String(ctx.inputs.message ?? "").trim();
 
       if (!message) {
-        return {
-          ok: false,
-          errorCode: "EMPTY_MESSAGE",
-          fieldErrors: {
-            message: "Please enter a message.",
-          },
-        };
+        return renderMarkdownFragment({
+          body: [
+            "## Action Status",
+            "Please enter a message before submitting.",
+          ],
+          block: guestbookBlock,
+        });
       }
 
       messages.unshift({ nickname, message });
@@ -226,8 +222,10 @@ The current HTTP Host contract is fixed:
   - Markdown key-value lines (for example `message: "Hello"`)
 - success response:
   - `200 text/markdown`
-- failure response:
-  - `400 text/markdown`
+- action-level failure response:
+  - still `200 text/markdown` (failure guidance is in Markdown body)
+- auth/session challenge response:
+  - usually `401 text/markdown` (with a login-guidance fragment)
 
 In a custom server, the simplest path is to return the agent-facing Markdown contract directly:
 
@@ -238,27 +236,33 @@ app.get("/list", async (req, res) => {
 });
 
 app.post("/post", async (req, res) => {
-  const result = await actions.post.run(
+  const markdown = await actions.post.run(
     createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
   );
-
-  if (typeof result === "string") {
-    res.status(200).type("text/markdown; charset=utf-8").send(result);
-    return;
-  }
-
-  res.status(400).type("text/markdown; charset=utf-8").send(
-    [
-      "## Action Status",
-      result.fieldErrors?.message ?? result.message ?? "Action failed.",
-    ].join("\\n\\n"),
-  );
+  res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 ```
 
 Here, `createActionContext()` is simply your adapter from the framework request into `ActionContext`.
 
-## 8. The minimum `ActionContext`
+## 8. Session Runtime Contract (Cookie-Based)
+
+Session handling is runtime behavior, not MDSN syntax.
+
+Recommended flow:
+
+1. login/register response sets cookie (`Set-Cookie`)
+2. next requests replay cookie (`Cookie`)
+3. when unauthorized, return `401 + Markdown guidance fragment`
+
+`@mdsnai/sdk/server` provides helpers:
+
+- `parseCookieHeader()`
+- `requireSessionFromCookie()`
+- `renderAuthRequiredFragment()`
+- `HttpCookieJar` (for Node/agent HTTP loops)
+
+## 9. The minimum `ActionContext`
 
 The smallest commonly useful fields are:
 
@@ -269,7 +273,7 @@ The smallest commonly useful fields are:
 
 Everything else can be layered on as needed.
 
-## 9. Where the client fits
+## 10. Where the client fits
 
 This page is about the server side only.
 

@@ -110,16 +110,7 @@ The ones you will use most often are:
 
 ## 5. Successful return values
 
-Successful returns use a Markdown fragment payload:
-
-1. a Markdown fragment string
-2. or an explicit fragment envelope
-
-An explicit fragment envelope looks like this:
-
-```ts
-{ ok: true, kind: "fragment", markdown: string }
-```
+Action handlers return a Markdown fragment string.
 
 When an action returns a Markdown fragment string:
 
@@ -127,22 +118,13 @@ When an action returns a Markdown fragment string:
 - the fragment may contain normal Markdown
 - the fragment may contain at most one executable `mdsn` code block
 
-## 6. Failure return value
+## 6. When an action cannot continue
 
-```ts
-{
-  ok: false,
-  errorCode: string,
-  message?: string,
-  fieldErrors?: Record<string, string>
-}
-```
+Return a Markdown fragment that clearly says:
 
-The page runtime reads these fields first:
-
-- `message`
-- `errorCode`
-- `fieldErrors`
+- what failed
+- what to do next
+- which action to run next (through the block operations)
 
 ## 7. HTTP contract
 
@@ -158,15 +140,12 @@ Request rules:
   - `nickname: "Guest"`
   - `message: "Hello"`
 
-Successful responses:
+Action responses:
 
 - `200 text/markdown`
 - body is the new `md` fragment
 
-Failure responses:
-
-- `400 text/markdown`
-- body is a markdown fragment with actionable guidance
+Protocol/runtime errors (for example missing action route, unsupported content-type, uncaught exception) are returned as 4xx/5xx with Markdown guidance.
 
 ## 8. Server-side Markdown helpers
 
