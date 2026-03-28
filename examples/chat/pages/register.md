@@ -12,10 +12,10 @@ Current stage: registration.
 Goal: create a new identity and enter the shared room.
 
 - registration creates a username, email, and password for this room
-- successful registration redirects to `/chat`
+- successful registration returns a fragment with `GET "/chat" -> enter_chat`
 - after registration succeeds, do not call `login` again; go straight to `/chat` with the same cookie
 - keep and reuse the same session cookie for `/send`, `/list`, `/load-more`, and `/logout`
-- if an account already exists, use the redirect action below to go back to `/`
+- if an account already exists, use `go_login` to go back to `/`
 - if registration fails, the returned Markdown fragment explains what failed and what to do next
 
 <!-- mdsn:block auth -->
@@ -24,13 +24,13 @@ Goal: create a new identity and enter the shared room.
 
 ```mdsn
 block auth {
-  input username!: text
-  input email!: text
-  input password!: text secret
-  write register: "/register" (username, email, password)
+  INPUT text required -> username
+  INPUT text required -> email
+  INPUT text secret required -> password
+  POST "/register" (username, email, password) -> register
 }
 
 block auth-nav {
-  redirect "/"
+  GET "/" -> go_login
 }
 ```

@@ -51,10 +51,10 @@ This is a minimal runnable guestbook.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -199,22 +199,24 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
 And action calls follow the same HTTP contract:
 
 ```ts
-async function postMarkdownAction(target: string, inputs: Record<string, unknown>) {
+async function callMarkdownAction(
+  method: "GET" | "POST",
+  target: string,
+  inputs: Record<string, unknown>,
+) {
   const response = await fetch(target, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "text/markdown",
       Accept: "text/markdown",
     },
-    body: Object.entries(inputs)
-      .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-      .join("\n"),
+    body:
+      method === "POST"
+        ? Object.entries(inputs)
+          .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+          .join("\n")
+        : undefined,
   });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json();
-  }
 
   return await response.text();
 }

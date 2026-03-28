@@ -28,7 +28,6 @@ export function createPageBootstrap(document: DocumentDefinition): PageBootstrap
     version: "vNext",
     frontmatter: document.frontmatter,
     markdown: document.markdown,
-    schemas: document.schemas,
     blocks: document.blocks,
     blockAnchors: document.blockAnchors,
     inputState,

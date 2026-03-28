@@ -19,10 +19,10 @@ describe("docs spec consistency", () => {
     expect(actionReference).toContain("页面里声明的 target");
     expect(actionReference).toContain("可直接调用的 HTTP 地址");
     expect(actionReference).toContain("在 HTTP Host 中");
-    expect(actionReference).toContain("`read` 使用 `POST`");
+    expect(actionReference).toContain("`read` 使用 `GET`");
     expect(actionReference).toContain("`write` 使用 `POST`");
-    expect(actionReference).toContain('`Accept: text/markdown`');
-    expect(actionReference).toContain('{ "inputs": { ... } }');
+    expect(actionReference).toContain("`Content-Type: text/markdown`");
+    expect(actionReference).not.toContain('{ "inputs": { ... } }');
     expect(actionReference).not.toContain("`POST /__mdsn/actions/<actionId>`");
   });
 

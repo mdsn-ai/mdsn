@@ -16,19 +16,6 @@ import {
 } from "./model";
 import type { AuthMode } from "./model";
 
-type ActionFailure = {
-  ok: false;
-  errorCode: string;
-  fieldErrors?: Record<string, string>;
-  message?: string;
-};
-
-type RedirectSuccess = {
-  ok: true;
-  kind: "redirect";
-  location: string;
-};
-
 type MarkdownActionSuccess = {
   ok: true;
   markdown: string;
@@ -43,6 +30,65 @@ type SessionUser = {
   username: string;
   email: string;
 };
+
+type UiRouteContext = {
+  mdsnRoute: "/" | "/register" | "/chat";
+  useWebRoutes: boolean;
+};
+
+function normalizePathname(pathname: string): string {
+  if (!pathname) {
+    return "/";
+  }
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
+function resolveUiRoute(pathname: string): UiRouteContext {
+  const normalized = normalizePathname(pathname);
+  if (normalized === "/web/chat") {
+    return { mdsnRoute: "/chat", useWebRoutes: true };
+  }
+  if (normalized === "/web/register") {
+    return { mdsnRoute: "/register", useWebRoutes: true };
+  }
+  if (normalized === "/web") {
+    return { mdsnRoute: "/", useWebRoutes: true };
+  }
+  if (normalized === "/chat") {
+    return { mdsnRoute: "/chat", useWebRoutes: false };
+  }
+  if (normalized === "/register") {
+    return { mdsnRoute: "/register", useWebRoutes: false };
+  }
+  return { mdsnRoute: "/", useWebRoutes: false };
+}
+
+function toUiRoute(location: string, route: UiRouteContext): string {
+  if (!route.useWebRoutes) {
+    return location;
+  }
+  if (location === "/") {
+    return "/web";
+  }
+  if (location === "/register" || location === "/chat") {
+    return `/web${location}`;
+  }
+  return location;
+}
+
+function parseSessionFromMarkdown(markdown: string): SessionUser | null {
+  const match = markdown.match(/Session active for \*\*(.+?)\*\* \((.+?)\)\./u);
+  if (!match) {
+    return null;
+  }
+  return {
+    username: match[1] ?? "",
+    email: match[2] ?? "",
+  };
+}
 
 function renderInlineNodes(nodes: MarkdownInlineNode[]): VNodeChild[] {
   return nodes.map((node, index) => {
@@ -119,6 +165,13 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
   return block.writes.find((item) => item.name === name)?.target ?? null;
 }
 
+function findContinueTarget(block: BlockDefinition | undefined): string | null {
+  if (!block) {
+    return null;
+  }
+  return block.reads[0]?.target ?? null;
+}
+
 function serializeInputsAsMarkdown(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .filter(([, value]) => value !== undefined)
@@ -126,83 +179,76 @@ function serializeInputsAsMarkdown(inputs: Record<string, unknown>): string {
     .join("\n");
 }
 
-async function postMarkdownAction(
+function applyQueryParams(target: string, inputs: Record<string, unknown>): string {
+  if (Object.keys(inputs).length === 0) {
+    return target;
+  }
+  const [basePath, rawQuery = ""] = target.split("?");
+  const params = new URLSearchParams(rawQuery);
+  for (const [name, value] of Object.entries(inputs)) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+    params.set(name, String(value));
+  }
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
+}
+
+async function requestMarkdownAction(
+  method: "GET" | "POST",
   target: string,
   inputs: Record<string, unknown>,
-): Promise<MarkdownActionSuccess | MarkdownActionFailure | ActionFailure> {
-  const response = await fetch(target, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "content-type": "text/markdown",
-      Accept: "text/markdown",
-    },
-    body: serializeInputsAsMarkdown(inputs),
-  });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json() as ActionFailure;
-  }
+): Promise<MarkdownActionSuccess | MarkdownActionFailure> {
+  const requestTarget = method === "GET" ? applyQueryParams(target, inputs) : target;
+  const response = await fetch(requestTarget, method === "GET"
+    ? {
+      method,
+      credentials: "same-origin",
+      headers: {
+        Accept: "text/markdown",
+      },
+    }
+    : {
+      method,
+      credentials: "same-origin",
+      headers: {
+        "content-type": "text/markdown",
+        Accept: "text/markdown",
+      },
+      body: serializeInputsAsMarkdown(inputs),
+    });
+  const markdown = await response.text();
 
   if (response.ok) {
     return {
       ok: true,
-      markdown: await response.text(),
+      markdown,
     };
   }
 
   return {
     ok: false,
-    markdown: await response.text(),
+    markdown,
   };
 }
 
-async function postJsonAction<T>(target: string, inputs: Record<string, unknown>): Promise<T | ActionFailure> {
-  const response = await fetch(target, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "content-type": "text/markdown",
-      Accept: "application/json",
-    },
-    body: serializeInputsAsMarkdown(inputs),
-  });
-
-  return await response.json() as T | ActionFailure;
-}
-
-async function postAuthAction(target: string, inputs: Record<string, unknown>): Promise<RedirectSuccess | ParsedFragment | ActionFailure> {
-  const response = await fetch(target, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "content-type": "text/markdown",
-      Accept: "text/markdown, application/json",
-    },
-    body: serializeInputsAsMarkdown(inputs),
-  });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("text/markdown")) {
-    return parseFragment(await response.text());
-  }
-
-  return await response.json() as RedirectSuccess | ActionFailure;
+async function postAuthAction(target: string, inputs: Record<string, unknown>): Promise<ParsedFragment> {
+  const response = await requestMarkdownAction("POST", target, inputs);
+  return parseFragment(response.markdown);
 }
 
 async function fetchSession(): Promise<SessionUser | null> {
   const response = await fetch("/session", {
     credentials: "same-origin",
     headers: {
-      Accept: "application/json",
+      Accept: "text/markdown",
     },
   });
   if (response.status === 401) {
     return null;
   }
-  const payload = await response.json() as { ok: true; user: SessionUser };
-  return payload.user;
+  return parseSessionFromMarkdown(await response.text());
 }
 
 const AuthWindow = {
@@ -219,9 +265,16 @@ const AuthWindow = {
       type: String,
       required: true,
     },
+    route: {
+      type: Object,
+      required: true,
+    },
   },
   emits: ["fragment"],
-  setup(props: { page: ParsedPage; fragment: ParsedFragment | null; mode: string }, { emit }: { emit: (event: "fragment", fragment: ParsedFragment | null) => void }) {
+  setup(
+    props: { page: ParsedPage; fragment: ParsedFragment | null; mode: string; route: UiRouteContext },
+    { emit }: { emit: (event: "fragment", fragment: ParsedFragment | null) => void },
+  ) {
     const username = ref("");
     const email = ref("");
     const password = ref("");
@@ -231,7 +284,7 @@ const AuthWindow = {
     const block = computed(() => props.fragment?.block ?? findBlock(props.page, "auth"));
     const navBlock = computed(() => findBlock(props.page, "auth-nav"));
     const submitActionName = computed(() => props.mode === "register" ? "register" : "login");
-    const navTarget = computed(() => navBlock.value?.redirects[0]?.target ?? null);
+    const navTarget = computed(() => findContinueTarget(navBlock.value));
     const navLabel = computed(() => props.mode === "register" ? "Back to Login" : "Create Account");
     const fragmentContainers = computed(() => props.fragment?.containers ?? []);
 
@@ -251,39 +304,22 @@ const AuthWindow = {
       });
       busy.value = false;
 
-      if ("block" in result) {
-        emit("fragment", result);
-        const nextDraft = resolveAuthDraftAfterFailure(props.mode === "register" ? "register" : "login", {
-          username: username.value,
-          email: email.value,
-          password: password.value,
-        });
-        username.value = nextDraft.username;
-        email.value = nextDraft.email;
-        password.value = nextDraft.password;
-        error.value = null;
+      const continueTarget = findContinueTarget(result.block);
+      if (continueTarget) {
+        window.location.assign(toUiRoute(continueTarget, props.route));
         return;
       }
 
-      if (!("ok" in result) || !result.ok || result.kind !== "redirect") {
-        const failure = result as ActionFailure;
-        const nextDraft = resolveAuthDraftAfterFailure(props.mode === "register" ? "register" : "login", {
-          username: username.value,
-          email: email.value,
-          password: password.value,
-        });
-        username.value = nextDraft.username;
-        email.value = nextDraft.email;
-        password.value = nextDraft.password;
-        error.value = failure.fieldErrors?.username
-          ?? failure.fieldErrors?.email
-          ?? failure.fieldErrors?.password
-          ?? failure.message
-          ?? failure.errorCode;
-        return;
-      }
-
-      window.location.assign(result.location);
+      emit("fragment", result);
+      const nextDraft = resolveAuthDraftAfterFailure(props.mode === "register" ? "register" : "login", {
+        username: username.value,
+        email: email.value,
+        password: password.value,
+      });
+      username.value = nextDraft.username;
+      email.value = nextDraft.email;
+      password.value = nextDraft.password;
+      error.value = null;
     }
 
     return () => h("section", { class: "vc-auth-card" }, [
@@ -344,7 +380,7 @@ const AuthWindow = {
           type: "button",
           class: "vc-auth-nav-button",
           onClick: () => {
-            window.location.assign(navTarget.value!);
+            window.location.assign(toUiRoute(navTarget.value!, props.route));
           },
         }, navLabel.value),
       ]) : null,
@@ -366,10 +402,14 @@ const ChatWindow = {
       type: Object,
       required: true,
     },
+    route: {
+      type: Object,
+      required: true,
+    },
   },
   emits: ["fragment"],
   setup(
-    props: { page: ParsedPage; fragment: ParsedFragment | null; user: SessionUser },
+    props: { page: ParsedPage; fragment: ParsedFragment | null; user: SessionUser; route: UiRouteContext },
     { emit }: { emit: (event: "fragment", fragment: ParsedFragment) => void },
   ) {
     const message = ref("");
@@ -382,6 +422,8 @@ const ChatWindow = {
     const sessionBlock = computed(() => findBlock(props.page, "session"));
     const messages = computed(() => props.fragment ? extractChatMessages(props.fragment) : []);
     const messageCountLabel = computed(() => `${messages.value.length} messages`);
+    const messagesTarget = computed(() => findTarget(block.value, "read", "messages"));
+    const moreTarget = computed(() => findTarget(block.value, "read", "more"));
 
     watch(() => props.fragment, async () => {
       if (pendingScrollAnchor === "none") {
@@ -402,31 +444,23 @@ const ChatWindow = {
     });
 
     async function refresh() {
-      const target = findTarget(block.value, "read", "refresh");
+      const target = messagesTarget.value;
       if (!target) return;
       busy.value = true;
       error.value = null;
-      const result = await postMarkdownAction(target, {});
+      const result = await requestMarkdownAction("GET", target, {});
       busy.value = false;
-      if (!("markdown" in result)) {
-        error.value = result.message ?? result.errorCode;
-        return;
-      }
       pendingScrollAnchor = "bottom";
       emit("fragment", parseFragment(result.markdown));
     }
 
     async function loadMore() {
-      const target = findTarget(block.value, "read", "load_more");
+      const target = moreTarget.value;
       if (!target) return;
       busy.value = true;
       error.value = null;
-      const result = await postMarkdownAction(target, {});
+      const result = await requestMarkdownAction("GET", target, {});
       busy.value = false;
-      if (!("markdown" in result)) {
-        error.value = result.message ?? result.errorCode;
-        return;
-      }
       const currentCount = messages.value.length;
       const nextFragment = parseFragment(result.markdown);
       const nextCount = extractChatMessages(nextFragment).length;
@@ -448,15 +482,10 @@ const ChatWindow = {
 
       busy.value = true;
       error.value = null;
-      const result = await postMarkdownAction(target, {
+      const result = await requestMarkdownAction("POST", target, {
         message: message.value,
       });
       busy.value = false;
-
-      if (!("markdown" in result)) {
-        error.value = result.fieldErrors?.message ?? result.message ?? result.errorCode;
-        return;
-      }
 
       if (result.ok) {
         message.value = "";
@@ -482,16 +511,17 @@ const ChatWindow = {
 
       busy.value = true;
       error.value = null;
-      const result = await postJsonAction<RedirectSuccess>(target, {});
+      const result = await requestMarkdownAction("POST", target, {});
       busy.value = false;
 
-      if (!("ok" in result) || !result.ok || result.kind !== "redirect") {
-        const failure = result as ActionFailure;
-        error.value = failure.message ?? failure.errorCode;
+      const fragmentResult = parseFragment(result.markdown);
+      const continueTarget = findContinueTarget(fragmentResult.block);
+      if (!continueTarget) {
+        error.value = "Logout completed but no follow-up action target was returned.";
         return;
       }
 
-      window.location.assign(result.location);
+      window.location.assign(toUiRoute(continueTarget, props.route));
     }
 
     return () => h("section", { class: "vc-chat-window" }, [
@@ -544,15 +574,15 @@ const ChatWindow = {
             h("button", {
               type: "button",
               class: "vc-secondary-button",
-              disabled: busy.value,
+              disabled: busy.value || !messagesTarget.value,
               onClick: refresh,
             }, "Refresh"),
-            h("button", {
+            moreTarget.value ? h("button", {
               type: "button",
               class: "vc-secondary-button",
               disabled: busy.value,
               onClick: loadMore,
-            }, "Load More"),
+            }, "Load More") : null,
           ]),
           h("button", {
             type: "submit",
@@ -567,11 +597,8 @@ const ChatWindow = {
 
 const App = {
   setup() {
-    const routePath = window.location.pathname === "/chat"
-      ? "/chat"
-      : window.location.pathname === "/register"
-        ? "/register"
-        : "/";
+    const route = resolveUiRoute(window.location.pathname);
+    const routePath = route.mdsnRoute;
     const pageSource = ref("");
     const fragment = ref<ParsedFragment | null>(null);
     const loading = ref(true);
@@ -591,7 +618,7 @@ const App = {
     }
 
     async function refreshFragment() {
-      const refreshResponse = await postMarkdownAction("/list", {});
+      const refreshResponse = await requestMarkdownAction("GET", "/list", {});
       if ("markdown" in refreshResponse) {
         fragment.value = parseFragment(refreshResponse.markdown);
       }
@@ -603,7 +630,7 @@ const App = {
       if (routePath === "/chat") {
         session.value = await fetchSession();
         if (!session.value) {
-          window.location.assign("/");
+          window.location.assign(toUiRoute("/", route));
           return;
         }
 
@@ -643,6 +670,7 @@ const App = {
             page: page.value,
             fragment: fragment.value,
             mode: routePath === "/register" ? "register" : "login",
+            route,
             onFragment: (nextFragment: ParsedFragment | null) => {
               fragment.value = nextFragment;
             },
@@ -658,6 +686,7 @@ const App = {
           page: page.value,
           fragment: fragment.value,
           user: session.value,
+          route,
           onFragment: (nextFragment: ParsedFragment) => {
             fragment.value = nextFragment;
           },

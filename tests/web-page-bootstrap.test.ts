@@ -6,7 +6,6 @@ describe("new web page bootstrap", () => {
     const bootstrap = createPageBootstrap({
       frontmatter: {},
       markdown: "# Profile",
-      schemas: [],
       blockAnchors: [{ name: "profile" }],
       blocks: [
         {
@@ -21,18 +20,16 @@ describe("new web page bootstrap", () => {
               secret: false,
             },
             {
-              id: "profile::input::payload",
+              id: "profile::input::asset",
               block: "profile",
-              name: "payload",
-              type: "json",
+              name: "asset",
+              type: "asset",
               required: true,
               secret: false,
-              schema: "payload_schema",
             },
           ],
           reads: [],
           writes: [],
-          redirects: [],
         },
       ],
     });
@@ -41,7 +38,6 @@ describe("new web page bootstrap", () => {
       version: "vNext",
       frontmatter: {},
       markdown: "# Profile",
-      schemas: [],
       blockAnchors: [{ name: "profile" }],
       blocks: [
         {
@@ -56,23 +52,21 @@ describe("new web page bootstrap", () => {
               secret: false,
             },
             {
-              id: "profile::input::payload",
+              id: "profile::input::asset",
               block: "profile",
-              name: "payload",
-              type: "json",
+              name: "asset",
+              type: "asset",
               required: true,
               secret: false,
-              schema: "payload_schema",
             },
           ],
           reads: [],
           writes: [],
-          redirects: [],
         },
       ],
       inputState: {
         "profile::input::enabled": false,
-        "profile::input::payload": "",
+        "profile::input::asset": "",
       },
     });
   });

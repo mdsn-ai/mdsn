@@ -42,9 +42,9 @@ title: Search
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
-  redirect "/done"
+  INPUT text required -> query
+  GET "/search_action" (query) -> search
+  GET "/done" -> finish
 }
 \`\`\`
 `,
@@ -72,8 +72,8 @@ block search {
       const html = await htmlResponse.text();
       expect(html).toContain('data-mdsn-block-region="search"');
       expect(html).toContain('data-mdsn-read="search::read::0"');
-      expect(html).toContain('data-mdsn-redirect="search::redirect::1"');
-      expect(html).toContain('data-target="/search"');
+      expect(html).toContain('data-mdsn-read="search::read::1"');
+      expect(html).toContain('data-target="/search_action"');
     });
   });
 
@@ -81,23 +81,65 @@ block search {
     const app = createHostedApp({
       pages,
       actions: {
-        search: async () => "# Updated",
+        search_action: async () => "# Updated",
       },
     });
 
     await withServer(app, async (baseUrl) => {
-      const response = await fetch(`${baseUrl}/search`, {
-        method: "POST",
+      const response = await fetch(`${baseUrl}/search_action?query=hello`, {
+        method: "GET",
         headers: {
-          "content-type": "application/json",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: { query: "hello" } }),
       });
 
       expect(response.status).toBe(200);
       expect(response.headers.get("content-type")).toContain("text/markdown");
       await expect(response.text()).resolves.toBe("# Updated");
+    });
+  });
+
+  it("routes GET and POST actions by declared verb for the same target", async () => {
+    const app = createHostedApp({
+      pages: {
+        "/entry": `---
+title: Entry
+---
+
+<!-- mdsn:block sync -->
+
+\`\`\`mdsn
+block sync {
+  INPUT text -> query
+  GET "/dual" (query) -> preview
+  POST "/dual" (query) -> commit
+}
+\`\`\`
+`,
+      },
+      actions: {
+        dual: async (ctx) => `# ${String(ctx.inputs.query ?? "")}`,
+      },
+    });
+
+    await withServer(app, async (baseUrl) => {
+      const readResponse = await fetch(`${baseUrl}/dual?query=from-get`, {
+        method: "GET",
+        headers: { Accept: "text/markdown" },
+      });
+      expect(readResponse.status).toBe(200);
+      await expect(readResponse.text()).resolves.toBe("# from-get");
+
+      const writeResponse = await fetch(`${baseUrl}/dual`, {
+        method: "POST",
+        headers: {
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
+        },
+        body: 'query: "from-post"',
+      });
+      expect(writeResponse.status).toBe(200);
+      await expect(writeResponse.text()).resolves.toBe("# from-post");
     });
   });
 });

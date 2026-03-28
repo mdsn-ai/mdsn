@@ -124,24 +124,24 @@ action 这层最重要的事实是：
 
 ````mdsn-src
 ```mdsn
-read refresh: "/list"
-write submit: "/post" (nickname, message)
+GET "/list" -> refresh
+POST "/post" (nickname, message) -> submit
 ```
 ````
 
 那你的服务端就应该提供：
 
-- `POST /list`
+- `GET /list`
 - `POST /post`
 
 这不是内部映射，也不是额外包装路径，就是页面里声明的 target 本身。
 
 ## 6. action handler 返回什么
 
-action handler 的成功返回值只有两种主形态：
+action handler 的成功返回统一使用 Markdown fragment：
 
-1. Markdown fragment 字符串
-2. `redirect`
+1. 直接返回 Markdown fragment 字符串
+2. 或返回 `{ ok: true, kind: "fragment", markdown }`
 
 失败时返回错误对象。
 
@@ -220,29 +220,26 @@ export const actions = defineActions({
 
 当前 HTTP Host 契约是固定的：
 
-- `read` / `write` 在 HTTP Host 中都使用 `POST`
-- 请求体（推荐）：
+- `read` 使用 `GET`
+- `write` 使用 `POST`
+- 请求体：
   - Markdown 键值行（例如 `message: "Hello"`）
-- JSON 兼容：
-  - `{ "inputs": { ... } }`
-- agent 成功响应：
+- 成功响应：
   - `200 text/markdown`
-- Host runtime 成功响应：
-  - `200 application/json`
 - 失败响应：
-  - `400 application/json`
+  - `400 text/markdown`
 
 在自定义服务端里，最简单的做法就是直接按 agent 侧 Markdown 契约返回：
 
 ```ts
-app.post("/list", async (req, res) => {
+app.get("/list", async (req, res) => {
   const markdown = await actions.list.run(createActionContext("/list", {}, req));
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 
 app.post("/post", async (req, res) => {
   const result = await actions.post.run(
-    createActionContext("/post", parseActionInputs(req.body), req),
+    createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
   );
 
   if (typeof result === "string") {
@@ -250,7 +247,12 @@ app.post("/post", async (req, res) => {
     return;
   }
 
-  res.status(400).json(result);
+  res.status(400).type("text/markdown; charset=utf-8").send(
+    [
+      "## Action Status",
+      result.fieldErrors?.message ?? result.message ?? "Action failed.",
+    ].join("\\n\\n"),
+  );
 });
 ```
 
@@ -291,33 +293,11 @@ function createActionContext(
 
 登录、session、鉴权这些都可以在这层自己接。
 
-## 9. `redirect` 怎么接
+## 9. 跳转怎么接
 
-如果 action 返回的是：
+页面导航统一用块里的 `GET "<path>" -> <name>` 显式动作表达。
 
-```ts
-{
-  ok: true,
-  kind: "redirect",
-  location: "/chat",
-}
-```
-
-那你的服务端只需要把它当成协议成功结果继续返回。
-
-最常见的做法是：
-
-- agent / API 客户端：
-  - 返回 JSON，让调用方自己决定是否跟随
-- 浏览器应用：
-  - 客户端收到后再执行跳转
-
-仓库里的 [examples/chat/server.ts](/Users/hencoo/projects/mdsn/examples/chat/server.ts) 就是这条链的完整参考：
-
-- `/login`
-- 设置 cookie session
-- 返回 `redirect`
-- 前端进入 `/chat`
+也就是说，服务端返回的 Markdown fragment 里给出下一步 `GET` 动作，客户端执行这个动作即可进入下一页。
 
 ## 10. 什么时候再加自定义前端
 
@@ -342,7 +322,7 @@ function createActionContext(
 - MDSN 负责页面协议
 - 你的服务端框架负责 HTTP 路由和上下文
 - 页面继续返回 Markdown
-- action 继续返回 Markdown fragment 或 `redirect`
+- action 继续返回 Markdown fragment
 
 只要你的框架能控制：
 

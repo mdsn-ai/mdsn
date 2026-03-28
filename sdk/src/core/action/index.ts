@@ -1,7 +1,6 @@
 export {
   fragmentActionResult,
   normalizeActionResult,
-  redirectActionResult,
 } from "./execution";
 export type {
   ActionFailure,
@@ -9,5 +8,4 @@ export type {
   ActionResult,
   ActionSuccess,
   FragmentActionSuccess,
-  RedirectActionSuccess,
 } from "./types";

@@ -46,10 +46,10 @@ title: Guestbook
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -172,7 +172,7 @@ http://localhost:3000/
 
 进阶验证可以直接看 `examples/chat/`：
 
-- 登录页 -> `redirect` -> 聊天页
+- 登录页 -> `GET "/chat" -> enter_chat` -> 聊天页
 - 登录后用 cookie 会话持续发言
 - 多个 fresh agent 共享同一房间上下文
 - 新的 fresh agent 可以只靠当前片段读取并总结聊天内容

@@ -39,20 +39,11 @@ function parseMarkdownInputs(source: string): Record<string, unknown> {
 
   for (const rawLine of source.split(/\r?\n/u)) {
     const line = rawLine.trim();
-    if (!line || line === "```") {
-      continue;
-    }
-    if (line.startsWith("```")) {
-      continue;
-    }
-    if (line.startsWith("#")) {
+    if (!line) {
       continue;
     }
 
-    let normalized = line.replace(/^>\s*/u, "");
-    normalized = normalized.replace(/^[-*+]\s+/u, "");
-    normalized = normalized.replace(/^\d+\.\s+/u, "");
-    normalized = normalized.replace(/^input\s+/iu, "");
+    const normalized = line.replace(/^[-*+]\s+/u, "");
 
     const separator = normalized.indexOf(":");
     if (separator <= 0) {
@@ -71,6 +62,33 @@ function parseMarkdownInputs(source: string): Record<string, unknown> {
   return inputs;
 }
 
+function normalizeObjectInputs(payload: Record<string, unknown>): Record<string, unknown> {
+  const inputs: Record<string, unknown> = {};
+  for (const [name, value] of Object.entries(payload)) {
+    if (!/^[a-zA-Z_][\w-]*$/u.test(name)) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        inputs[name] = value[0];
+      }
+      continue;
+    }
+
+    if (typeof value === "string") {
+      inputs[name] = parseScalarToken(value);
+      continue;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      inputs[name] = value;
+      continue;
+    }
+  }
+  return inputs;
+}
+
 export function serializeActionInputsAsMarkdown(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .filter(([, value]) => value !== undefined)
@@ -79,16 +97,12 @@ export function serializeActionInputsAsMarkdown(inputs: Record<string, unknown>)
 }
 
 export function parseActionInputs(payload: unknown): Record<string, unknown> {
-  if (isPlainObject(payload)) {
-    const maybeInputs = payload.inputs;
-    if (isPlainObject(maybeInputs)) {
-      return maybeInputs;
-    }
-    return payload;
-  }
-
   if (typeof payload === "string") {
     return parseMarkdownInputs(payload);
+  }
+
+  if (isPlainObject(payload)) {
+    return normalizeObjectInputs(payload);
   }
 
   return {};

@@ -1,20 +1,10 @@
 import type { BlockDefinition } from "../model/block";
 import type { BlockAnchorDefinition } from "../model/document";
-import type { SchemaDefinition } from "../model/schema";
 
 export function validateDocumentStructure(
-  schemas: SchemaDefinition[],
   blocks: BlockDefinition[],
   blockAnchors: BlockAnchorDefinition[],
 ): void {
-  const schemaNames = new Set<string>();
-  for (const schema of schemas) {
-    if (schemaNames.has(schema.name)) {
-      throw new Error(`Duplicate schema name: ${schema.name}`);
-    }
-    schemaNames.add(schema.name);
-  }
-
   const blockNames = new Set<string>();
   for (const block of blocks) {
     if (blockNames.has(block.name)) {
@@ -51,9 +41,6 @@ export function validateDocumentStructure(
         throw new Error(`Duplicate input name in block ${block.name}: ${input.name}`);
       }
       inputNames.add(input.name);
-      if (input.schema && !schemaNames.has(input.schema)) {
-        throw new Error(`Unknown schema ${input.schema} referenced by input ${input.name}`);
-      }
     }
 
     for (const operation of [...block.reads, ...block.writes]) {

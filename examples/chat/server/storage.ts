@@ -35,6 +35,7 @@ export type ChatStorage = {
   deleteSession(sessionId: string): void;
   appendMessage(input: { userId: string; room?: string; content: string }): ChatMessage;
   listRecentMessages(limit?: number, room?: string): ChatMessage[];
+  countMessages(room?: string): number;
   reset(): void;
   close(): void;
 };
@@ -170,6 +171,11 @@ export function createChatStorage(dbPath: string): ChatStorage {
     ORDER BY m.created_at DESC
     LIMIT ?
   `);
+  const countMessages = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM messages
+    WHERE room = ?
+  `);
 
   const deleteMessages = db.prepare("DELETE FROM messages");
   const deleteSessions = db.prepare("DELETE FROM sessions");
@@ -280,6 +286,11 @@ export function createChatStorage(dbPath: string): ChatStorage {
           username: String(row.username),
         }))
         .reverse();
+    },
+
+    countMessages(room = DEFAULT_ROOM) {
+      const row = countMessages.get(room) as Record<string, unknown> | undefined;
+      return Number(row?.total ?? 0);
     },
 
     reset() {

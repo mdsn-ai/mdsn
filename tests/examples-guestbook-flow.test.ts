@@ -54,16 +54,14 @@ describe("examples guestbook flow", () => {
       expect(pageResponse.status).toBe(200);
       const pageMarkdown = await pageResponse.text();
       expect(pageMarkdown).toContain("# Guestbook");
-      expect(pageMarkdown).toContain('read refresh: "/list"');
-      expect(pageMarkdown).toContain('write submit: "/post" (nickname, message)');
+      expect(pageMarkdown).toContain('GET "/list" -> refresh');
+      expect(pageMarkdown).toContain('POST "/post" (nickname, message) -> submit');
 
       const listResponse = await fetch(`${baseUrl}/list`, {
-        method: "POST",
+        method: "GET",
         headers: {
-          "content-type": "application/json",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({ inputs: {} }),
       });
 
       if (listResponse.status !== 200) {
@@ -76,15 +74,13 @@ describe("examples guestbook flow", () => {
       const postResponse = await fetch(`${baseUrl}/post`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
+          "content-type": "text/markdown",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: {
-            nickname: "MDSN",
-            message: "Hello",
-          },
-        }),
+        body: [
+          'nickname: "MDSN"',
+          'message: "Hello"',
+        ].join("\n"),
       });
 
       expect(postResponse.status).toBe(200);

@@ -6,7 +6,6 @@ describe("new web fragment render", () => {
     const fragment = parseBlockFragment("## Updated\n\nSaved.");
 
     expect(fragment.markdown).toBe("## Updated\n\nSaved.");
-    expect(fragment.schemas).toEqual([]);
     expect(fragment.blocks).toEqual([]);
   });
 
@@ -15,8 +14,8 @@ describe("new web fragment render", () => {
 
 \`\`\`mdsn
 block chat {
-  input message!: text
-  write send: "/messages" (message)
+  INPUT text required -> message
+  POST "/messages" (message) -> send
 }
 \`\`\`
 `);
@@ -47,7 +46,6 @@ block chat {
             order: 0,
           },
         ],
-        redirects: [],
       },
     ]);
   });
@@ -74,8 +72,8 @@ block two {
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  write submit: "/guestbook/post" (message)
+  INPUT text required -> message
+  POST "/guestbook/post" (message) -> submit
 }
 \`\`\`
 `, "guestbook", {
@@ -94,8 +92,8 @@ block guestbook {
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  write submit: "/guestbook/post" (message)
+  INPUT text required -> message
+  POST "/guestbook/post" (message) -> submit
 }
 \`\`\`
 

@@ -26,7 +26,6 @@ export type {
   SerializableBlock,
   SerializableInput,
   SerializableRead,
-  SerializableRedirect,
   SerializableWrite,
 } from "./markdown";
 export type { HostedPageResponse } from "./page-host";

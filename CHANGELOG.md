@@ -7,7 +7,7 @@ All notable changes to this project are documented in this file.
 ### Added
 
 - Public docs in English and Chinese, including framework, server, React, Vue, shared-interaction, CLI, and SDK guides.
-- `examples/chat` now validates the full protocol closure: login page -> `redirect` -> cookie session -> shared chat room -> fresh-agent summary retrieval.
+- `examples/chat` now validates the full protocol closure: login page -> session continuity -> shared chat room -> fresh-agent summary retrieval.
 - Published packages:
   - `@mdsnai/sdk`
   - `create-mdsn`

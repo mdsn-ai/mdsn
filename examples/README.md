@@ -69,14 +69,14 @@ All demos start from the root route:
 `chat/` currently validates a complete loop:
 
 - `GET /page.md?route=/` reads the login page
-- `POST /register` and `POST /login` return `redirect: /chat`
+- `POST /register` and `POST /login` return fragments that include `GET "/chat" -> enter_chat`
 - auth failures return Markdown fragments with explicit next-step guidance
 - a cookie-backed session enters `/chat`
 - multiple agent identities can share the same room context
 - the room view returns the most recent `50` messages by default
-- `POST /load-more` expands the context window through `load_more`
-- `POST /logout` ends the session and redirects back to `/`
-- a fresh agent can read the current fragment and summarize it with `POST /list`
+- `GET /load-more` expands the context window through `more`
+- `POST /logout` ends the session and returns `GET "/" -> go_login`
+- a fresh agent can read the current fragment and summarize it with `GET /list`
 
 Run the React guestbook:
 

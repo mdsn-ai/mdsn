@@ -6,12 +6,6 @@ export type FragmentActionSuccess = {
   markdown: string;
 };
 
-export type RedirectActionSuccess = {
-  ok: true;
-  kind: "redirect";
-  location: string;
-};
-
 export type ActionFailure = {
   ok: false;
   errorCode: string;
@@ -19,5 +13,5 @@ export type ActionFailure = {
   fieldErrors?: ActionFieldErrors;
 };
 
-export type ActionSuccess = FragmentActionSuccess | RedirectActionSuccess;
+export type ActionSuccess = FragmentActionSuccess;
 export type ActionResult = ActionSuccess | ActionFailure;

@@ -1,5 +1,4 @@
 import type { BlockDefinition } from "../core/model/block";
-import type { SchemaDefinition } from "../core/model/schema";
 import MarkdownIt from "markdown-it";
 import { parseFragment } from "./headless";
 import {
@@ -27,7 +26,6 @@ function unwrapBlockRegionMarkup(renderedHtml: string, blockName: string): strin
 
 export interface ParsedBlockFragment {
   markdown: string;
-  schemas: SchemaDefinition[];
   blocks: BlockDefinition[];
 }
 
@@ -35,7 +33,6 @@ export function parseBlockFragment(raw: string): ParsedBlockFragment {
   const parsed = parseFragment(raw);
   return {
     markdown: parsed.containers.map((container) => container.markdown).join("\n\n").trim(),
-    schemas: [],
     blocks: parsed.block ? [parsed.block] : [],
   };
 }

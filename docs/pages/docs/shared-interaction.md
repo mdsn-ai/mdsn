@@ -62,7 +62,7 @@ So:
 
 In HTTP Host:
 
-- `read` uses `POST`
+- `read` uses `GET`
 - `write` uses `POST`
 
 Request payloads are Markdown-first:
@@ -72,23 +72,15 @@ nickname: "Guest"
 message: "Hello"
 ```
 
-JSON is still supported for compatibility:
-
-```json
-{ "inputs": { ... } }
-```
-
-Successful responses also support negotiation:
+Successful responses are Markdown-first:
 
 - `Accept: text/markdown`
   - returns a new Markdown fragment
-- `Accept: application/json`
-  - returns the Host runtime JSON envelope
 
 That means:
 
 - an agent can keep consuming Markdown fragments
-- a browser runtime can keep consuming JSON for block updates
+- a browser runtime can keep consuming rendered HTML fragments for block updates
 
 That shared transport is what makes MDSN suitable for agent apps, skills apps, and other human-agent collaboration surfaces.
 
@@ -99,10 +91,10 @@ For a minimal guestbook page:
 ````mdsn-src
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -121,7 +113,7 @@ For a browser, the chain looks like this:
 1. `GET /guestbook` with `Accept: text/html`
 2. open the page
 3. trigger `read` or `write`
-4. call the action with `Accept: application/json`
+4. call the action with `Accept: text/html`
 5. let the Host runtime update the current block
 
 The transport forms differ, but the page model does not.
@@ -156,8 +148,8 @@ This is directly tied to the current MDSN model:
 
 - page body is static Markdown
 - `mdsn:block` marks the replaceable region
-- `read` and `write` return new Markdown fragments on success
-- `redirect` handles page-level navigation
+- `GET` and `POST` return new Markdown fragments on success
+- navigation is represented as explicit `GET "<path>" -> <name>` actions
 
 Without HTTP negotiation:
 

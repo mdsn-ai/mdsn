@@ -124,24 +124,24 @@ If the page declares:
 
 ````mdsn-src
 ```mdsn
-read refresh: "/list"
-write submit: "/post" (nickname, message)
+GET "/list" -> refresh
+POST "/post" (nickname, message) -> submit
 ```
 ````
 
 then your server should provide:
 
-- `POST /list`
+- `GET /list`
 - `POST /post`
 
 There is no hidden internal route here. The declared target is the route.
 
 ## 6. What handlers return
 
-Successful action returns have two main shapes:
+Successful action returns use Markdown fragments:
 
 1. a Markdown fragment string
-2. a `redirect`
+2. or `{ ok: true, kind: "fragment", markdown }`
 
 Failure returns are error objects.
 
@@ -220,30 +220,26 @@ export const actions = defineActions({
 
 The current HTTP Host contract is fixed:
 
-- `read` uses `POST`
+- `read` uses `GET`
 - `write` uses `POST`
-- request body (preferred):
+- request body:
   - Markdown key-value lines (for example `message: "Hello"`)
-- JSON compatibility:
-  - `{ "inputs": { ... } }`
-- agent success response:
+- success response:
   - `200 text/markdown`
-- Host runtime success response:
-  - `200 application/json`
 - failure response:
-  - `400 application/json`
+  - `400 text/markdown`
 
 In a custom server, the simplest path is to return the agent-facing Markdown contract directly:
 
 ```ts
-app.post("/list", async (req, res) => {
+app.get("/list", async (req, res) => {
   const markdown = await actions.list.run(createActionContext("/list", {}, req));
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 
 app.post("/post", async (req, res) => {
   const result = await actions.post.run(
-    createActionContext("/post", parseActionInputs(req.body), req),
+    createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
   );
 
   if (typeof result === "string") {
@@ -251,7 +247,12 @@ app.post("/post", async (req, res) => {
     return;
   }
 
-  res.status(400).json(result);
+  res.status(400).type("text/markdown; charset=utf-8").send(
+    [
+      "## Action Status",
+      result.fieldErrors?.message ?? result.message ?? "Action failed.",
+    ].join("\\n\\n"),
+  );
 });
 ```
 

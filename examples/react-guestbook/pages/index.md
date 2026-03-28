@@ -16,9 +16,9 @@ This demo uses the headless MDSN API in a custom React UI.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```

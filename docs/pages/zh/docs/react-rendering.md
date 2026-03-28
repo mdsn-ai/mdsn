@@ -59,10 +59,10 @@ This is a minimal runnable guestbook.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -213,22 +213,24 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
 提交 action 时，示例直接按 HTTP 协议调用：
 
 ```tsx
-async function postMarkdownAction(target: string, inputs: Record<string, unknown>): Promise<string | ActionFailure> {
+async function callMarkdownAction(
+  method: "GET" | "POST",
+  target: string,
+  inputs: Record<string, unknown>,
+): Promise<string> {
   const response = await fetch(target, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "text/markdown",
       Accept: "text/markdown",
     },
-    body: Object.entries(inputs)
-      .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-      .join("\n"),
+    body:
+      method === "POST"
+        ? Object.entries(inputs)
+          .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+          .join("\n")
+        : undefined,
   });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json() as ActionFailure;
-  }
 
   return await response.text();
 }
@@ -237,7 +239,8 @@ async function postMarkdownAction(target: string, inputs: Record<string, unknown
 这里对应的就是当前协议：
 
 - target 直接是可调用地址
-- `read` / `write` 在 HTTP Host 中都使用 `POST`
+- `read` 使用 `GET`
+- `write` 使用 `POST`
 - 成功时返回 `text/markdown`
 
 ## 7. 页面布局由 React 自己决定

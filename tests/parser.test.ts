@@ -19,7 +19,6 @@ describe("public parsePageDefinition", () => {
       id: "guestbook",
       title: "Guestbook",
     });
-    expect(document.schemas).toEqual([]);
     expect(document.blockAnchors).toEqual([{ name: "guestbook" }]);
     expect(document.markdown).toContain("<!-- mdsn:block guestbook -->");
     expect(document.markdown).not.toContain("```mdsn");
@@ -64,7 +63,6 @@ describe("public parsePageDefinition", () => {
             order: 1,
           },
         ],
-        redirects: [],
       },
     ]);
   });
@@ -83,7 +81,7 @@ describe("public parsePageDefinition", () => {
     expect(html).not.toContain('data-mdsn-result=');
   });
 
-  it("supports json inputs with schema references", () => {
+  it("rejects schema declarations and json input types", () => {
     const raw = `---
 title: Search
 ---
@@ -102,40 +100,16 @@ schema filters_schema {
 }
 
 block search {
-  input filters!: json filters_schema
-  read search: "/search" (filters)
+  INPUT text required -> filters
+  GET "/search" (filters) -> search
 }
 \`\`\`
 `;
 
-    const document = parsePageDefinition(raw);
-
-    expect(document.schemas).toEqual([
-      {
-        name: "filters_schema",
-        shape: {
-          type: "object",
-          properties: {
-            query: { type: "string" },
-          },
-          required: ["query"],
-        },
-      },
-    ]);
-    expect(document.blocks[0]?.inputs[0]).toMatchObject({
-      name: "filters",
-      type: "json",
-      required: true,
-      schema: "filters_schema",
-    });
-    expect(document.blocks[0]?.reads[0]).toMatchObject({
-      name: "search",
-      target: "/search",
-      inputs: ["filters"],
-    });
+    expect(() => parsePageDefinition(raw)).toThrow("Unsupported MDSN statement: schema filters_schema {");
   });
 
-  it("parses multiple blocks and static redirects", () => {
+  it("parses multiple blocks with explicit GET/POST operations", () => {
     const raw = `---
 title: Flow
 ---
@@ -147,14 +121,14 @@ title: Flow
 
 \`\`\`mdsn
 block login {
-  input account!: text
-  write submit: "/login" (account)
-  redirect "/chat"
+  INPUT text required -> account
+  POST "/login" (account) -> submit
+  GET "/chat" -> enter_chat
 }
 
 block chat {
-  input message!: text
-  write send: "/chat/send" (message)
+  INPUT text required -> message
+  POST "/chat/send" (message) -> send
 }
 \`\`\`
 `;
@@ -162,11 +136,13 @@ block chat {
     const document = parsePageDefinition(raw);
 
     expect(document.blocks.map((block) => block.name)).toEqual(["login", "chat"]);
-    expect(document.blocks[0]?.redirects).toEqual([
+    expect(document.blocks[0]?.reads).toEqual([
       {
-        id: "login::redirect::1",
+        id: "login::read::1",
         block: "login",
+        name: "enter_chat",
         target: "/chat",
+        inputs: [],
         order: 1,
       },
     ]);
@@ -198,14 +174,14 @@ title: Invalid
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  write "/post" (message)
+  INPUT text required -> message
+  POST "/post" (message)
 }
 \`\`\`
 `;
 
     expect(() => parsePageDefinition(raw)).toThrow(
-      'Invalid write declaration: write "/post" (message)',
+      'Invalid write declaration: POST "/post" (message)',
     );
   });
 
@@ -216,9 +192,9 @@ title: Duplicate operation
 
 \`\`\`mdsn
 block search {
-  input query!: text
-  read search: "/search" (query)
-  write search: "/save" (query)
+  INPUT text required -> query
+  GET "/search" (query) -> search
+  POST "/save" (query) -> search
 }
 \`\`\`
 `;

@@ -12,8 +12,8 @@ Current stage: login.
 Goal: enter the shared room with an existing identity.
 
 - use `login` if an account already exists for this email
-- if no account exists yet, use the redirect action below to go to `/register`
-- successful login redirects to `/chat`
+- if no account exists yet, use `go_register` to go to `/register`
+- successful login returns a fragment with `GET "/chat" -> enter_chat`
 - after login, the chat room uses the logged-in identity for all messages
 - keep and reuse the same session cookie for `/chat`, `/send`, `/list`, `/load-more`, and `/logout`
 - if login succeeds, go directly to `/chat` and continue with the same cookie
@@ -25,12 +25,12 @@ Goal: enter the shared room with an existing identity.
 
 ```mdsn
 block auth {
-  input email!: text
-  input password!: text secret
-  write login: "/login" (email, password)
+  INPUT text required -> email
+  INPUT text secret required -> password
+  POST "/login" (email, password) -> login
 }
 
 block auth-nav {
-  redirect "/register"
+  GET "/register" -> go_register
 }
 ```

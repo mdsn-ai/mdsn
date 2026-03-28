@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeActionResult,
-  redirectActionResult,
   type ActionFailure,
 } from "../sdk/src/core/action";
 
@@ -14,7 +13,7 @@ describe("new core action contract", () => {
     });
   });
 
-  it("preserves explicit fragment and redirect results", () => {
+  it("preserves explicit fragment results", () => {
     expect(
       normalizeActionResult({
         ok: true,
@@ -25,12 +24,6 @@ describe("new core action contract", () => {
       ok: true,
       kind: "fragment",
       markdown: "## Updated",
-    });
-
-    expect(normalizeActionResult(redirectActionResult("/login"))).toEqual({
-      ok: true,
-      kind: "redirect",
-      location: "/login",
     });
   });
 

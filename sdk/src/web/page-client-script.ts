@@ -135,14 +135,6 @@ export function getPageClientRuntimeScript(): string {
     return parsed;
   }
 
-  function parseSchemaLiteral(raw) {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("Schema body must be a JSON object");
-    }
-    return parsed;
-  }
-
   function parseBlockHeaderLine(line) {
     const match = String(line).trim().match(/^block\\s+([a-zA-Z_][\\w-]*)\\s*\\{$/);
     if (!match) {
@@ -154,60 +146,60 @@ export function getPageClientRuntimeScript(): string {
   function parseInputLine(line, blockName) {
     const match = String(line)
       .trim()
-      .match(/^input\\s+([a-zA-Z_][\\w-]*)(!)?:\\s*(text|number|boolean|choice|file|json)(?:\\s+(secret))?(?:\\s+(\\[.*\\]))?(?:\\s+([a-zA-Z_][\\w-]*))?$/);
+      .match(/^INPUT\\s+(text|number|boolean|choice|asset)(?:\\s+(.*?))?\\s*->\\s*([a-zA-Z_][\\w-]*)$/);
     if (!match) {
       throw new Error("Invalid input declaration: " + line);
     }
 
-    const name = match[1];
-    const requiredMarker = match[2];
-    const type = match[3];
-    const secretMarker = match[4];
-    const optionsLiteral = match[5];
-    const schemaName = match[6];
+    const type = match[1];
+    const trailing = String(match[2] || "").trim();
+    const name = match[3];
+    const required = /\\brequired\\b/u.test(trailing);
+    const secret = /\\bsecret\\b/u.test(trailing);
+    const optionsLiteral = (trailing.match(/(\\[.*\\])/u) || [])[1];
+    const normalizedTrailing = trailing
+      .replace(/\\brequired\\b/gu, "")
+      .replace(/\\bsecret\\b/gu, "")
+      .replace(/(\\[.*\\])/u, "")
+      .trim();
+    if (normalizedTrailing) {
+      throw new Error("Invalid input declaration: " + line);
+    }
     const input = {
       id: blockName + "::input::" + name,
       block: blockName,
       name,
       type,
-      required: requiredMarker === "!",
-      secret: secretMarker === "secret",
+      required,
+      secret,
     };
 
     if (optionsLiteral) {
       input.options = parseStringArrayLiteral(optionsLiteral);
     }
 
-    if (schemaName) {
-      input.schema = schemaName;
-    }
-
     if (input.type === "choice" && (!input.options || input.options.length === 0)) {
       throw new Error("Choice input " + name + " in block " + blockName + " must define options");
     }
 
-    if (input.type === "json" && !input.schema) {
-      throw new Error("JSON input " + name + " in block " + blockName + " must define schema");
+    if (input.type !== "choice" && input.options) {
+      throw new Error("Only choice input " + name + " in block " + blockName + " can define options");
     }
 
     return input;
   }
 
   function parseReadOrWriteLine(line, kind, blockName, index) {
-    const match = String(line)
-      .trim()
-      .match(/^(read|write)\\s+([a-zA-Z_][\\w-]*)\\s*:\\s*"([^"]+)"(?:\\s*\\(([^)]*)\\))?$/);
+    const match = kind === "read"
+      ? String(line).trim().match(/^GET\\s+"([^"]+)"(?:\\s*\\(([^)]*)\\))?\\s*->\\s*([a-zA-Z_][\\w-]*)$/)
+      : String(line).trim().match(/^POST\\s+"([^"]+)"\\s*\\(([^)]*)\\)\\s*->\\s*([a-zA-Z_][\\w-]*)$/);
     if (!match) {
       throw new Error("Invalid " + kind + " declaration: " + line);
     }
 
-    const parsedKind = match[1];
-    const name = match[2];
-    const target = match[3];
-    const rawInputs = match[4];
-    if (parsedKind !== kind) {
-      throw new Error("Expected " + kind + " declaration: " + line);
-    }
+    const target = match[1];
+    const rawInputs = match[2];
+    const name = match[3];
 
     return {
       id: blockName + "::" + kind + "::" + index,
@@ -219,61 +211,11 @@ export function getPageClientRuntimeScript(): string {
     };
   }
 
-  function parseRedirectLine(line, blockName, index) {
-    const match = String(line).trim().match(/^redirect\\s+"([^"]+)"$/);
-    if (!match) {
-      throw new Error("Invalid redirect declaration: " + line);
-    }
-
-    return {
-      id: blockName + "::redirect::" + index,
-      block: blockName,
-      target: match[1],
-      order: index,
-    };
-  }
-
-  function parseSchemaBlock(lines, startIndex) {
-    const firstLine = String(lines[startIndex]).trim();
-    const match = firstLine.match(/^schema\\s+([a-zA-Z_][\\w-]*)\\s*(\\{.*)?$/);
-    if (!match) {
-      throw new Error("Invalid schema declaration: " + firstLine);
-    }
-
-    const name = match[1];
-    let literal = (match[2] || "").trim();
-    let braceDepth = (literal.match(/\\{/g) || []).length - (literal.match(/\\}/g) || []).length;
-    let index = startIndex;
-
-    while (braceDepth > 0) {
-      index += 1;
-      if (index >= lines.length) {
-        throw new Error("Unterminated schema declaration: " + name);
-      }
-      literal += "\\n" + lines[index];
-      braceDepth += (lines[index].match(/\\{/g) || []).length;
-      braceDepth -= (lines[index].match(/\\}/g) || []).length;
-    }
-
-    if (!literal.startsWith("{")) {
-      throw new Error("schema " + name + " must start with {");
-    }
-
-    return {
-      schema: {
-        name,
-        shape: parseSchemaLiteral(literal),
-      },
-      nextIndex: index + 1,
-    };
-  }
-
   function getNextOperationOrder(block) {
-    return block.reads.length + block.writes.length + block.redirects.length;
+    return block.reads.length + block.writes.length;
   }
 
   function parseMdsnBlocks(blocks) {
-    const schemas = [];
     const documentBlocks = [];
     let currentBlock = null;
 
@@ -289,20 +231,12 @@ export function getPageClientRuntimeScript(): string {
         }
 
         if (!currentBlock) {
-          if (line.startsWith("schema ")) {
-            const parsedSchema = parseSchemaBlock(lines, index);
-            schemas.push(parsedSchema.schema);
-            index = parsedSchema.nextIndex;
-            continue;
-          }
-
           if (line.startsWith("block ")) {
             currentBlock = {
               name: parseBlockHeaderLine(line),
               inputs: [],
               reads: [],
               writes: [],
-              redirects: [],
             };
             documentBlocks.push(currentBlock);
             index += 1;
@@ -322,26 +256,20 @@ export function getPageClientRuntimeScript(): string {
           continue;
         }
 
-        if (line.startsWith("input ")) {
+        if (line.startsWith("INPUT ")) {
           currentBlock.inputs.push(parseInputLine(line, currentBlock.name));
           index += 1;
           continue;
         }
 
-        if (line.startsWith("read ")) {
+        if (line.startsWith("GET ")) {
           currentBlock.reads.push(parseReadOrWriteLine(line, "read", currentBlock.name, getNextOperationOrder(currentBlock)));
           index += 1;
           continue;
         }
 
-        if (line.startsWith("write ")) {
+        if (line.startsWith("POST ")) {
           currentBlock.writes.push(parseReadOrWriteLine(line, "write", currentBlock.name, getNextOperationOrder(currentBlock)));
-          index += 1;
-          continue;
-        }
-
-        if (line.startsWith("redirect ")) {
-          currentBlock.redirects.push(parseRedirectLine(line, currentBlock.name, getNextOperationOrder(currentBlock)));
           index += 1;
           continue;
         }
@@ -355,7 +283,6 @@ export function getPageClientRuntimeScript(): string {
     }
 
     return {
-      schemas,
       blocks: documentBlocks,
     };
   }
@@ -401,9 +328,6 @@ export function getPageClientRuntimeScript(): string {
     for (const write of block.writes || []) {
       operationsById.set(write.id, { ...write, kind: "write" });
     }
-    for (const redirect of block.redirects || []) {
-      operationsById.set(redirect.id, { ...redirect, kind: "redirect" });
-    }
   }
 
   function clearBlock(blockName) {
@@ -417,6 +341,70 @@ export function getPageClientRuntimeScript(): string {
         operationsById.delete(key);
       }
     }
+  }
+
+  function parseOperationOrder(operationId, kind) {
+    const pattern = new RegExp("::" + kind + "::(\\\\d+)$");
+    const match = String(operationId || "").match(pattern);
+    return match ? Number(match[1]) : 0;
+  }
+
+  function registerBlockFromDom(blockName) {
+    clearBlock(blockName);
+    for (const element of document.querySelectorAll("[data-mdsn-input]")) {
+      const inputId = element.getAttribute("data-mdsn-input");
+      const name = element.getAttribute("data-input-name");
+      const type = element.getAttribute("data-input-type");
+      if (!inputId || !inputId.startsWith(blockName + "::input::") || !name || !type) {
+        continue;
+      }
+
+      inputDefinitionsById.set(inputId, {
+        id: inputId,
+        block: blockName,
+        name,
+        type,
+        required: element.getAttribute("data-required") === "true",
+        secret: element.getAttribute("data-secret") === "true",
+      });
+    }
+
+    for (const element of document.querySelectorAll("[data-mdsn-read]")) {
+      const operationId = element.getAttribute("data-mdsn-read");
+      const target = element.getAttribute("data-target");
+      if (!operationId || !operationId.startsWith(blockName + "::read::") || !target) {
+        continue;
+      }
+
+      operationsById.set(operationId, {
+        id: operationId,
+        block: blockName,
+        kind: "read",
+        name: element.getAttribute("data-op-name") || element.textContent || "read",
+        target,
+        inputs: parseIdentifierList(element.getAttribute("data-inputs") || ""),
+        order: parseOperationOrder(operationId, "read"),
+      });
+    }
+
+    for (const element of document.querySelectorAll("[data-mdsn-write]")) {
+      const operationId = element.getAttribute("data-mdsn-write");
+      const target = element.getAttribute("data-target");
+      if (!operationId || !operationId.startsWith(blockName + "::write::") || !target) {
+        continue;
+      }
+
+      operationsById.set(operationId, {
+        id: operationId,
+        block: blockName,
+        kind: "write",
+        name: element.getAttribute("data-op-name") || element.textContent || "write",
+        target,
+        inputs: parseIdentifierList(element.getAttribute("data-inputs") || ""),
+        order: parseOperationOrder(operationId, "write"),
+      });
+    }
+
   }
 
   for (const block of bootstrap.blocks || []) {
@@ -466,6 +454,26 @@ export function getPageClientRuntimeScript(): string {
       .join("\\n");
   }
 
+  function applyQueryParams(target, inputs) {
+    const source = String(target || "");
+    if (!inputs || Object.keys(inputs).length === 0) {
+      return source;
+    }
+    const parts = source.split("?");
+    const basePath = parts[0] || "";
+    const existingQuery = parts[1] ? new URLSearchParams(parts[1]) : new URLSearchParams();
+    for (const entry of Object.entries(inputs)) {
+      const name = entry[0];
+      const value = entry[1];
+      if (value === undefined || value === null || value === "") {
+        continue;
+      }
+      existingQuery.set(name, String(value));
+    }
+    const queryString = existingQuery.toString();
+    return queryString ? basePath + "?" + queryString : basePath;
+  }
+
   async function runOperation(operationId, button) {
     const operation = operationsById.get(operationId);
     if (!operation) return;
@@ -477,11 +485,6 @@ export function getPageClientRuntimeScript(): string {
     updateStatus("Loading...", "loading");
 
     try {
-      if (operation.kind === "redirect") {
-        window.location.assign(mapTargetToHttpPath(operation.target));
-        return;
-      }
-
       const inputs = {};
       for (const inputName of operation.inputs || []) {
         const inputId = operation.block + "::input::" + inputName;
@@ -490,50 +493,34 @@ export function getPageClientRuntimeScript(): string {
         inputs[inputName] = getInputValue(definition);
       }
 
-      const response = await fetch(mapTargetToHttpPath(operation.target), {
-        method: "POST",
-        headers: {
-          "content-type": "text/markdown",
-          Accept: "application/json",
-        },
-        body: serializeInputsAsMarkdown(inputs),
-      });
-      const result = await response.json();
-
-      if (!result || result.ok !== true) {
-        const message = result && typeof result.message === "string"
-          ? result.message
-          : result && typeof result.errorCode === "string"
-            ? result.errorCode
-            : "Action failed.";
-        updateStatus("Failed: " + message, "error");
-        return;
-      }
-
-      if (result.kind === "redirect" && typeof result.location === "string") {
-        window.location.assign(result.location);
-        return;
-      }
-
-      if (
-        result.kind === "fragment"
-        && typeof result.markdown === "string"
-        && typeof result.html === "string"
-      ) {
-        const fragment = parseBlockFragment(result.markdown);
-        root.innerHTML = replaceBlockRegionMarkup(root.innerHTML, operation.block, result.html);
-        clearBlock(operation.block);
-        if (fragment.blocks[0]) {
-          registerBlock(fragment.blocks[0]);
+      const method = operation.kind === "read" ? "GET" : "POST";
+      const mappedTarget = mapTargetToHttpPath(operation.target);
+      const requestTarget = method === "GET" ? applyQueryParams(mappedTarget, inputs) : mappedTarget;
+      const requestInit = method === "GET"
+        ? {
+          method,
+          headers: { Accept: "text/html" },
         }
-        bindActions("[data-mdsn-read]", "data-mdsn-read");
-        bindActions("[data-mdsn-write]", "data-mdsn-write");
-        bindActions("[data-mdsn-redirect]", "data-mdsn-redirect");
-        updateStatus("Updated.", "success");
-        return;
+        : {
+          method,
+          headers: {
+            "content-type": "text/markdown",
+            Accept: "text/html",
+          },
+          body: serializeInputsAsMarkdown(inputs),
+        };
+      const response = await fetch(requestTarget, requestInit);
+      const contentType = response.headers.get("content-type") || "";
+      const payload = await response.text();
+      if (contentType && !contentType.includes("text/html")) {
+        throw new Error("Invalid action response: expected text/html fragment");
       }
 
-      updateStatus("Failed: Invalid action response.", "error");
+      root.innerHTML = replaceBlockRegionMarkup(root.innerHTML, operation.block, payload);
+      registerBlockFromDom(operation.block);
+      bindActions("[data-mdsn-read]", "data-mdsn-read");
+      bindActions("[data-mdsn-write]", "data-mdsn-write");
+      updateStatus(response.ok ? "Updated." : "Failed: action returned an error fragment.", response.ok ? "success" : "error");
     } catch (error) {
       updateStatus("Failed: " + (error instanceof Error ? error.message : String(error)), "error");
     } finally {
@@ -558,7 +545,6 @@ export function getPageClientRuntimeScript(): string {
 
   bindActions("[data-mdsn-read]", "data-mdsn-read");
   bindActions("[data-mdsn-write]", "data-mdsn-write");
-  bindActions("[data-mdsn-redirect]", "data-mdsn-redirect");
 })();
 `;
 }

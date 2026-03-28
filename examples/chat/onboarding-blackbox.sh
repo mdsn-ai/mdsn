@@ -106,7 +106,7 @@ H1="$(mktemp /tmp/mdsn-chat-h1-XXXXXX)"; B1="$(mktemp /tmp/mdsn-chat-b1-XXXXXX)"
 S1="$(curl -sS -D "${H1}" -o "${B1}" -w "%{http_code}" -H "Accept: text/markdown" "${BASE_URL}/")"
 assert_status "${S1}" "200" "GET /"
 assert_content_type_contains "$(read_content_type "${H1}")" "text/markdown" "GET /"
-assert_contains "${B1}" "write login: \"/login\" (email, password)" "GET /"
+assert_contains "${B1}" "POST \"/login\" (email, password) -> login" "GET /"
 echo "PASS step 1: GET /"
 
 H2="$(mktemp /tmp/mdsn-chat-h2-XXXXXX)"; B2="$(mktemp /tmp/mdsn-chat-b2-XXXXXX)"
@@ -117,7 +117,7 @@ S2="$(curl -sS -D "${H2}" -o "${B2}" -w "%{http_code}" -c "${COOKIE_JAR}" \
   --data-binary $'username: '"${USERNAME}"$'\nemail: '"${EMAIL}"$'\npassword: '"${PASSWORD}")"
 assert_status "${S2}" "200" "POST /register"
 assert_content_type_contains "$(read_content_type "${H2}")" "text/markdown" "POST /register"
-assert_contains "${B2}" "redirect \"/chat\"" "POST /register"
+assert_contains "${B2}" "GET \"/chat\" -> enter_chat" "POST /register"
 echo "PASS step 2: POST /register"
 
 OLD_SID="$(awk '$6=="mdsn-chat-session"{print $7}' "${COOKIE_JAR}" | tail -n 1)"
@@ -131,7 +131,7 @@ S3="$(curl -sS -D "${H3}" -o "${B3}" -w "%{http_code}" -b "${COOKIE_JAR}" \
   "${BASE_URL}/chat")"
 assert_status "${S3}" "200" "GET /chat"
 assert_content_type_contains "$(read_content_type "${H3}")" "text/markdown" "GET /chat"
-assert_contains "${B3}" "write send: \"/send\" (message)" "GET /chat"
+assert_contains "${B3}" "POST \"/send\" (message) -> send" "GET /chat"
 echo "PASS step 3: GET /chat"
 
 H4="$(mktemp /tmp/mdsn-chat-h4-XXXXXX)"; B4="$(mktemp /tmp/mdsn-chat-b4-XXXXXX)"
@@ -149,13 +149,11 @@ echo "PASS step 4: POST /send (logged in)"
 H5="$(mktemp /tmp/mdsn-chat-h5-XXXXXX)"; B5="$(mktemp /tmp/mdsn-chat-b5-XXXXXX)"
 S5="$(curl -sS -D "${H5}" -o "${B5}" -w "%{http_code}" -b "${COOKIE_JAR}" \
   -H "Accept: text/markdown" \
-  -H "Content-Type: text/markdown" \
-  -X POST "${BASE_URL}/list" \
-  --data-binary "")"
-assert_status "${S5}" "200" "POST /list"
-assert_content_type_contains "$(read_content_type "${H5}")" "text/markdown" "POST /list"
-assert_contains "${B5}" "${ESCAPED_MESSAGE}" "POST /list"
-echo "PASS step 5: POST /list"
+  "${BASE_URL}/list")"
+assert_status "${S5}" "200" "GET /list"
+assert_content_type_contains "$(read_content_type "${H5}")" "text/markdown" "GET /list"
+assert_contains "${B5}" "${ESCAPED_MESSAGE}" "GET /list"
+echo "PASS step 5: GET /list"
 
 H6="$(mktemp /tmp/mdsn-chat-h6-XXXXXX)"; B6="$(mktemp /tmp/mdsn-chat-b6-XXXXXX)"
 S6="$(curl -sS -D "${H6}" -o "${B6}" -w "%{http_code}" -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
@@ -165,7 +163,7 @@ S6="$(curl -sS -D "${H6}" -o "${B6}" -w "%{http_code}" -b "${COOKIE_JAR}" -c "${
   --data-binary "")"
 assert_status "${S6}" "200" "POST /logout"
 assert_content_type_contains "$(read_content_type "${H6}")" "text/markdown" "POST /logout"
-assert_contains "${B6}" "redirect \"/\"" "POST /logout"
+assert_contains "${B6}" "GET \"/\" -> go_login" "POST /logout"
 echo "PASS step 6: POST /logout"
 
 H7="$(mktemp /tmp/mdsn-chat-h7-XXXXXX)"; B7="$(mktemp /tmp/mdsn-chat-b7-XXXXXX)"
@@ -176,7 +174,7 @@ S7="$(curl -sS -D "${H7}" -o "${B7}" -w "%{http_code}" -b "${COOKIE_JAR}" \
   --data-binary "message: should-fail-after-logout")"
 assert_status "${S7}" "401" "POST /send after logout (cookie jar)"
 assert_content_type_contains "$(read_content_type "${H7}")" "text/markdown" "POST /send after logout (cookie jar)"
-assert_contains "${B7}" "write login: \"/login\" (email, password)" "POST /send after logout (cookie jar)"
+assert_contains "${B7}" "POST \"/login\" (email, password) -> login" "POST /send after logout (cookie jar)"
 echo "PASS step 7: POST /send after logout (cookie jar)"
 
 H8="$(mktemp /tmp/mdsn-chat-h8-XXXXXX)"; B8="$(mktemp /tmp/mdsn-chat-b8-XXXXXX)"

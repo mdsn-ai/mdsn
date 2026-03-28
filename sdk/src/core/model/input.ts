@@ -1,4 +1,4 @@
-export type InputType = "text" | "number" | "boolean" | "choice" | "file" | "json";
+export type InputType = "text" | "number" | "boolean" | "choice" | "asset";
 
 export interface InputDefinition {
   id: string;
@@ -8,5 +8,4 @@ export interface InputDefinition {
   required: boolean;
   secret: boolean;
   options?: string[];
-  schema?: string;
 }

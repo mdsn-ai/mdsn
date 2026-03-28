@@ -62,7 +62,7 @@ MDSN 做的事情，就是把这层交互层明确下来。
 
 在 HTTP Host 中：
 
-- `read` 使用 `POST`
+- `read` 使用 `GET`
 - `write` 使用 `POST`
 
 请求体推荐使用 Markdown 键值行：
@@ -72,23 +72,15 @@ nickname: "Guest"
 message: "Hello"
 ```
 
-JSON 仍保留兼容：
-
-```json
-{ "inputs": { ... } }
-```
-
-成功响应也支持内容协商：
+成功响应按 Markdown-first 返回：
 
 - `Accept: text/markdown`
   - 返回新的 Markdown fragment
-- `Accept: application/json`
-  - 返回 Host runtime 使用的 JSON 结果
 
 这意味着：
 
 - Agent 可以直接拿 Markdown fragment 继续操作
-- 浏览器 runtime 可以拿 JSON 结果更新当前页面
+- 浏览器 runtime 可以拿 HTML 片段更新当前页面
 
 这种共享承载方式，正是 skills apps、agent apps 和 human-agent collaboration 页面成立的前提。
 
@@ -101,10 +93,10 @@ JSON 仍保留兼容：
 ````mdsn-src
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -123,7 +115,7 @@ block guestbook {
 1. `GET /guestbook` with `Accept: text/html`
 2. 打开页面
 3. 触发 `read` / `write`
-4. 以 `Accept: application/json` 调 action
+4. 以 `Accept: text/html` 调 action
 5. Host runtime 更新当前 block
 
 两边的区别只是承载形式不同，不是协议模型不同。
@@ -153,8 +145,8 @@ block guestbook {
 
 - 页面正文是静态 Markdown
 - `mdsn:block` 是可替换区域
-- `read` / `write` 成功后返回新的 Markdown fragment
-- `redirect` 负责页面级跳转
+- `GET` / `POST` 成功后返回新的 Markdown fragment
+- 页面跳转通过显式的 `GET "<path>" -> <name>` 动作表达
 
 如果没有 HTTP 内容协商：
 

@@ -13,8 +13,8 @@ title: Public Web Entry
 
 \`\`\`mdsn
 block profile {
-  input role!: choice ["admin", "user"]
-  read load_messages: "/messages" (role)
+  INPUT choice ["admin", "user"] required -> role
+  GET "/messages" (role) -> load_messages
 }
 \`\`\`
 `;
@@ -36,7 +36,8 @@ describe("sdk public web entry", () => {
 
     expect(script).toContain('bootstrap.version !== "vNext"');
     expect(script).toContain("replaceBlockRegionMarkup(");
-    expect(script).toContain('typeof result.html === "string"');
-    expect(script).toContain("pathname: window.location.pathname");
+    expect(script).toContain('Accept: "text/html"');
+    expect(script).toContain('expected text/html fragment');
+    expect(script).toContain("function markdownPathToRoutePath(pathname)");
   });
 });

@@ -7,8 +7,6 @@ export type {
   InputDefinition,
   InputType,
   ReadDefinition,
-  RedirectDefinition,
-  SchemaDefinition,
   WriteDefinition,
 } from "./core";
 export {

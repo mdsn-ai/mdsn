@@ -1,12 +1,9 @@
 import type { BlockDefinition } from "../model/block";
-import type { SchemaDefinition } from "../model/schema";
 import {
   getNextOperationOrder,
   parseBlockHeaderLine,
   parseInputLine,
   parseReadOrWriteLine,
-  parseRedirectLine,
-  parseSchemaBlock,
 } from "./statements";
 
 function createBlock(name: string): BlockDefinition {
@@ -15,15 +12,12 @@ function createBlock(name: string): BlockDefinition {
     inputs: [],
     reads: [],
     writes: [],
-    redirects: [],
   };
 }
 
 export function parseMdsnBlocks(blocks: string[]): {
-  schemas: SchemaDefinition[];
   blocks: BlockDefinition[];
 } {
-  const schemas: SchemaDefinition[] = [];
   const documentBlocks: BlockDefinition[] = [];
   let currentBlock: BlockDefinition | null = null;
 
@@ -39,13 +33,6 @@ export function parseMdsnBlocks(blocks: string[]): {
       }
 
       if (!currentBlock) {
-        if (line.startsWith("schema ")) {
-          const parsed = parseSchemaBlock(lines, index);
-          schemas.push(parsed.schema);
-          index = parsed.nextIndex;
-          continue;
-        }
-
         if (line.startsWith("block ")) {
           currentBlock = createBlock(parseBlockHeaderLine(line));
           documentBlocks.push(currentBlock);
@@ -66,13 +53,13 @@ export function parseMdsnBlocks(blocks: string[]): {
         continue;
       }
 
-      if (line.startsWith("input ")) {
+      if (line.startsWith("INPUT ")) {
         currentBlock.inputs.push(parseInputLine(line, currentBlock.name));
         index += 1;
         continue;
       }
 
-      if (line.startsWith("read ")) {
+      if (line.startsWith("GET ")) {
         currentBlock.reads.push(
           parseReadOrWriteLine(line, "read", currentBlock.name, getNextOperationOrder(currentBlock)),
         );
@@ -80,16 +67,10 @@ export function parseMdsnBlocks(blocks: string[]): {
         continue;
       }
 
-      if (line.startsWith("write ")) {
+      if (line.startsWith("POST ")) {
         currentBlock.writes.push(
           parseReadOrWriteLine(line, "write", currentBlock.name, getNextOperationOrder(currentBlock)),
         );
-        index += 1;
-        continue;
-      }
-
-      if (line.startsWith("redirect ")) {
-        currentBlock.redirects.push(parseRedirectLine(line, currentBlock.name, getNextOperationOrder(currentBlock)));
         index += 1;
         continue;
       }
@@ -103,7 +84,6 @@ export function parseMdsnBlocks(blocks: string[]): {
   }
 
   return {
-    schemas,
     blocks: documentBlocks,
   };
 }

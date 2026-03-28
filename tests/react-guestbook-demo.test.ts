@@ -84,15 +84,13 @@ describe("react guestbook demo", () => {
       const postResponse = await fetch(`${baseUrl}/post`, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
+          "content-type": "text/markdown",
           Accept: "text/markdown",
         },
-        body: JSON.stringify({
-          inputs: {
-            nickname: "ReactUser",
-            message: "Hello from React demo",
-          },
-        }),
+        body: [
+          'nickname: "ReactUser"',
+          'message: "Hello from React demo"',
+        ].join("\n"),
       });
 
       expect(postResponse.status).toBe(200);

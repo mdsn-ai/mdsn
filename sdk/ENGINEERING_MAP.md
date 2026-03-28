@@ -10,7 +10,7 @@ Core facts:
 - `mdsn` defines mutable interaction fragments
 - `read` and `write` return `md` text fragments on success
 - The Host replaces only the current `mdsn:block` region
-- `redirect` is the only page-level navigation primitive
+- page-level navigation is expressed as explicit `GET "<path>" -> <name>` actions
 
 ## Public Entry Points
 
@@ -71,13 +71,10 @@ Core facts:
   - block
   - `read`
   - `write`
-  - `redirect`
 - `src/core/model/input.ts`
   - `input` types
   - `!`
   - `secret`
-- `src/core/model/schema.ts`
-  - schema definitions
 - `src/core/model/fragment.ts`
   - `md` fragment definitions
   - executable `mdsn` information inside fragments
@@ -92,16 +89,13 @@ Core facts:
   - `input`
   - `read`
   - `write`
-  - `redirect`
-  - `schema`
 - `src/core/protocol/mdsn.ts`
   - `mdsn` code block parsing
 - `src/core/protocol/validation.ts`
   - block reference validation
   - input reference validation
-  - schema validation
 - `src/core/action/types.ts`
-  - fragment / redirect action results
+  - fragment / failure action results
 - `src/core/action/execution.ts`
   - action result normalization
 - `src/core/action/index.ts`
@@ -126,7 +120,7 @@ Core facts:
 - `src/web/block-runtime.ts`
   - block region markers and replacement
 - `src/web/navigation.ts`
-  - `redirect` navigation
+  - page navigation utilities
 - `src/web/public-render.ts`
   - stable page rendering API
 - `src/web/public-client-runtime.ts`

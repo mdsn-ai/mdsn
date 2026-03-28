@@ -38,10 +38,10 @@ describe("server markdown helpers", () => {
     ).toBe([
       "```mdsn",
       "block guestbook {",
-      "  input nickname: text",
-      "  input message!: text",
-      '  read refresh: "/list"',
-      '  write submit: "/post" (nickname, message)',
+      "  INPUT text -> nickname",
+      "  INPUT text required -> message",
+      '  GET "/list" -> refresh',
+      '  POST "/post" (nickname, message) -> submit',
       "}",
       "```",
     ].join("\n"));
@@ -67,6 +67,6 @@ describe("server markdown helpers", () => {
     expect(fragment).toContain("## Messages");
     expect(fragment).toContain("- **A**: hello");
     expect(fragment).toContain("```mdsn");
-    expect(fragment).toContain('write submit: "/post" (nickname, message)');
+    expect(fragment).toContain('POST "/post" (nickname, message) -> submit');
   });
 });

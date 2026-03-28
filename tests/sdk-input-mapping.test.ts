@@ -12,23 +12,14 @@ title: Input Mapping
 <!-- mdsn:block types -->
 
 \`\`\`mdsn
-schema filters_schema {
-  "type": "object",
-  "properties": {
-    "query": { "type": "string" }
-  },
-  "required": ["query"]
-}
-
 block types {
-  input nickname!: text
-  input password!: text secret
-  input quantity!: number
-  input agree!: boolean
-  input role!: choice ["admin", "user"]
-  input image!: file
-  input filters!: json filters_schema
-  write submit: "/submit" (nickname, password, quantity, agree, role, image, filters)
+  INPUT text required -> nickname
+  INPUT text secret required -> password
+  INPUT number required -> quantity
+  INPUT boolean required -> agree
+  INPUT choice ["admin", "user"] required -> role
+  INPUT asset required -> avatar
+  POST "/submit" (nickname, password, quantity, agree, role, avatar) -> submit
 }
 \`\`\`
 `;
@@ -55,13 +46,8 @@ describe("sdk input mapping", () => {
     expect(model.markdownHtml).toContain('<option value="admin">admin</option>');
     expect(model.markdownHtml).toContain('<option value="user">user</option>');
 
-    expect(model.markdownHtml).toContain('<input id="types::input::image" type="file"');
-    expect(model.markdownHtml).toContain('data-input-type="file"');
-
-    expect(model.markdownHtml).toContain('<textarea id="types::input::filters"');
-    expect(model.markdownHtml).toContain('rows="8"');
-    expect(model.markdownHtml).toContain('spellcheck="false"');
-    expect(model.markdownHtml).toContain('data-input-type="json"');
+    expect(model.markdownHtml).toContain('<input id="types::input::avatar" type="url"');
+    expect(model.markdownHtml).toContain('data-input-type="asset"');
   });
 
   it("marks required inputs consistently in the dom", () => {
@@ -81,8 +67,7 @@ describe("sdk input mapping", () => {
       "types::input::quantity": null,
       "types::input::agree": false,
       "types::input::role": "",
-      "types::input::image": "",
-      "types::input::filters": "",
+      "types::input::avatar": "",
     });
   });
 });

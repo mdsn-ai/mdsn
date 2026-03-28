@@ -54,8 +54,8 @@ After block.
 
 \`\`\`mdsn
 block chat {
-  input message!: text
-  write send: "/send" (message)
+  INPUT text required -> message
+  POST "/send" (message) -> send
 }
 \`\`\`
 `);
@@ -77,8 +77,8 @@ block chat {
 
 \`\`\`mdsn
 block guestbook {
-  input message!: text
-  write submit: "/post" (message)
+  INPUT text required -> message
+  POST "/post" (message) -> submit
 }
 \`\`\`
 `);
@@ -95,8 +95,8 @@ block guestbook {
 
 \`\`\`mdsn
 block chat {
-  input message!: text
-  write send: "/send" (message)
+  INPUT text required -> message
+  POST "/send" (message) -> send
 }
 \`\`\`
 

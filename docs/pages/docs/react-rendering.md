@@ -59,10 +59,10 @@ This is a minimal runnable guestbook.
 
 ```mdsn
 block guestbook {
-  input nickname: text
-  input message!: text
-  read refresh: "/list"
-  write submit: "/post" (nickname, message)
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
 }
 ```
 ````
@@ -174,22 +174,24 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
 When it submits an action, it follows the current HTTP contract directly:
 
 ```tsx
-async function postMarkdownAction(target: string, inputs: Record<string, unknown>): Promise<string | ActionFailure> {
+async function callMarkdownAction(
+  method: "GET" | "POST",
+  target: string,
+  inputs: Record<string, unknown>,
+): Promise<string> {
   const response = await fetch(target, {
-    method: "POST",
+    method,
     headers: {
       "content-type": "text/markdown",
       Accept: "text/markdown",
     },
-    body: Object.entries(inputs)
-      .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-      .join("\n"),
+    body:
+      method === "POST"
+        ? Object.entries(inputs)
+          .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+          .join("\n")
+        : undefined,
   });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return await response.json() as ActionFailure;
-  }
 
   return await response.text();
 }
