@@ -14,14 +14,8 @@ Current core objects:
 
 - `block`
 - `input`
-- `read`
-- `write`
-- `view`
-- `flow`
-
-Constraint object:
-
-- `schema`
+- `GET` operation
+- `POST` operation
 
 ## Roles
 
@@ -29,28 +23,19 @@ Constraint object:
   - interaction scope
 - `input`
   - input definition
-- `read`
-  - read-only operation
-- `write`
+- `GET`
+  - read operation
+- `POST`
   - mutating operation
-- `view`
-  - result reading hint and Markdown result anchor binding
-- `flow`
-  - optional ordering of blocks
-- `schema`
-  - JSON structure constraint for `json` typed values
 
 ## Key Rules
 
-- `flow` directly orders blocks
 - `block` is the primary scope unit
-- `json` typed inputs and results require `schema`
-- `block` and `view` are currently anchored in Markdown with comments
+- interaction declarations stay inside a single `mdsn` block
+- page updates are driven by Markdown fragments returned from `GET` / `POST`
 
 ## Agent View
 
 Minimal execution loop:
 
-`input -> read|write -> result`
-
-`view` helps the agent understand how to read the result.
+`input -> GET|POST -> next Markdown fragment`

@@ -15,7 +15,6 @@ import {
 import {
   createChatActions,
   renderLoginFailureFragment,
-  renderRedirectFragment,
 } from "./server/actions";
 import { createChatStorage } from "./server/storage";
 
@@ -253,8 +252,8 @@ export async function startVueChatDemo(
       renderMarkdownFragment({
         body: [
           "## Session Status",
-          `- username: ${JSON.stringify(sessionResult.session.user.username)}`,
-          `- email: ${JSON.stringify(sessionResult.session.user.email)}`,
+          `username: ${JSON.stringify(sessionResult.session.user.username)}`,
+          `email: ${JSON.stringify(sessionResult.session.user.email)}`,
           "Next step: use `enter_chat` to continue.",
         ],
         block: {

@@ -450,8 +450,8 @@ export function getPageClientRuntimeScript(): string {
   function serializeInputsAsMarkdown(inputs) {
     return Object.entries(inputs)
       .filter((entry) => entry[1] !== undefined)
-      .map((entry) => "- " + entry[0] + ": " + JSON.stringify(entry[1]))
-      .join("\\n");
+      .map((entry) => entry[0] + ": " + JSON.stringify(entry[1]))
+      .join(", ");
   }
 
   function applyQueryParams(target, inputs) {

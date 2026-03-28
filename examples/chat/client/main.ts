@@ -104,23 +104,106 @@ function parseMarkdownScalar(raw: string): unknown {
   return trimmed;
 }
 
-function parseMarkdownKeyValueFields(markdown: string): Record<string, unknown> {
-  const fields: Record<string, unknown> = {};
-  for (const rawLine of markdown.split(/\r?\n/u)) {
-    const line = rawLine.trim();
-    if (!line) {
+function splitTopLevelMarkdownPairs(source: string): string[] {
+  const pairs: string[] = [];
+  let current = "";
+  let depthObject = 0;
+  let depthArray = 0;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let escaped = false;
+
+  const flushCurrent = () => {
+    const trimmed = current.trim();
+    if (trimmed) {
+      pairs.push(trimmed);
+    }
+    current = "";
+  };
+
+  for (const char of source) {
+    if (escaped) {
+      current += char;
+      escaped = false;
       continue;
     }
-    const normalized = line.replace(/^[-*+]\s+/u, "");
-    const separator = normalized.indexOf(":");
+
+    if (inSingleQuote) {
+      current += char;
+      if (char === "\\") {
+        escaped = true;
+      } else if (char === "'") {
+        inSingleQuote = false;
+      }
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      current += char;
+      if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inDoubleQuote = false;
+      }
+      continue;
+    }
+
+    if (char === "'") {
+      inSingleQuote = true;
+      current += char;
+      continue;
+    }
+    if (char === "\"") {
+      inDoubleQuote = true;
+      current += char;
+      continue;
+    }
+    if (char === "{") {
+      depthObject += 1;
+      current += char;
+      continue;
+    }
+    if (char === "}") {
+      depthObject = Math.max(0, depthObject - 1);
+      current += char;
+      continue;
+    }
+    if (char === "[") {
+      depthArray += 1;
+      current += char;
+      continue;
+    }
+    if (char === "]") {
+      depthArray = Math.max(0, depthArray - 1);
+      current += char;
+      continue;
+    }
+
+    const isTopLevel = depthObject === 0 && depthArray === 0;
+    if (isTopLevel && (char === "," || char === "，" || char === "\n" || char === "\r")) {
+      flushCurrent();
+      continue;
+    }
+
+    current += char;
+  }
+
+  flushCurrent();
+  return pairs;
+}
+
+function parseMarkdownKeyValueFields(markdown: string): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const line of splitTopLevelMarkdownPairs(markdown)) {
+    const separator = line.indexOf(":");
     if (separator <= 0) {
       continue;
     }
-    const name = normalized.slice(0, separator).trim();
+    const name = line.slice(0, separator).trim();
     if (!/^[a-zA-Z_][\w-]*$/u.test(name)) {
       continue;
     }
-    fields[name] = parseMarkdownScalar(normalized.slice(separator + 1));
+    fields[name] = parseMarkdownScalar(line.slice(separator + 1));
   }
   return fields;
 }
@@ -223,8 +306,8 @@ function findContinueTarget(block: BlockDefinition | undefined): string | null {
 function serializeInputsAsMarkdown(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => `- ${name}: ${JSON.stringify(value)}`)
-    .join("\n");
+    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+    .join(", ");
 }
 
 function applyQueryParams(target: string, inputs: Record<string, unknown>): string {
@@ -327,7 +410,6 @@ const AuthWindow = {
     const email = ref("");
     const password = ref("");
     const busy = ref(false);
-    const error = ref<string | null>(null);
 
     const block = computed(() => props.fragment?.block ?? findBlock(props.page, "auth"));
     const navBlock = computed(() => findBlock(props.page, "auth-nav"));
@@ -344,7 +426,6 @@ const AuthWindow = {
       }
 
       busy.value = true;
-      error.value = null;
       const result = await postAuthAction(target, {
         username: username.value,
         email: email.value,
@@ -367,7 +448,6 @@ const AuthWindow = {
       username.value = nextDraft.username;
       email.value = nextDraft.email;
       password.value = nextDraft.password;
-      error.value = null;
     }
 
     return () => h("section", { class: "vc-auth-card" }, [
@@ -416,7 +496,6 @@ const AuthWindow = {
             },
           }),
         ]),
-        error.value ? h("p", { class: "vc-error" }, error.value) : null,
         h("button", {
           type: "submit",
           class: "vc-primary-button",

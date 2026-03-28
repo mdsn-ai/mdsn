@@ -120,8 +120,24 @@ function findTarget(block: BlockDefinition | undefined, kind: "read" | "write", 
 function serializeInputsAsMarkdown(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => `- ${name}: ${JSON.stringify(value)}`)
-    .join("\n");
+    .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+    .join(", ");
+}
+
+function applyQueryParams(target: string, inputs: Record<string, unknown>): string {
+  if (Object.keys(inputs).length === 0) {
+    return target;
+  }
+  const [basePath, rawQuery = ""] = target.split("?");
+  const params = new URLSearchParams(rawQuery);
+  for (const [name, value] of Object.entries(inputs)) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+    params.set(name, String(value));
+  }
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
 }
 
 async function callMarkdownAction(
@@ -129,14 +145,22 @@ async function callMarkdownAction(
   target: string,
   inputs: Record<string, unknown>,
 ): Promise<string> {
-  const response = await fetch(target, {
-    method,
-    headers: {
-      "content-type": "text/markdown",
-      Accept: "text/markdown",
-    },
-    body: method === "POST" ? serializeInputsAsMarkdown(inputs) : undefined,
-  });
+  const requestTarget = method === "GET" ? applyQueryParams(target, inputs) : target;
+  const response = await fetch(requestTarget, method === "GET"
+    ? {
+      method,
+      headers: {
+        Accept: "text/markdown",
+      },
+    }
+    : {
+      method,
+      headers: {
+        "content-type": "text/markdown",
+        Accept: "text/markdown",
+      },
+      body: serializeInputsAsMarkdown(inputs),
+    });
   return await response.text();
 }
 
@@ -148,7 +172,6 @@ function GuestbookBlock(props: {
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const block = props.fragment?.block ?? findBlock(props.page, "guestbook");
 
@@ -156,7 +179,6 @@ function GuestbookBlock(props: {
     const target = findTarget(block, "read", "refresh");
     if (!target) return;
     setBusy(true);
-    setError(null);
     const result = await callMarkdownAction("GET", target, {});
     setBusy(false);
 
@@ -170,7 +192,6 @@ function GuestbookBlock(props: {
     const target = findTarget(block, "write", "submit");
     if (!target) return;
     setBusy(true);
-    setError(null);
     const result = await callMarkdownAction("POST", target, { nickname, message });
     setBusy(false);
 
@@ -204,7 +225,6 @@ function GuestbookBlock(props: {
             rows={4}
           />
         </label>
-        {error ? <p className="rg-error">{error}</p> : null}
         <div className="rg-actions">
           <button type="button" onClick={refresh} disabled={busy}>Refresh</button>
           <button type="submit" disabled={busy}>Send</button>

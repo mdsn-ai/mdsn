@@ -11,9 +11,9 @@ describe("action input conversion", () => {
       'username: "MarkdownAgent"',
       "retries: 3",
       "enabled: true",
-      '- role: "owner"',
+      'role: "owner"',
       'asset: {"name":"avatar.png","type":"image/png"}',
-    ].join("\n");
+    ].join(", ");
 
     expect(parseActionInputs(payload)).toEqual({
       username: "MarkdownAgent",
@@ -31,6 +31,7 @@ describe("action input conversion", () => {
     const payload = [
       "# Inputs",
       "> role: ignored",
+      '- role: "ignored"',
       "INPUT role: ignored",
       "1. role: ignored",
       'role: "kept"',
@@ -38,6 +39,18 @@ describe("action input conversion", () => {
 
     expect(parseActionInputs(payload)).toEqual({
       role: "kept",
+    });
+  });
+
+  it("parses top-level comma separated payloads while preserving commas inside JSON values", () => {
+    const payload = 'message: "hello, world", filters: {"query":"a,b","limit":2}, tags: ["x,y","z"]';
+    expect(parseActionInputs(payload)).toEqual({
+      message: "hello, world",
+      filters: {
+        query: "a,b",
+        limit: 2,
+      },
+      tags: ["x,y", "z"],
     });
   });
 
@@ -71,11 +84,7 @@ describe("action input conversion", () => {
       "enabled: false",
     ].join("\n");
 
-    expect(normalizeActionInputPayloadToMarkdown(payload)).toBe([
-      '- nickname: "Agent"',
-      "- retries: 7",
-      "- enabled: false",
-    ].join("\n"));
+    expect(normalizeActionInputPayloadToMarkdown(payload)).toBe('nickname: "Agent", retries: 7, enabled: false');
   });
 
   it("serializes explicit input maps into canonical markdown format", () => {
@@ -84,10 +93,6 @@ describe("action input conversion", () => {
       count: 1,
       keep: false,
       optional: undefined,
-    })).toBe([
-      '- message: "hello"',
-      "- count: 1",
-      "- keep: false",
-    ].join("\n"));
+    })).toBe('message: "hello", count: 1, keep: false');
   });
 });

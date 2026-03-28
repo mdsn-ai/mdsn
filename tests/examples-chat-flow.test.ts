@@ -13,7 +13,7 @@ let activeDbDir: string | null = null;
 function toMarkdownInputs(inputs: Record<string, unknown>): string {
   return Object.entries(inputs)
     .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-    .join("\n");
+    .join(", ");
 }
 
 async function withServer(
