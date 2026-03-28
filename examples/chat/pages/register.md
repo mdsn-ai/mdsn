@@ -7,16 +7,13 @@ description: Create an account for the shared chat room
 
 # Register
 
-Current stage: registration.
+## Agent Quick Input Contract
 
-Goal: create a new identity and enter the shared room.
-
-- registration creates a username, email, and password for this room
-- successful registration returns a fragment with `GET "/chat" -> enter_chat`
-- after registration succeeds, do not call `login` again; go straight to `/chat` with the same cookie
-- keep and reuse the same session cookie for `/send`, `/list`, `/load-more`, and `/logout`
-- if an account already exists, use `go_login` to go back to `/`
-- if registration fails, the returned Markdown fragment explains what failed and what to do next
+- write requests use `Content-Type: text/markdown`
+- body format is plain text `key: value`; newline or comma separated is fine
+- use `username`, `email`, and `password`
+- after success, follow the returned fragment with the same cookie
+- if the account already exists, use `go_login`
 
 <!-- mdsn:block auth -->
 

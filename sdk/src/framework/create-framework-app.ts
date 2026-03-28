@@ -6,6 +6,7 @@ export interface CreateFrameworkAppOptions {
   rootDir: string;
   config?: MdsnConfig;
   actions?: Record<string, ActionHandler<{ inputs: Record<string, unknown> }>>;
+  errorFragments?: import("./hosted-app").CreateHostedAppOptions["errorFragments"];
   mode?: "dev" | "start";
   devState?: unknown;
 }
@@ -15,5 +16,6 @@ export function createFrameworkApp(options: CreateFrameworkAppOptions) {
     rootDir: options.rootDir,
     config: options.config,
     actions: options.actions,
+    errorFragments: options.errorFragments,
   });
 }

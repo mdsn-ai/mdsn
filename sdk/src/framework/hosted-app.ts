@@ -3,6 +3,11 @@ import { parsePageDefinition } from "../core/document/page-definition";
 import type { BlockDefinition } from "../core/model/block";
 import { executeActionHandler, type ActionHandler } from "../server/action-host";
 import { parseActionInputs } from "../server/action-inputs";
+import {
+  renderActionNotAvailableFragment,
+  renderInternalErrorFragment,
+  renderUnsupportedContentTypeFragment,
+} from "../server/error-fragments";
 import { renderMarkdownFragment, type SerializableBlock } from "../server/markdown";
 import { mapPageTargetToHttpPath } from "../server/page-links";
 import { renderHostedPage, type RenderHostedPageOptions } from "../server/page-host";
@@ -15,6 +20,7 @@ export interface CreateHostedAppOptions {
   pages: Record<string, string>;
   actions?: Record<string, ActionHandler<{ inputs: Record<string, unknown> }>>;
   publicDir?: string;
+  errorFragments?: Partial<HostedAppErrorFragments>;
   render?: Omit<RenderHostedPageOptions, "accept" | "routePath" | "layoutTemplate"> & {
     resolveLayoutTemplate?: (routePath: string, rawPage: string) => string | undefined;
   };
@@ -31,6 +37,29 @@ type RoutedPage = {
   routePath: string;
   source: string;
 };
+
+export interface HostedAppErrorFragmentContext {
+  actionId: string;
+  block: SerializableBlock;
+  method: "GET" | "POST";
+  path: string;
+}
+
+export interface HostedAppActionNotAvailableContext extends HostedAppErrorFragmentContext {}
+
+export interface HostedAppUnsupportedContentTypeContext extends HostedAppErrorFragmentContext {
+  contentType: string;
+}
+
+export interface HostedAppInternalErrorContext extends HostedAppErrorFragmentContext {
+  error: unknown;
+}
+
+export interface HostedAppErrorFragments {
+  actionNotAvailable: (ctx: HostedAppActionNotAvailableContext) => string;
+  unsupportedContentType: (ctx: HostedAppUnsupportedContentTypeContext) => string;
+  internalError: (ctx: HostedAppInternalErrorContext) => string;
+}
 
 function normalizeActionId(target: string): string | null {
   const trimmed = String(target).trim();
@@ -158,6 +187,12 @@ function sendActionFragment(
 export function createHostedApp(options: CreateHostedAppOptions) {
   const app = express();
   const actionBindings = buildActionBindings(options.pages);
+  const errorFragments: HostedAppErrorFragments = {
+    actionNotAvailable: (ctx) => renderActionNotAvailableFragment({ block: ctx.block }),
+    unsupportedContentType: (ctx) => renderUnsupportedContentTypeFragment({ block: ctx.block }),
+    internalError: (ctx) => renderInternalErrorFragment({ block: ctx.block, error: ctx.error }),
+    ...options.errorFragments,
+  };
   const routedPages = sortRoutedPagesForMatching(
     Object.entries(options.pages).map(([routePath, source]) => ({
       routePath,
@@ -191,15 +226,15 @@ export function createHostedApp(options: CreateHostedAppOptions) {
 
     const action = options.actions?.[binding.actionId];
     if (!action) {
+      const block = blockToSerializableBlock(binding.block);
       sendActionFragment(
         req.headers.accept,
         404,
-        renderMarkdownFragment({
-          body: [
-            "## Action Status",
-            "This action is not available on the current server.",
-          ],
-          block: blockToSerializableBlock(binding.block),
+        errorFragments.actionNotAvailable({
+          actionId: binding.actionId,
+          block,
+          method,
+          path: req.path,
         }),
         binding,
         res,
@@ -213,16 +248,16 @@ export function createHostedApp(options: CreateHostedAppOptions) {
         const contentType = req.headers["content-type"] ?? "";
         const normalized = String(contentType).toLowerCase();
         if (!normalized.includes("text/markdown")) {
+          const block = blockToSerializableBlock(binding.block);
           sendActionFragment(
             req.headers.accept,
             415,
-            renderMarkdownFragment({
-              body: [
-                "## Action Status",
-                "Unsupported content type for write action.",
-                "Use `Content-Type: text/markdown` with Markdown key-value lines.",
-              ],
-              block: blockToSerializableBlock(binding.block),
+            errorFragments.unsupportedContentType({
+              actionId: binding.actionId,
+              block,
+              method,
+              path: req.path,
+              contentType: String(contentType),
             }),
             binding,
             res,
@@ -249,13 +284,12 @@ export function createHostedApp(options: CreateHostedAppOptions) {
       sendActionFragment(
         req.headers.accept,
         500,
-        renderMarkdownFragment({
-          body: [
-            "## Action Status",
-            "The action failed due to an internal error.",
-            error instanceof Error ? error.message : String(error),
-          ],
+        errorFragments.internalError({
+          actionId: binding.actionId,
           block: blockToSerializableBlock(binding.block),
+          method,
+          path: req.path,
+          error,
         }),
         binding,
         res,

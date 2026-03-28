@@ -1,6 +1,8 @@
 import {
   defineAction,
   defineActions,
+  renderAuthRequiredFragment,
+  renderErrorFragment,
   renderMarkdownFragment,
   renderMarkdownValue,
   type ActionContext,
@@ -90,6 +92,7 @@ function renderChatFragment(
   options: {
     limit: number;
     contextMessage: string;
+    preface?: string[];
   },
 ): string {
   const limit = clampChatWindowLimit(options.limit);
@@ -98,6 +101,7 @@ function renderChatFragment(
 
   return renderMarkdownFragment({
     body: [
+      ...(options.preface ?? []),
       "## Conversation",
       options.contextMessage,
       renderedMessages.length > 0
@@ -115,23 +119,25 @@ function renderChatFragment(
 }
 
 export function renderLoginFailureFragment(message: string): string {
-  return renderMarkdownFragment({
-    body: [
-      "## Login Status",
-      message,
-      "Next step: enter the correct password and submit again, or go to register if no account exists.",
-    ],
-    block: loginAuthBlock,
+  return renderAuthRequiredFragment({
+    heading: "## Login Status",
+    message,
+    nextStep: "Next step: enter the correct password and submit again, or go to register if no account exists.",
+    blockName: loginAuthBlock.name,
+    emailInputName: "email",
+    passwordInputName: "password",
+    loginActionName: "login",
+    loginTarget: "/login",
+    registerActionName: "go_register",
+    registerTarget: "/register",
   });
 }
 
 export function renderRegisterFailureFragment(message: string): string {
-  return renderMarkdownFragment({
-    body: [
-      "## Registration Status",
-      message,
-      "Next step: choose a different identity, or go back to login if this account already exists.",
-    ],
+  return renderErrorFragment({
+    heading: "## Registration Status",
+    message,
+    nextStep: "Next step: choose a different identity, or go back to login if this account already exists.",
     block: registerAuthBlock,
   });
 }
@@ -141,14 +147,17 @@ export function renderChatFailureFragment(
   message: string,
   nextStep: string,
   limit: number = DEFAULT_CHAT_WINDOW_LIMIT,
+  options?: {
+    preface?: string[];
+  },
 ): string {
   const boundedLimit = clampChatWindowLimit(limit);
   const includeMore = storage.countMessages() > boundedLimit;
-  return renderMarkdownFragment({
-    body: [
-      "## Chat Status",
-      message,
-      nextStep,
+  return renderErrorFragment({
+    preface: options?.preface ?? [],
+    heading: "## Chat Status",
+    message,
+    details: [
       "## Conversation",
       `This view shows up to the most recent ${boundedLimit} messages.\n\nUse \`more\` to read older messages.`,
       ...(() => {
@@ -164,6 +173,7 @@ export function renderChatFailureFragment(
       "### Continue",
       "Use the same room to continue the shared conversation.",
     ],
+    nextStep,
     block: createChatBlock(includeMore),
   });
 }
@@ -303,24 +313,38 @@ export function createChatActions(storage: ChatStorage) {
             "Send failed: sign in before sending messages.",
             "Next step: log in and try again.",
             limit,
+            {
+              preface: [
+                "send_status: failed",
+              ],
+            },
           );
         }
 
         if (!message) {
           return renderChatFailureFragment(
             storage,
-            "Send failed: a message is required before this chat action can continue.",
-            "Next step: enter a message and submit again.",
+            "Send failed: `message` is required.",
+            "Next step: call `send` with `Content-Type: text/markdown` and body `message: \"hello\"`.",
             limit,
+            {
+              preface: [
+                "send_status: failed",
+              ],
+            },
           );
         }
 
-        storage.appendMessage({
+        const created = storage.appendMessage({
           userId,
           content: message,
         });
         return renderChatFragment(storage, {
           limit,
+          preface: [
+            "send_status: success",
+            `sent_message_id: ${created.id}`,
+          ],
           contextMessage: `This view shows up to the most recent ${limit} messages.\n\nUse \`more\` to read older messages.`,
         });
       },

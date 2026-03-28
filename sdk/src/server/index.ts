@@ -12,9 +12,15 @@ export {
 export {
   HttpCookieJar,
   parseCookieHeader,
-  renderAuthRequiredFragment,
   requireSessionFromCookie,
 } from "./session";
+export {
+  renderActionNotAvailableFragment,
+  renderAuthRequiredFragment,
+  renderErrorFragment,
+  renderInternalErrorFragment,
+  renderUnsupportedContentTypeFragment,
+} from "./error-fragments";
 export { wantsHtml } from "./negotiate";
 export { executeActionHandler } from "./action-host";
 export { renderHostedPage } from "./page-host";
@@ -35,10 +41,16 @@ export type {
 } from "./markdown";
 export type {
   HeaderCarrier,
-  RenderAuthRequiredFragmentOptions,
   RequireSessionFromCookieOptions,
   SessionGuardFailure,
   SessionGuardResult,
   SessionGuardSuccess,
 } from "./session";
+export type {
+  RenderActionNotAvailableFragmentOptions,
+  RenderAuthRequiredFragmentOptions,
+  RenderErrorFragmentOptions,
+  RenderInternalErrorFragmentOptions,
+  RenderUnsupportedContentTypeFragmentOptions,
+} from "./error-fragments";
 export type { HostedPageResponse } from "./page-host";

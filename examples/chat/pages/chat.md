@@ -7,14 +7,13 @@ description: Persistent single-room chat example
 
 # Chat Demo
 
-Current stage: shared room.
+## Agent Quick Input Contract
 
-Goal: continue the room conversation with the current logged-in identity.
-
-- use `messages` to refresh the current window
-- use `more` to load older messages
-- use `send` to post a new message
-- use `logout` to end the session
+- write requests use `Content-Type: text/markdown`
+- body format is plain text `key: value`; newline or comma separated is fine
+- send uses the field `message`
+- use `messages`, `more`, `send`, and `logout`
+- successful send returns `send_status: success`
 
 <!-- mdsn:block session -->
 

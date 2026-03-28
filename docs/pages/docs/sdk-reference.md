@@ -74,6 +74,10 @@ Most important APIs:
 - `parseCookieHeader()`
 - `requireSessionFromCookie()`
 - `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
 - `HttpCookieJar`
 - `parsePageDefinition()`
 
@@ -178,10 +182,16 @@ Most important APIs:
 - `parseCookieHeader()`
 - `requireSessionFromCookie()`
 - `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
 - `HttpCookieJar`
 - `wantsHtml()`
 
 `executeActionHandler()` runs your action and validates that it returns a Markdown string.
+
+`createFrameworkApp()` also accepts `errorFragments` so app-level framework errors can reuse your own wording without changing the HTTP status.
 
 ## 5. `@mdsnai/sdk/web`
 

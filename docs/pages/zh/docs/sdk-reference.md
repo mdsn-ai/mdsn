@@ -74,6 +74,10 @@ layout: docs
 - `parseCookieHeader()`
 - `requireSessionFromCookie()`
 - `renderAuthRequiredFragment()`
+- `renderErrorFragment()`
+- `renderActionNotAvailableFragment()`
+- `renderUnsupportedContentTypeFragment()`
+- `renderInternalErrorFragment()`
 - `HttpCookieJar`
 - `parsePageDefinition()`
 
@@ -196,6 +200,14 @@ layout: docs
   - 基于 cookie 做会话校验并返回 401 引导片段
 - `renderAuthRequiredFragment()`
   - 生成标准登录引导 Markdown 片段
+- `renderErrorFragment()`
+  - 生成通用错误 Markdown 片段
+- `renderActionNotAvailableFragment()`
+  - 生成默认 `404` action 不可用提示片段
+- `renderUnsupportedContentTypeFragment()`
+  - 生成默认 `415` content-type 提示片段
+- `renderInternalErrorFragment()`
+  - 生成默认 `500` 内部错误提示片段
 - `HttpCookieJar`
   - 在 Node/agent HTTP 链路里自动保管和回放 cookie
 - `wantsHtml()`
@@ -206,6 +218,8 @@ layout: docs
 - `ActionContext`
 - `ActionDefinition`
 - `SerializableBlock`
+
+`createFrameworkApp()` 现在也支持 `errorFragments`，应用层可以不改 HTTP 状态，只重写默认提示词。
 
 ## 5. `@mdsnai/sdk/web`
 

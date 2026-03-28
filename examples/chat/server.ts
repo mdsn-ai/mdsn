@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   parseActionInputs,
   parseCookieHeader,
+  renderUnsupportedContentTypeFragment,
   renderMarkdownFragment,
   requireSessionFromCookie,
   type ActionContext,
@@ -198,9 +199,10 @@ export async function startVueChatDemo(
     const contentType = String(req.headers["content-type"] ?? "").toLowerCase();
     if (!contentType.includes("text/markdown")) {
       res.status(415).type("text/markdown; charset=utf-8").send(
-        renderLoginFailureFragment(
-          "Unsupported content type: use `Content-Type: text/markdown` for write actions.",
-        ),
+        renderUnsupportedContentTypeFragment({
+          message: "Unsupported content type for write action.",
+          nextStep: "Next step: resend the same write action with `Content-Type: text/markdown` and a plain-text `key: value` body.",
+        }),
       );
       return false;
     }
@@ -213,14 +215,34 @@ export async function startVueChatDemo(
       ? registerPageMarkdown
       : loginPageMarkdown);
 
+  const requireChatPageSession = (req: express.Request) => requireSessionFromCookie({
+    cookieHeader: req.headers.cookie,
+    cookieName: SESSION_COOKIE,
+    resolveSession: (sessionId) => storage.getSession(sessionId),
+    unauthorizedMarkdown: renderLoginFailureFragment(
+      "Please log in before entering the chat room.",
+    ),
+  });
+
   app.get(["/web", "/web/", "/web/register", "/web/chat"], (_req, res) => {
     res.setHeader("cache-control", "no-store");
     res.status(200).type("text/html; charset=utf-8").send(renderShell());
   });
 
-  app.get(["/", "/register", "/chat"], (req, res) => {
+  app.get(["/", "/register"], (req, res) => {
     res.setHeader("cache-control", "no-store");
     res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(req.path));
+  });
+
+  app.get("/chat", (req, res) => {
+    const sessionResult = requireChatPageSession(req);
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
+      return;
+    }
+
+    res.setHeader("cache-control", "no-store");
+    res.status(200).type("text/markdown; charset=utf-8").send(chatPageMarkdown);
   });
 
   app.get("/app.js", (_req, res) => {
@@ -231,6 +253,13 @@ export async function startVueChatDemo(
   app.get("/page.md", (req, res) => {
     res.setHeader("cache-control", "no-store");
     const route = typeof req.query.route === "string" ? req.query.route : "/";
+    if (route === "/chat") {
+      const sessionResult = requireChatPageSession(req);
+      if (!sessionResult.ok) {
+        res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
+        return;
+      }
+    }
     res.status(200).type("text/markdown; charset=utf-8").send(resolvePageMarkdownByRoute(route));
   });
 

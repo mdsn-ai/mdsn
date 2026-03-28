@@ -1,4 +1,7 @@
-import { renderMarkdownFragment, type SerializableBlock } from "./markdown";
+import {
+  renderAuthRequiredFragment,
+  type RenderAuthRequiredFragmentOptions,
+} from "./error-fragments";
 
 export type HeaderCarrier = {
   get(name: string): string | null;
@@ -224,61 +227,6 @@ export class HttpCookieJar {
 
     this.ingestSetCookieHeader(headers.get("set-cookie"));
   }
-}
-
-export interface RenderAuthRequiredFragmentOptions {
-  heading?: string;
-  message?: string;
-  nextStep?: string;
-  blockName?: string;
-  emailInputName?: string;
-  passwordInputName?: string;
-  loginActionName?: string;
-  loginTarget?: string;
-  registerActionName?: string;
-  registerTarget?: string;
-  includeRegisterAction?: boolean;
-}
-
-export function renderAuthRequiredFragment(
-  options: RenderAuthRequiredFragmentOptions = {},
-): string {
-  const heading = options.heading ?? "## Login Status";
-  const message = options.message ?? "Login required: sign in before continuing.";
-  const nextStep = options.nextStep
-    ?? "Next step: enter email/password and run login, or go to register if no account exists.";
-
-  const emailInputName = options.emailInputName ?? "email";
-  const passwordInputName = options.passwordInputName ?? "password";
-  const loginActionName = options.loginActionName ?? "login";
-  const loginTarget = options.loginTarget ?? "/login";
-  const includeRegisterAction = options.includeRegisterAction ?? true;
-  const registerActionName = options.registerActionName ?? "go_register";
-  const registerTarget = options.registerTarget ?? "/register";
-  const blockName = options.blockName ?? "auth";
-
-  const block: SerializableBlock = {
-    name: blockName,
-    inputs: [
-      { name: emailInputName, type: "text", required: true },
-      { name: passwordInputName, type: "text", required: true, secret: true },
-    ],
-    reads: includeRegisterAction
-      ? [{ name: registerActionName, target: registerTarget }]
-      : [],
-    writes: [
-      { name: loginActionName, target: loginTarget, inputs: [emailInputName, passwordInputName] },
-    ],
-  };
-
-  return renderMarkdownFragment({
-    body: [
-      heading,
-      message,
-      nextStep,
-    ],
-    block,
-  });
 }
 
 export type SessionGuardSuccess<Session> = {
