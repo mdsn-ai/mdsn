@@ -3,6 +3,7 @@ import path from "node:path";
 import { actionFilePathToActionId } from "./action";
 import { resolveConfig, type MdsnConfig } from "./config";
 import { parsePageDefinition } from "../core/document/page-definition";
+import { isStreamAccept } from "../core/model/block";
 import { pagePathToRoutePath } from "./routes";
 import { findActionFiles, findPageFiles, resolveSitePaths } from "./site";
 
@@ -125,6 +126,9 @@ export async function buildFrameworkSite(options: {
 
     for (const block of page.blocks) {
       for (const operation of [...block.reads, ...block.writes]) {
+        if ("accept" in operation && (!operation.name || isStreamAccept(operation.accept))) {
+          continue;
+        }
         const actionId = normalizeDeclaredActionId(operation.target);
         if (!actionId) {
           continue;

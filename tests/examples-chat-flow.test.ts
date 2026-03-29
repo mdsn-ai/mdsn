@@ -105,6 +105,10 @@ describe("examples chat flow", () => {
     expect(registerPageSource).toContain('GET "/" -> go_login');
     expect(chatPageSource).toContain("<!-- mdsn:block chat -->");
     expect(chatPageSource).toContain("<!-- mdsn:block session -->");
+    expect(chatPageSource).toContain("## Session Runtime");
+    expect(chatPageSource).toContain("realtime updates are available at `/stream`");
+    expect(chatPageSource).toContain("when you receive `refresh`, call `messages`");
+    expect(chatPageSource).toContain('GET "/stream" accept:"text/event-stream"');
     expect(chatPageSource).toContain('POST "/send" (message) -> send');
     expect(chatPageSource).toContain('GET "/list" -> messages');
     expect(chatPageSource).toContain('GET "/load-more" -> more');
@@ -235,6 +239,7 @@ describe("examples chat flow", () => {
       expect(chatPageResponse.status).toBe(200);
       const chatPageMarkdown = await chatPageResponse.text();
       expect(chatPageMarkdown).toContain("# Chat Demo");
+      expect(chatPageMarkdown).toContain('GET "/stream" accept:"text/event-stream"');
       expect(chatPageMarkdown).toContain('GET "/list" -> messages');
       expect(chatPageMarkdown).toContain('GET "/load-more" -> more');
       expect(chatPageMarkdown).toContain('POST "/send" (message) -> send');
@@ -1045,9 +1050,33 @@ describe("examples chat flow", () => {
 
   it("pushes a refresh event over the stream endpoint after new messages", async () => {
     await withServer(async (baseUrl) => {
+      const unauthorizedStream = await fetch(`${baseUrl}/stream`, {
+        headers: { Accept: "text/event-stream" },
+      });
+      expect(unauthorizedStream.status).toBe(401);
+      expect(unauthorizedStream.headers.get("content-type")).toContain("text/markdown");
+      await expect(unauthorizedStream.text()).resolves.toContain("Please log in before opening realtime updates.");
+
+      const registerResponse = await fetch(`${baseUrl}/register`, {
+        method: "POST",
+        headers: {
+          "content-type": "text/markdown",
+          Accept: "text/markdown",
+        },
+        body: toMarkdownInputs({
+            username: "AgentStream",
+            email: "stream@example.com",
+            password: "secret",
+          }),
+      });
+      const streamCookie = registerResponse.headers.get("set-cookie");
+
       const controller = new AbortController();
       const streamResponse = await fetch(`${baseUrl}/stream`, {
-        headers: { Accept: "text/event-stream" },
+        headers: {
+          Accept: "text/event-stream",
+          Cookie: streamCookie ?? "",
+        },
         signal: controller.signal,
       });
 
@@ -1058,19 +1087,14 @@ describe("examples chat flow", () => {
       expect(reader).toBeDefined();
 
       try {
-        const registerResponse = await fetch(`${baseUrl}/register`, {
-          method: "POST",
-          headers: {
-            "content-type": "text/markdown",
-            Accept: "text/markdown",
-          },
-          body: toMarkdownInputs({
-              username: "AgentStream",
-              email: "stream@example.com",
-              password: "secret",
-            }),
-        });
-        const streamCookie = registerResponse.headers.get("set-cookie");
+        let text = "";
+        for (let attempt = 0; attempt < 3 && !text.includes("event: ready"); attempt += 1) {
+          const chunk = await reader!.read();
+          text += new TextDecoder().decode(chunk.value ?? new Uint8Array());
+        }
+
+        expect(text).toContain("event: ready");
+        expect(text).toContain("data: stream open; wait for refresh; then call messages");
 
         await fetch(`${baseUrl}/send`, {
           method: "POST",
@@ -1081,16 +1105,16 @@ describe("examples chat flow", () => {
           },
           body: toMarkdownInputs({
               message: "实时刷新测试",
-            }),
+          }),
         });
 
-        let text = "";
         for (let attempt = 0; attempt < 3 && !text.includes("event: refresh"); attempt += 1) {
           const chunk = await reader!.read();
           text += new TextDecoder().decode(chunk.value ?? new Uint8Array());
         }
 
         expect(text).toContain("event: refresh");
+        expect(text).toContain("data: call messages");
       } finally {
         await reader!.cancel().catch(() => undefined);
         controller.abort();

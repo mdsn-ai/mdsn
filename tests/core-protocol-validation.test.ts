@@ -60,4 +60,29 @@ describe("new core protocol validation", () => {
       );
     }).toThrow();
   });
+
+  it("rejects unnamed non-stream reads in validated block models", () => {
+    expect(() => {
+      validateDocumentStructure(
+        [
+          {
+            name: "session",
+            inputs: [],
+            reads: [
+              {
+                id: "session::read::0",
+                block: "session",
+                name: undefined,
+                target: "/list",
+                inputs: [],
+                order: 0,
+              },
+            ],
+            writes: [],
+          },
+        ],
+        [{ name: "session" }],
+      );
+    }).toThrow("Read operations must declare a name unless they accept text/event-stream: session::read::0");
+  });
 });

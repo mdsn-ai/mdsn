@@ -240,4 +240,37 @@ block explode {
       });
     });
   });
+
+  it("does not bind stream GET declarations as ordinary hosted actions", async () => {
+    const app = createHostedApp({
+      pages: {
+        "/chat": `---
+title: Chat
+---
+
+<!-- mdsn:block session -->
+
+\`\`\`mdsn
+block session {
+  GET "/stream" accept:"text/event-stream"
+}
+\`\`\`
+`,
+      },
+    });
+
+    await withServer(app, async (baseUrl) => {
+      const htmlResponse = await fetch(`${baseUrl}/chat`, {
+        headers: { Accept: "text/html" },
+      });
+      expect(htmlResponse.status).toBe(200);
+      const html = await htmlResponse.text();
+      expect(html).not.toContain('data-mdsn-read="session::read::0"');
+
+      const streamResponse = await fetch(`${baseUrl}/stream`, {
+        headers: { Accept: "text/markdown" },
+      });
+      expect(streamResponse.status).toBe(404);
+    });
+  });
 });

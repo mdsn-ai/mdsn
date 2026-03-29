@@ -6,6 +6,7 @@ import { createFrameworkApp, type CreateFrameworkAppOptions } from "../framework
 import { resolveConfig, type MdsnConfig } from "./config";
 import { createDevState } from "./dev";
 import { importModuleFromFile } from "./module-loader";
+import { createLogger, type Logger } from "../core";
 
 export type CreateFrameworkAppFn = (options: CreateFrameworkAppOptions) => Express;
 
@@ -41,7 +42,7 @@ function formatConfigLoadError(configPath: string, error: unknown): Error {
   return new Error(`Failed to load ${path.basename(configPath)}: ${message}`);
 }
 
-async function loadConfigFromFile(configPath: string): Promise<MdsnConfig> {
+async function loadConfigFromFile(configPath: string, logger: Logger): Promise<MdsnConfig> {
   const extension = path.extname(configPath).toLowerCase();
   if (extension === ".json") {
     return JSON.parse(readFileSync(configPath, "utf8")) as MdsnConfig;
@@ -51,16 +52,19 @@ async function loadConfigFromFile(configPath: string): Promise<MdsnConfig> {
     const loadedModule = await importModuleFromFile(configPath) as Record<string, unknown>;
     return (loadedModule.default ?? loadedModule) as MdsnConfig;
   } catch (error) {
+    logger.debug("Failed to load config file", { path: configPath });
     throw formatConfigLoadError(configPath, error);
   }
 }
 
-export async function loadUserConfig(rootDir: string): Promise<MdsnConfig> {
+export async function loadUserConfig(rootDir: string, logger?: Logger): Promise<MdsnConfig> {
+  const log = logger ?? createLogger({ prefix: "config" });
   const availableConfigPaths = USER_CONFIG_CANDIDATES
     .map((name) => path.join(rootDir, name))
     .filter((candidatePath) => existsSync(candidatePath));
 
   if (availableConfigPaths.length === 0) {
+    log.debug("No config file found, using defaults");
     return {};
   }
 
@@ -68,7 +72,8 @@ export async function loadUserConfig(rootDir: string): Promise<MdsnConfig> {
 
   for (const configPath of availableConfigPaths) {
     try {
-      return await loadConfigFromFile(configPath);
+      log.debug("Loading config file", { path: configPath });
+      return await loadConfigFromFile(configPath, log);
     } catch (error) {
       errors.push(error instanceof Error ? error : new Error(String(error)));
     }
@@ -133,12 +138,13 @@ export async function startFrameworkServer(options: {
   openBrowser?: OpenBrowserFn;
   log?: (message: string) => void;
 } = {}): Promise<void> {
+  const logger = createLogger({ prefix: "server" });
   const cwd = path.resolve(options.cwd ?? process.cwd());
   const distDir = path.join(cwd, "dist");
   const shouldUseDist = options.mode === "start";
   const builtConfig = shouldUseDist ? loadBuiltConfig(distDir) : null;
   const rootDir = builtConfig ? distDir : cwd;
-  const config = builtConfig ?? await loadUserConfig(rootDir);
+  const config = builtConfig ?? await loadUserConfig(rootDir, logger);
   const resolvedConfig = resolveConfig(config);
   const devState = options.mode === "dev" ? createDevState() : undefined;
   const app = (options.createApp ?? createFrameworkApp)({
@@ -164,9 +170,11 @@ export async function startFrameworkServer(options: {
             ? path.join(directoryName, fileName).split(path.sep).join("/")
             : directoryName;
           devState.bumpVersion(relativeName);
+          logger.debug("File changed, bumping version", { file: relativeName });
         });
-      } catch {
-        // Ignore watcher setup failures for now; the dev server remains usable without auto-reload.
+        logger.info("Watching directory for changes", { directory: directoryName });
+      } catch (error) {
+        logger.warn("Failed to setup file watcher", { directory: directoryName, error: String(error) });
       }
     }
   }
@@ -182,8 +190,9 @@ export async function startFrameworkServer(options: {
   if (options.mode === "dev" && resolvedConfig.dev.openBrowser) {
     try {
       await (options.openBrowser ?? openBrowser)(`http://localhost:${port}`);
-    } catch {
-      // Keep the dev server usable even if the opener is unavailable.
+      logger.info("Opening browser", { url: `http://localhost:${port}` });
+    } catch (error) {
+      logger.warn("Failed to open browser", { error: String(error) });
     }
   }
 }

@@ -69,7 +69,11 @@ export function actionExportNameToActionId(filePath: string, actionsDir: string,
 }
 
 function isActionDefinition(value: unknown): value is ActionDefinition {
-  return !!value && typeof value === "object" && typeof (value as { run?: unknown }).run === "function";
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const obj = value as Record<string, unknown>;
+  return typeof obj.run === "function";
 }
 
 function actionDefinitionEntriesFromMap(candidate: unknown): RegisteredAction[] | null {

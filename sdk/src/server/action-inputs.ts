@@ -1,3 +1,5 @@
+import { validateInputLength, MAX_INPUT_LENGTH, MAX_IDENTIFIER_LENGTH } from "../core";
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -7,6 +9,8 @@ function parseScalarToken(raw: string): unknown {
   if (!trimmed) {
     return "";
   }
+
+  validateInputLength(trimmed, MAX_INPUT_LENGTH);
 
   if (
     trimmed.startsWith("{")
@@ -35,6 +39,8 @@ function parseScalarToken(raw: string): unknown {
 }
 
 function parseMarkdownInputs(source: string): Record<string, unknown> {
+  validateInputLength(source, MAX_INPUT_LENGTH * 10);
+  
   const inputs: Record<string, unknown> = {};
   const segments = splitInputPairs(source);
 
@@ -46,6 +52,10 @@ function parseMarkdownInputs(source: string): Record<string, unknown> {
 
     const name = segment.slice(0, separator).trim();
     if (!/^[a-zA-Z_][\w-]*$/u.test(name)) {
+      continue;
+    }
+
+    if (name.length > MAX_IDENTIFIER_LENGTH) {
       continue;
     }
 
