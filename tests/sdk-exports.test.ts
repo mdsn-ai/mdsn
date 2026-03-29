@@ -72,12 +72,11 @@ describe("sdk layered exports", () => {
     const distEntry = path.join(process.cwd(), "sdk", "dist", "index.js");
 
     if (!existsSync(distEntry)) {
-      // Fall through to the build below.
+      execFileSync("npm", ["run", "build", "--workspace", "@mdsnai/sdk"], {
+        cwd: process.cwd(),
+        stdio: "pipe",
+      });
     }
-    execFileSync("npm", ["run", "build", "--workspace", "@mdsnai/sdk"], {
-      cwd: process.cwd(),
-      stdio: "pipe",
-    });
 
     const output = execFileSync(
       process.execPath,
