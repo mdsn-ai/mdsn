@@ -1,6 +1,6 @@
 {
   "name": "create-mdsn",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "npm create entry for scaffolding a new MDSN site project.",
   "license": "MIT",
@@ -34,6 +34,6 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@mdsnai/sdk": "0.2.0"
+    "@mdsnai/sdk": "0.2.1"
   }
 }

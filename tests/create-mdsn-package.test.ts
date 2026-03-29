@@ -29,7 +29,7 @@ describe("create-mdsn package", () => {
     });
     expect(packageJson.files).toEqual(expect.arrayContaining(["bin", "README.md", "LICENSE"]));
     expect(packageJson.dependencies).toMatchObject({
-      "@mdsnai/sdk": "0.2.0",
+      "@mdsnai/sdk": "0.2.1",
     });
   });
 
