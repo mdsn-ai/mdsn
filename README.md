@@ -85,7 +85,7 @@ That means the same Markdown source can carry:
 <!-- mdsn:block guestbook -->
 
 ```mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   GET "/list" -> refresh

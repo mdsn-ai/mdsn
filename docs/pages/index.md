@@ -58,7 +58,7 @@ An MDSN page usually contains:
 
 ### 2. Block
 
-A `block` is an interaction scope inside the page.
+A `BLOCK` is an interaction scope inside the page.
 
 It is mounted back into the Markdown body through an anchor such as `<!-- mdsn:block guestbook -->`, and becomes the replaceable region at runtime.
 
