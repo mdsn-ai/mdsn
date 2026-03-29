@@ -19,6 +19,27 @@ This applies to:
 - Koa
 - any HTTP framework where you control routing and headers
 
+## Default Rule
+
+Start with the root package:
+
+```ts
+import {
+  createHostedApp,
+  createActionContextFromRequest,
+  defineActions,
+  parseActionInputs,
+  renderHostedPage,
+  renderMarkdownFragment,
+  renderMarkdownValue,
+} from "@mdsnai/sdk";
+```
+
+For most custom server integrations, there are two tracks:
+
+- use `createHostedApp()` when you want MDSN to carry the page/action HTTP glue for you
+- use `renderHostedPage()` plus manual routes when you need full HTTP control
+
 ## 1. When this path makes sense
 
 Choose this path when you already have your own server app, or when you need full control over:
@@ -31,11 +52,15 @@ Choose this path when you already have your own server app, or when you need ful
 
 In that case, you often do not need `@mdsnai/sdk/framework`.
 
-Instead, work directly with:
+In practice, start with:
 
-- `@mdsnai/sdk/core`
+- `@mdsnai/sdk`
+
+Only move to child entry points when you want stricter package boundaries:
+
 - `@mdsnai/sdk/server`
 - `@mdsnai/sdk/web`
+- `@mdsnai/sdk/core`
 
 ## 2. Full reference demo
 
@@ -54,7 +79,44 @@ This demo does four things:
 
 If you only care about the server side, this example is enough.
 
-## 3. The minimal server chain
+## 3. Track A: use `createHostedApp()`
+
+This is the simplest server-side path when you already have your own HTTP app but do not want to hand-wire every page and action route.
+
+```ts
+import express from "express";
+import { readFile } from "node:fs/promises";
+import { createHostedApp, defineAction, defineActions, renderMarkdownFragment } from "@mdsnai/sdk";
+
+const app = createHostedApp({
+  pages: {
+    "/": await readFile("pages/index.md", "utf8"),
+  },
+  actions: defineActions({
+    list: defineAction({
+      async run() {
+        return renderMarkdownFragment({
+          body: ["## Messages", "_No messages yet._"],
+          block: {
+            name: "guestbook",
+            reads: [{ name: "refresh", target: "/list" }],
+          },
+        });
+      },
+    }),
+  }),
+});
+
+express().use(app);
+```
+
+Use this track when:
+
+- you want custom server ownership
+- you still want SDK-managed page/action wiring
+- you do not need to hand-code every route
+
+## 4. Track B: manual hosting and routing
 
 No matter which framework you use, the flow is the same:
 
@@ -69,7 +131,7 @@ That means:
 - MDSN still defines the page protocol
 - your framework only carries it over HTTP
 
-## 4. Serving pages
+## 5. Serving pages manually
 
 The two most common public APIs here are:
 
@@ -114,7 +176,7 @@ After this:
 - `Accept: text/markdown` returns the original page Markdown
 - `Accept: text/html` returns the hosted HTML page
 
-## 5. Wiring action routes
+## 6. Wiring action routes manually
 
 The most important rule for actions is:
 
@@ -136,7 +198,7 @@ then your server should provide:
 
 There is no hidden internal route here. The declared target is the route.
 
-## 6. What handlers return
+## 7. What handlers return
 
 Action handlers return Markdown fragments.  
 When the action cannot continue, return a Markdown fragment that explains the issue and the next step.
@@ -212,7 +274,7 @@ export const actions = defineActions({
 });
 ```
 
-## 7. HTTP action contract
+## 8. HTTP action contract
 
 The current HTTP Host contract is fixed:
 
@@ -231,21 +293,26 @@ In a custom server, the simplest path is to return the agent-facing Markdown con
 
 ```ts
 app.get("/list", async (req, res) => {
-  const markdown = await actions.list.run(createActionContext("/list", {}, req));
+  const markdown = await actions.list.run(createActionContextFromRequest(req, {
+    pathname: "/list",
+  }));
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 
 app.post("/post", async (req, res) => {
   const markdown = await actions.post.run(
-    createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
+    createActionContextFromRequest(req, {
+      pathname: "/post",
+      inputs: parseActionInputs(typeof req.body === "string" ? req.body : ""),
+    }),
   );
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 ```
 
-Here, `createActionContext()` is simply your adapter from the framework request into `ActionContext`.
+Here, `createActionContextFromRequest()` is the public adapter from your framework request into `ActionContext`.
 
-## 8. Session Runtime Contract (Cookie-Based)
+## 9. Session Runtime Contract (Cookie-Based)
 
 Session handling is runtime behavior, not MDSN syntax.
 
