@@ -1,6 +1,6 @@
 import express from "express";
 import { parsePageDefinition } from "../core/document/page-definition";
-import type { BlockDefinition } from "../core/model/block";
+import { isStreamAccept, type BlockDefinition } from "../core/model/block";
 import { executeActionHandler, type ActionHandler } from "../server/action-host";
 import { parseActionInputs } from "../server/action-inputs";
 import {
@@ -88,6 +88,9 @@ function buildActionBindings(pages: Record<string, string>): Map<string, ActionB
     }
     for (const block of document.blocks) {
       for (const operation of block.reads) {
+        if (!operation.name || isStreamAccept(operation.accept)) {
+          continue;
+        }
         const targetPath = mapPageTargetToHttpPath(operation.target);
         const actionId = normalizeActionId(operation.target);
         if (!actionId) {
@@ -154,6 +157,7 @@ function blockToSerializableBlock(block: BlockDefinition): SerializableBlock {
       name: read.name,
       target: read.target,
       inputs: read.inputs,
+      accept: read.accept,
     })),
     writes: block.writes.map((write) => ({
       name: write.name,

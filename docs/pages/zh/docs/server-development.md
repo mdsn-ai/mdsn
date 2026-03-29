@@ -19,6 +19,27 @@ layout: docs
 - Koa
 - 任何能自己处理路由和响应头的 HTTP 框架
 
+## 默认规则
+
+默认先用根入口：
+
+```ts
+import {
+  createHostedApp,
+  createActionContextFromRequest,
+  defineActions,
+  parseActionInputs,
+  renderHostedPage,
+  renderMarkdownFragment,
+  renderMarkdownValue,
+} from "@mdsnai/sdk";
+```
+
+对大多数“挂到现有服务端”的场景，可以直接分成两条路：
+
+- 用 `createHostedApp()`，让 SDK 帮你接页面和 action 的 HTTP glue
+- 用 `renderHostedPage()` + 手写路由，保留完全控制权
+
 ## 1. 什么时候需要这条路
 
 如果你已经有自己的服务端应用，或者你要自己控制：
@@ -31,11 +52,15 @@ layout: docs
 
 那就不一定需要 `@mdsnai/sdk/framework`。
 
-这时候更适合直接使用公开 SDK：
+实际接入时，先从这里开始：
 
-- `@mdsnai/sdk/core`
+- `@mdsnai/sdk`
+
+只有在你明确想要更强的分层边界时，再切到：
+
 - `@mdsnai/sdk/server`
 - `@mdsnai/sdk/web`
+- `@mdsnai/sdk/core`
 
 ## 2. 参考完整 demo
 
@@ -54,7 +79,44 @@ layout: docs
 
 如果你只关心服务端接入，这个 demo 已经足够完整。
 
-## 3. 服务端接入的最小链路
+## 3. 路径 A：使用 `createHostedApp()`
+
+如果你已经有自己的 HTTP 应用，但不想手写每一个页面路由和 action route，这条路最短。
+
+```ts
+import express from "express";
+import { readFile } from "node:fs/promises";
+import { createHostedApp, defineAction, defineActions, renderMarkdownFragment } from "@mdsnai/sdk";
+
+const app = createHostedApp({
+  pages: {
+    "/": await readFile("pages/index.md", "utf8"),
+  },
+  actions: defineActions({
+    list: defineAction({
+      async run() {
+        return renderMarkdownFragment({
+          body: ["## Messages", "_No messages yet._"],
+          block: {
+            name: "guestbook",
+            reads: [{ name: "refresh", target: "/list" }],
+          },
+        });
+      },
+    }),
+  }),
+});
+
+express().use(app);
+```
+
+适合你：
+
+- 要自己掌控服务端应用
+- 但不想自己把页面和 action route 一条条 glue 起来
+- 想先跑通一条标准 MDSN 承载路径
+
+## 4. 路径 B：手动承载页面和路由
 
 不管你用什么框架，流程都一样：
 
@@ -69,7 +131,7 @@ layout: docs
 - 页面协议仍然是 MDSN
 - 框架只负责 HTTP 承载
 
-## 4. 页面响应怎么做
+## 5. 手动承载页面响应
 
 最常用的两个公开 API 是：
 
@@ -114,7 +176,7 @@ app.get("/", (req, res) => {
 - `Accept: text/markdown` 会返回原始页面 Markdown
 - `Accept: text/html` 会返回 HTML 页面
 
-## 5. action 路由怎么做
+## 6. 手动接 action 路由
 
 action 这层最重要的事实是：
 
@@ -136,7 +198,7 @@ POST "/post" (nickname, message) -> submit
 
 这不是内部映射，也不是额外包装路径，就是页面里声明的 target 本身。
 
-## 6. action handler 返回什么
+## 7. action handler 返回什么
 
 action handler 统一返回 Markdown fragment。  
 当 action 不能继续时，也直接返回带“问题 + 下一步”的 Markdown fragment。
@@ -212,7 +274,7 @@ export const actions = defineActions({
 });
 ```
 
-## 7. action HTTP 契约怎么接
+## 8. action HTTP 契约怎么接
 
 当前 HTTP Host 契约是固定的：
 
@@ -231,21 +293,26 @@ export const actions = defineActions({
 
 ```ts
 app.get("/list", async (req, res) => {
-  const markdown = await actions.list.run(createActionContext("/list", {}, req));
+  const markdown = await actions.list.run(createActionContextFromRequest(req, {
+    pathname: "/list",
+  }));
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 
 app.post("/post", async (req, res) => {
   const markdown = await actions.post.run(
-    createActionContext("/post", parseActionInputs(typeof req.body === "string" ? req.body : ""), req),
+    createActionContextFromRequest(req, {
+      pathname: "/post",
+      inputs: parseActionInputs(typeof req.body === "string" ? req.body : ""),
+    }),
   );
   res.status(200).type("text/markdown; charset=utf-8").send(markdown);
 });
 ```
 
-这里的 `createActionContext()` 只是把你的请求对象整理成 `ActionContext` 需要的字段。
+这里的 `createActionContextFromRequest()` 就是把你的请求对象整理成 `ActionContext` 的公开 adapter。
 
-## 8. Session 运行时契约（Cookie）
+## 9. Session 运行时契约（Cookie）
 
 session 处理属于运行时行为，不属于 MDSN 语法关键字。
 

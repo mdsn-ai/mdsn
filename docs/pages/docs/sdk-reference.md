@@ -6,7 +6,23 @@ layout: docs
 
 # SDK Reference
 
-`@mdsnai/sdk` is not a single flat API surface.
+Start here by default:
+
+- `@mdsnai/sdk`
+
+Use the root entry point first when you want to:
+
+- build a site with the built-in framework
+- host pages and actions inside your own server
+- render the UI yourself with React or Vue
+
+Move to child entry points only when you want:
+
+- stricter layer boundaries
+- narrower imports
+- docs focused on one specific integration path
+
+`@mdsnai/sdk` still sits on top of a layered package structure.
 
 It gives you a few different ways to work:
 
@@ -24,6 +40,13 @@ Only after that does it list the public exports.
 
 ## 1. Choose a path first
 
+| Goal | Start here | Main APIs |
+| --- | --- | --- |
+| Build a site with the framework | `@mdsnai/sdk` | `createFrameworkApp()`, `defineConfig()` |
+| Host inside your own server | `@mdsnai/sdk` | `createHostedApp()`, `defineActions()`, `renderHostedPage()` |
+| Render with React or Vue | `@mdsnai/sdk` | `parsePage()`, `parseFragment()`, `parseMarkdown()` |
+| Parse protocol structure only | `@mdsnai/sdk/core` | `parsePageDefinition()` |
+
 ### Path A: build a site directly
 
 Use this when:
@@ -37,7 +60,11 @@ Read first:
 - [Getting Started](/docs/getting-started)
 - [Framework Development](/docs/site-development)
 
-Main package entry:
+Default package entry:
+
+- `@mdsnai/sdk`
+
+Focused entry if you want framework-only imports:
 
 - `@mdsnai/sdk/framework`
 
@@ -59,7 +86,11 @@ Read first:
 - [Server Development](/docs/server-development)
 - [SDK Error Fragments](/docs/sdk-error-fragments)
 
-Main package entries:
+Default package entry:
+
+- `@mdsnai/sdk`
+
+Focused entries if you want explicit layer boundaries:
 
 - `@mdsnai/sdk/server`
 - `@mdsnai/sdk/core`
@@ -94,7 +125,11 @@ Read first:
 - [Custom Rendering with Vue](/docs/vue-rendering)
 - [Custom Rendering with React](/docs/react-rendering)
 
-Main package entry:
+Default package entry:
+
+- `@mdsnai/sdk`
+
+Focused entry if you want headless-only imports:
 
 - `@mdsnai/sdk/web`
 
@@ -122,13 +157,13 @@ Most important API:
 
 ## 2. `@mdsnai/sdk`
 
-This is the aggregate entry point.
+This is the default entry point.
 
 Use it when:
 
-- you want to try the main capabilities quickly
-- you are not sure yet which boundary you need
-- you are okay importing framework, web, and core APIs from one package
+- you want one package to cover the common integration paths
+- you do not want to decide your exact layer boundary on day one
+- you want framework, hosting, and headless APIs available from one place
 
 Main capabilities exposed here:
 
@@ -136,9 +171,10 @@ Main capabilities exposed here:
 - headless parsing: `parseMarkdown()`, `parsePage()`, `parseFragment()`
 - default rendering: `createRenderModel()`, `renderPageHtml()`, `renderDefaultHtmlDocument()`
 - framework: `createFrameworkApp()`, `defineConfig()`
-- actions: `defineAction()`
+- hosting: `createHostedApp()`, `renderHostedPage()`, `createActionContextFromRequest()`
+- actions: `defineAction()`, `defineActions()`, `renderMarkdownFragment()`, `renderMarkdownValue()`
 
-If your integration boundary is already clear, prefer the focused entry points:
+If your integration boundary is already clear, or you want narrower imports, prefer the focused entry points:
 
 - `@mdsnai/sdk/core`
 - `@mdsnai/sdk/server`

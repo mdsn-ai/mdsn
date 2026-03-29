@@ -88,4 +88,36 @@ describe("new web page render", () => {
     expect(model.markdownHtml).toContain('data-target="/__mdsn/actions/messages"');
     expect(model.markdownHtml).not.toContain('data-target="/messages"');
   });
+
+  it("does not render a standard read button for stream declarations", () => {
+    const model = createPageRenderModel({
+      frontmatter: {
+        title: "Chat",
+      },
+      markdown: "# Chat\n\n<!-- mdsn:block session -->",
+      blockAnchors: [{ name: "session" }],
+      blocks: [
+        {
+          name: "session",
+          inputs: [],
+          reads: [
+            {
+              id: "session::read::0",
+              block: "session",
+              name: undefined,
+              target: "/stream",
+              accept: "text/event-stream",
+              inputs: [],
+              order: 0,
+            },
+          ],
+          writes: [],
+        },
+      ],
+    });
+
+    expect(model.markdownHtml).toContain('data-mdsn-block-region="session"');
+    expect(model.markdownHtml).not.toContain('data-mdsn-read="session::read::0"');
+    expect(model.markdownHtml).not.toContain("/stream");
+  });
 });

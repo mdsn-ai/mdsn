@@ -6,7 +6,23 @@ layout: docs
 
 # SDK 参考
 
-`@mdsnai/sdk` 不是只有一组 API。
+默认先从这里开始：
+
+- `@mdsnai/sdk`
+
+当你要做这些事情时，优先直接用根入口：
+
+- 用内建 framework 建站
+- 把页面和 action 挂到现有服务端
+- 用 React / Vue 自己渲染前端
+
+只有在你明确需要这些东西时，再切子入口：
+
+- 更清晰的层级边界
+- 更窄的 import 面
+- 面向某一条接入路径的专门文档
+
+`@mdsnai/sdk` 下面仍然是分层结构。
 
 它提供了几条不同的使用路径：
 
@@ -24,6 +40,13 @@ layout: docs
 
 ## 1. 先选路径
 
+| 目标 | 默认入口 | 主要 API |
+| --- | --- | --- |
+| 直接用 framework 建站 | `@mdsnai/sdk` | `createFrameworkApp()`、`defineConfig()` |
+| 挂到现有服务端 | `@mdsnai/sdk` | `createHostedApp()`、`defineActions()`、`renderHostedPage()` |
+| 用 React / Vue 自定义渲染 | `@mdsnai/sdk` | `parsePage()`、`parseFragment()`、`parseMarkdown()` |
+| 只做协议解析 | `@mdsnai/sdk/core` | `parsePageDefinition()` |
+
 ### 路径 A：直接开发一个站点
 
 适合你：
@@ -37,7 +60,11 @@ layout: docs
 - [快速开始](/zh/docs/getting-started)
 - [基础开发框架](/zh/docs/site-development)
 
-主要入口：
+默认入口：
+
+- `@mdsnai/sdk`
+
+如果你只想要 framework 边界：
 
 - `@mdsnai/sdk/framework`
 
@@ -59,7 +86,11 @@ layout: docs
 - [服务端开发](/zh/docs/server-development)
 - [SDK 错误提示片段](/zh/docs/sdk-error-fragments)
 
-主要入口：
+默认入口：
+
+- `@mdsnai/sdk`
+
+如果你要显式分层：
 
 - `@mdsnai/sdk/server`
 - `@mdsnai/sdk/core`
@@ -94,7 +125,11 @@ layout: docs
 - [使用 Vue 自定义渲染](/zh/docs/vue-rendering)
 - [使用 React 自定义渲染](/zh/docs/react-rendering)
 
-主要入口：
+默认入口：
+
+- `@mdsnai/sdk`
+
+如果你只想拿 headless 能力：
 
 - `@mdsnai/sdk/web`
 
@@ -122,13 +157,13 @@ layout: docs
 
 ## 2. `@mdsnai/sdk`
 
-这是聚合入口。
+这是默认入口。
 
 适合你：
 
-- 还没确定最终边界
-- 想快速试用 SDK 主能力
-- 不介意从一个包里拿 framework / web / core 的公开 API
+- 想用一个包先把主路径跑通
+- 暂时不想先决定精确层级边界
+- 希望 framework / hosting / headless 能力先都能拿到
 
 它暴露的主要能力有：
 
@@ -136,9 +171,10 @@ layout: docs
 - headless 解析：`parseMarkdown()`、`parsePage()`、`parseFragment()`
 - 默认渲染：`createRenderModel()`、`renderPageHtml()`、`renderDefaultHtmlDocument()`
 - framework：`createFrameworkApp()`、`defineConfig()`
-- action：`defineAction()`
+- hosting：`createHostedApp()`、`renderHostedPage()`、`createActionContextFromRequest()`
+- action：`defineAction()`、`defineActions()`、`renderMarkdownFragment()`、`renderMarkdownValue()`
 
-如果你的接入边界已经明确，优先直接用子入口：
+如果你的接入边界已经明确，或者你想缩小 import 面，再优先切到子入口：
 
 - `@mdsnai/sdk/core`
 - `@mdsnai/sdk/server`

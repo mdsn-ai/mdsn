@@ -17,8 +17,15 @@ describe("sdk layered exports", () => {
     expect(typeof sdk.renderDefaultHtmlDocument).toBe("function");
     expect(typeof sdk.getClientRuntimeScript).toBe("function");
     expect(typeof sdk.createFrameworkApp).toBe("function");
+    expect(typeof sdk.createHostedApp).toBe("function");
     expect(typeof sdk.defineConfig).toBe("function");
     expect(typeof sdk.defineAction).toBe("function");
+    expect(typeof sdk.defineActions).toBe("function");
+    expect(typeof sdk.renderHostedPage).toBe("function");
+    expect(typeof sdk.renderMarkdownFragment).toBe("function");
+    expect(typeof sdk.renderMarkdownValue).toBe("function");
+    expect(typeof sdk.parseActionInputs).toBe("function");
+    expect(typeof sdk.createActionContextFromRequest).toBe("function");
     expect("createParallelSiteApp" in sdk).toBe(false);
     expect("foundation" in sdk).toBe(false);
     expect("parseMdsnBlocks" in sdk).toBe(false);
@@ -48,6 +55,7 @@ describe("sdk layered exports", () => {
     expect(typeof server.renderInternalErrorFragment).toBe("function");
     expect(typeof server.wantsHtml).toBe("function");
     expect(typeof framework.createFrameworkApp).toBe("function");
+    expect(typeof framework.createHostedApp).toBe("function");
     expect(typeof framework.defineConfig).toBe("function");
     expect("createParallelFrameworkApp" in framework).toBe(false);
     expect("createParallelSiteApp" in framework).toBe(false);
@@ -74,7 +82,7 @@ describe("sdk layered exports", () => {
       process.execPath,
       [
         "-e",
-        `Promise.all([import("@mdsnai/sdk"), import("@mdsnai/sdk/core"), import("@mdsnai/sdk/web"), import("@mdsnai/sdk/server"), import("@mdsnai/sdk/framework"), import("@mdsnai/sdk/cli")]).then(([root, coreLayer, webLayer, serverLayer, frameworkLayer, cliLayer]) => { console.log(JSON.stringify({ root: typeof root.parsePageDefinition, rootFramework: typeof root.createFrameworkApp, core: typeof coreLayer.parsePageDefinition, web: typeof webLayer.getClientRuntimeScript, server: typeof serverLayer.defineAction, framework: typeof frameworkLayer.createFrameworkApp, cli: typeof cliLayer.runCli })); }).catch((error) => { console.error(error); process.exit(1); });`,
+        `Promise.all([import("@mdsnai/sdk"), import("@mdsnai/sdk/core"), import("@mdsnai/sdk/web"), import("@mdsnai/sdk/server"), import("@mdsnai/sdk/framework"), import("@mdsnai/sdk/cli")]).then(([root, coreLayer, webLayer, serverLayer, frameworkLayer, cliLayer]) => { console.log(JSON.stringify({ root: typeof root.parsePageDefinition, rootFramework: typeof root.createFrameworkApp, rootHosted: typeof root.createHostedApp, rootActions: typeof root.defineActions, rootHostedPage: typeof root.renderHostedPage, rootActionContext: typeof root.createActionContextFromRequest, core: typeof coreLayer.parsePageDefinition, web: typeof webLayer.getClientRuntimeScript, server: typeof serverLayer.defineAction, framework: typeof frameworkLayer.createFrameworkApp, frameworkHosted: typeof frameworkLayer.createHostedApp, cli: typeof cliLayer.runCli })); }).catch((error) => { console.error(error); process.exit(1); });`,
       ],
       { cwd: process.cwd(), encoding: "utf8" },
     );
@@ -82,10 +90,15 @@ describe("sdk layered exports", () => {
     expect(JSON.parse(output)).toEqual({
       root: "function",
       rootFramework: "function",
+      rootHosted: "function",
+      rootActions: "function",
+      rootHostedPage: "function",
+      rootActionContext: "function",
       core: "function",
       web: "function",
       server: "function",
       framework: "function",
+      frameworkHosted: "function",
       cli: "function",
     });
   });

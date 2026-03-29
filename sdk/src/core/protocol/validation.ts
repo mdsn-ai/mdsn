@@ -1,4 +1,4 @@
-import type { BlockDefinition } from "../model/block";
+import { isStreamAccept, type BlockDefinition } from "../model/block";
 import type { BlockAnchorDefinition } from "../model/document";
 
 export function validateDocumentStructure(
@@ -43,7 +43,31 @@ export function validateDocumentStructure(
       inputNames.add(input.name);
     }
 
-    for (const operation of [...block.reads, ...block.writes]) {
+    for (const operation of block.reads) {
+      if (!operation.name && !isStreamAccept(operation.accept)) {
+        throw new Error(
+          `Read operations must declare a name unless they accept text/event-stream: ${operation.id}`,
+        );
+      }
+      if (isStreamAccept(operation.accept) && operation.name) {
+        throw new Error(
+          `Stream read operations must not declare a name: ${operation.id}`,
+        );
+      }
+      if (operation.name) {
+        if (operationNames.has(operation.name)) {
+          throw new Error(`Duplicate operation name in block ${block.name}: ${operation.name}`);
+        }
+        operationNames.add(operation.name);
+      }
+      for (const inputName of operation.inputs) {
+        if (!inputNames.has(inputName)) {
+          throw new Error(`Unknown input ${inputName} referenced by ${operation.id}`);
+        }
+      }
+    }
+
+    for (const operation of block.writes) {
       if (operationNames.has(operation.name)) {
         throw new Error(`Duplicate operation name in block ${block.name}: ${operation.name}`);
       }

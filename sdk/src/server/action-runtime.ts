@@ -1,14 +1,13 @@
-import type express from "express";
 import { statSync } from "node:fs";
 import path from "node:path";
 import {
   actionExportNameToActionId,
   createActionRegistry,
   resolveActionModuleEntries,
-  type ActionContext,
   type ActionDefinition,
   type ActionRegistry,
 } from "./action";
+import { createActionContextFromRequest } from "./action-context";
 import { importModuleFromFile } from "./module-loader";
 
 function toPosixRelativePath(baseDir: string, filePath: string): string {
@@ -68,35 +67,6 @@ export async function loadActionRegistry(
   return createActionRegistry(entries);
 }
 
-export function createActionContext(
-  req: express.Request,
-  siteTitle?: string,
-  siteBaseUrl?: string,
-): ActionContext {
-  const body = (req.body ?? {}) as {
-    inputs?: Record<string, unknown>;
-    pathname?: string;
-  };
-
-  return {
-    inputs: body.inputs ?? {},
-    params: Object.fromEntries(Object.entries(req.params).map(([key, value]) => [key, String(value)])),
-    query: new URLSearchParams(
-      Object.entries(req.query).flatMap(([key, value]) => {
-        if (value === undefined) return [];
-        if (Array.isArray(value)) {
-          return value.map((item) => [key, String(item)] as [string, string]);
-        }
-        return [[key, String(value)] as [string, string]];
-      }),
-    ),
-    pathname: typeof body.pathname === "string" ? body.pathname : req.path,
-    request: req,
-    cookies: {},
-    env: process.env,
-    site: {
-      title: siteTitle,
-      baseUrl: siteBaseUrl,
-    },
-  };
+export function createActionContext(req: Parameters<typeof createActionContextFromRequest>[0], siteTitle?: string, siteBaseUrl?: string) {
+  return createActionContextFromRequest(req, { siteTitle, siteBaseUrl });
 }

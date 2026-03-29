@@ -15,12 +15,20 @@ description: Persistent single-room chat example
 - use `messages`, `more`, `send`, and `logout`
 - successful send returns `send_status: success`
 
+## Session Runtime
+
+- realtime updates are available at `/stream`
+- use the same session cookie
+- keep the stream open
+- when you receive `refresh`, call `messages`
+
 <!-- mdsn:block session -->
 
 <!-- mdsn:block chat -->
 
 ```mdsn
 block session {
+  GET "/stream" accept:"text/event-stream"
   POST "/logout" () -> logout
 }
 

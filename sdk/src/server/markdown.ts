@@ -31,9 +31,10 @@ export type SerializableInput = {
 };
 
 export type SerializableRead = {
-  name: string;
+  name?: string;
   target: string;
   inputs?: string[];
+  accept?: string;
 };
 
 export type SerializableWrite = {
@@ -116,7 +117,9 @@ export function serializeBlock(block: SerializableBlock): string {
   }
 
   for (const read of block.reads ?? []) {
-    lines.push(`  GET "${read.target}"${formatIdentifierList(read.inputs)} -> ${read.name}`);
+    const acceptClause = read.accept ? ` accept:${JSON.stringify(read.accept)}` : "";
+    const nameClause = read.name ? ` -> ${read.name}` : "";
+    lines.push(`  GET "${read.target}"${formatIdentifierList(read.inputs)}${acceptClause}${nameClause}`);
   }
 
   for (const write of block.writes ?? []) {

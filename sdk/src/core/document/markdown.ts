@@ -1,6 +1,4 @@
-function trimTrailingBlankLines(value: string): string {
-  return value.replace(/\n+$/u, "\n");
-}
+import { trimTrailingBlankLines } from "../utils";
 
 export function extractExecutableMdsnBlocks(markdown: string): {
   markdownWithoutMdsn: string;

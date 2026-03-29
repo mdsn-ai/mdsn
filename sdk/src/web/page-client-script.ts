@@ -190,9 +190,36 @@ export function getPageClientRuntimeScript(): string {
   }
 
   function parseReadOrWriteLine(line, kind, blockName, index) {
-    const match = kind === "read"
-      ? String(line).trim().match(/^GET\\s+"([^"]+)"(?:\\s*\\(([^)]*)\\))?\\s*->\\s*([a-zA-Z_][\\w-]*)$/)
-      : String(line).trim().match(/^POST\\s+"([^"]+)"\\s*\\(([^)]*)\\)\\s*->\\s*([a-zA-Z_][\\w-]*)$/);
+    if (kind === "read") {
+      const match = String(line)
+        .trim()
+        .match(/^GET\\s+"([^"]+)"(?:\\s*\\(([^)]*)\\))?(?:\\s+accept:"([^"]+)")?(?:\\s*->\\s*([a-zA-Z_][\\w-]*))?$/);
+      if (!match) {
+        throw new Error("Invalid " + kind + " declaration: " + line);
+      }
+
+      const target = match[1];
+      const rawInputs = match[2];
+      const accept = match[3];
+      const name = match[4];
+      const isStream = String(accept || "").toLowerCase() === "text/event-stream";
+
+      if ((!name && !isStream) || (isStream && name)) {
+        throw new Error("Invalid " + kind + " declaration: " + line);
+      }
+
+      return {
+        id: blockName + "::" + kind + "::" + index,
+        block: blockName,
+        name,
+        target,
+        inputs: parseIdentifierList(rawInputs || ""),
+        accept,
+        order: index,
+      };
+    }
+
+    const match = String(line).trim().match(/^POST\\s+"([^"]+)"\\s*\\(([^)]*)\\)\\s*->\\s*([a-zA-Z_][\\w-]*)$/);
     if (!match) {
       throw new Error("Invalid " + kind + " declaration: " + line);
     }
@@ -547,8 +574,4 @@ export function getPageClientRuntimeScript(): string {
   bindActions("[data-mdsn-write]", "data-mdsn-write");
 })();
 `;
-}
-
-export function serializePageClientRuntimeScript(): string {
-  return serializeForInlineScript(getPageClientRuntimeScript());
 }

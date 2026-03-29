@@ -5,6 +5,9 @@ export {
   serializeActionInputsAsMarkdown,
 } from "./action-inputs";
 export {
+  createActionContextFromRequest,
+} from "./action-context";
+export {
   renderMarkdownFragment,
   renderMarkdownValue,
   serializeBlock,
@@ -29,6 +32,9 @@ export type {
   ActionDefinition,
   ActionDefinitionMap,
 } from "./action";
+export type {
+  CreateActionContextFromRequestOptions,
+} from "./action-context";
 export type {
   MarkdownImageValue,
   MarkdownTableValue,

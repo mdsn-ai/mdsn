@@ -185,6 +185,54 @@ block guestbook {
     );
   });
 
+  it("allows a stream GET without an operation name when accept is text/event-stream", () => {
+    const raw = `---
+title: Stream
+---
+
+# Chat
+
+<!-- mdsn:block session -->
+
+\`\`\`mdsn
+block session {
+  GET "/stream" accept:"text/event-stream"
+}
+\`\`\`
+`;
+
+    const document = parsePageDefinition(raw);
+
+    expect(document.blocks[0]?.reads).toEqual([
+      {
+        id: "session::read::0",
+        block: "session",
+        name: undefined,
+        target: "/stream",
+        accept: "text/event-stream",
+        inputs: [],
+        order: 0,
+      },
+    ]);
+  });
+
+  it("rejects unnamed non-stream GET operations", () => {
+    const raw = `---
+title: Invalid
+---
+
+\`\`\`mdsn
+block guestbook {
+  GET "/list"
+}
+\`\`\`
+`;
+
+    expect(() => parsePageDefinition(raw)).toThrow(
+      'Invalid read declaration: GET "/list"',
+    );
+  });
+
   it("rejects duplicate operation names inside the same block", () => {
     const raw = `---
 title: Duplicate operation

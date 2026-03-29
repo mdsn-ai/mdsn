@@ -1,13 +1,5 @@
 import type { PageRenderModel } from "./page-render";
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "../core";
 
 function serializeInlineJson(value: unknown): string {
   return JSON.stringify(value)

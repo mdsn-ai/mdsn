@@ -5,7 +5,7 @@ export {
 } from "./public-render";
 export { getClientRuntimeScript } from "./public-client-runtime";
 export { createPageBootstrap } from "./page-bootstrap";
-export { parseBlockFragment } from "./fragment-render";
+export { parseBlockFragment, renderBlockFragmentHtml } from "./fragment-render";
 export { createPageRenderModel } from "./page-render";
 export {
   parseFragment,

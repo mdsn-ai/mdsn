@@ -47,6 +47,21 @@ describe("server markdown helpers", () => {
     ].join("\n"));
   });
 
+  it("serializes stream GET declarations with an explicit accept constraint", () => {
+    expect(
+      serializeBlock({
+        name: "session",
+        reads: [{ target: "/stream", accept: "text/event-stream" }],
+      }),
+    ).toBe([
+      "```mdsn",
+      "block session {",
+      '  GET "/stream" accept:"text/event-stream"',
+      "}",
+      "```",
+    ].join("\n"));
+  });
+
   it("renders a complete markdown fragment from body and block", () => {
     const fragment = renderMarkdownFragment({
       body: [

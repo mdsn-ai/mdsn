@@ -296,12 +296,27 @@ export async function startVueChatDemo(
   });
 
   app.get("/stream", (req, res) => {
+    const sessionResult = requireSessionFromCookie({
+      cookieHeader: req.headers.cookie,
+      cookieName: SESSION_COOKIE,
+      resolveSession: (sessionId) => storage.getSession(sessionId),
+      unauthorizedMarkdown: renderLoginFailureFragment(
+        "Please log in before opening realtime updates.",
+      ),
+    });
+    if (!sessionResult.ok) {
+      res.status(sessionResult.status).type("text/markdown; charset=utf-8").send(sessionResult.markdown);
+      return;
+    }
+
     res.status(200);
     res.setHeader("content-type", "text/event-stream; charset=utf-8");
     res.setHeader("cache-control", "no-cache, no-transform");
     res.setHeader("connection", "keep-alive");
     res.flushHeaders?.();
     res.write(": connected\n\n");
+    res.write("event: ready\n");
+    res.write("data: stream open; wait for refresh; then call messages\n\n");
     streamClients.add(res);
 
     req.on("close", () => {
@@ -468,7 +483,7 @@ export async function startVueChatDemo(
     if (afterCount > beforeCount) {
       for (const client of streamClients) {
         client.write("event: refresh\n");
-        client.write("data: chat\n\n");
+        client.write("data: call messages\n\n");
       }
     }
     res.status(200).type("text/markdown; charset=utf-8").send(result);

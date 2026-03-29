@@ -41,4 +41,15 @@ describe("new core protocol statements", () => {
       order: 1,
     });
   });
+
+  it("parses stream GET statements with an explicit accept constraint", () => {
+    expect(parseReadOrWriteLine('GET "/stream" accept:"text/event-stream"', "read", "session", 0)).toMatchObject({
+      id: "session::read::0",
+      name: undefined,
+      target: "/stream",
+      accept: "text/event-stream",
+      inputs: [],
+      order: 0,
+    });
+  });
 });

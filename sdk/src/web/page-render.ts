@@ -1,6 +1,7 @@
 import MarkdownIt from "markdown-it";
-import type { BlockDefinition } from "../core/model/block";
+import { isStreamAccept, type BlockDefinition } from "../core/model/block";
 import type { DocumentDefinition } from "../core/model/document";
+import { escapeHtml } from "../core";
 import { createPageBootstrap, type PageBootstrap } from "./page-bootstrap";
 import { createBlockRegionMarkup } from "./block-runtime";
 import {
@@ -24,15 +25,6 @@ export interface RenderMarkdownOptions {
 export interface CreatePageRenderOptions {
   mapActionTarget?: (target: string) => string;
   markdown?: RenderMarkdownOptions;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 function createMarkdownRenderer(options?: RenderMarkdownOptions): MarkdownIt {
@@ -74,9 +66,11 @@ function renderInput(block: BlockDefinition): string {
 }
 
 function renderActions(block: BlockDefinition, options?: CreatePageRenderOptions): string {
-  const readButtons = block.reads.map((read) =>
-    `<button type="button" data-mdsn-read="${escapeHtml(read.id)}" data-op-name="${escapeHtml(read.name)}" data-target="${escapeHtml(options?.mapActionTarget?.(read.target) ?? read.target)}" data-inputs="${escapeHtml(read.inputs.join(","))}">${escapeHtml(read.name)}</button>`
-  );
+  const readButtons = block.reads
+    .filter((read) => read.name && !isStreamAccept(read.accept))
+    .map((read) =>
+      `<button type="button" data-mdsn-read="${escapeHtml(read.id)}" data-op-name="${escapeHtml(read.name!)}" data-target="${escapeHtml(options?.mapActionTarget?.(read.target) ?? read.target)}" data-inputs="${escapeHtml(read.inputs.join(","))}">${escapeHtml(read.name!)}</button>`
+    );
   const writeButtons = block.writes.map((write) =>
     `<button type="button" data-mdsn-write="${escapeHtml(write.id)}" data-op-name="${escapeHtml(write.name)}" data-target="${escapeHtml(options?.mapActionTarget?.(write.target) ?? write.target)}" data-inputs="${escapeHtml(write.inputs.join(","))}">${escapeHtml(write.name)}</button>`
   );
