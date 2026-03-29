@@ -33,7 +33,7 @@ export function parseMdsnBlocks(blocks: string[]): {
       }
 
       if (!currentBlock) {
-        if (line.startsWith("block ")) {
+        if (line.startsWith("BLOCK ")) {
           currentBlock = createBlock(parseBlockHeaderLine(line));
           documentBlocks.push(currentBlock);
           index += 1;

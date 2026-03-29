@@ -11,7 +11,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search" (query) -> search
 }
@@ -51,7 +51,7 @@ Visit https://example.com -- "quote"
 <!-- mdsn:block copy -->
 
 \`\`\`mdsn
-block copy {
+BLOCK copy {
   INPUT text required -> name
   GET "/hello" (name) -> hello
 }
@@ -81,7 +81,7 @@ layout: default
 # Home
 
 \`\`\`mdsn
-block home {
+BLOCK home {
 }
 \`\`\`
 `, {
@@ -120,7 +120,7 @@ layout: default
 # Home
 
 \`\`\`mdsn
-block home {
+BLOCK home {
 }
 \`\`\`
 `, {

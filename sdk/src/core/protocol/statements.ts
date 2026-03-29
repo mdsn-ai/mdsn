@@ -26,7 +26,7 @@ function parseStringArrayLiteral(raw: string): string[] {
 }
 
 export function parseBlockHeaderLine(line: string): string {
-  const match = line.trim().match(/^block\s+([a-zA-Z_][\w-]*)\s*\{$/);
+  const match = line.trim().match(/^BLOCK\s+([a-zA-Z_][\w-]*)\s*\{$/);
   if (!match) {
     throw new Error(`Invalid block declaration: ${line}`);
   }

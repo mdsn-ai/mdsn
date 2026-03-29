@@ -58,7 +58,7 @@ title: Docs
 <!-- mdsn:block docs -->
 
 \`\`\`mdsn
-block docs {
+BLOCK docs {
   GET "/" -> go_login
 }
 \`\`\`
@@ -106,7 +106,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   POST "/search_action" (query) -> search
 }
@@ -184,7 +184,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   POST "/search_action" () -> search
 }
 \`\`\`
@@ -237,7 +237,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   POST "/search_action" () -> search
 }
 \`\`\`
@@ -313,7 +313,7 @@ title: Custom
 <!-- mdsn:block custom -->
 
 \`\`\`mdsn
-block custom {
+BLOCK custom {
   INPUT text required -> name
   POST "/hello" (name) -> hello
 }
@@ -386,7 +386,7 @@ Visit https://example.com -- "quote"
 <!-- mdsn:block docs -->
 
 \`\`\`mdsn
-block docs {
+BLOCK docs {
   INPUT text required -> query
   GET "/search" (query) -> search
 }
@@ -464,7 +464,7 @@ title: Guestbook
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   GET "/list" -> refresh
   POST "/post" (message) -> submit
@@ -535,7 +535,7 @@ title: Dynamic Post
 # Dynamic Post
 
 \`\`\`mdsn
-block post {
+BLOCK post {
 }
 \`\`\`
 `,
@@ -568,7 +568,7 @@ title: English Docs
 # English Docs
 
 \`\`\`mdsn
-block docs {
+BLOCK docs {
 }
 \`\`\`
 `,

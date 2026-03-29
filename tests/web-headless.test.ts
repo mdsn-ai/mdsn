@@ -53,7 +53,7 @@ Before block.
 After block.
 
 \`\`\`mdsn
-block chat {
+BLOCK chat {
   INPUT text required -> message
   POST "/send" (message) -> send
 }
@@ -76,7 +76,7 @@ block chat {
 - hello
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   POST "/post" (message) -> submit
 }
@@ -94,7 +94,7 @@ block guestbook {
     const fragment = parseFragment(`Before block.
 
 \`\`\`mdsn
-block chat {
+BLOCK chat {
   INPUT text required -> message
   POST "/send" (message) -> send
 }

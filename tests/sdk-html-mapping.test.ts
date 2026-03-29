@@ -11,7 +11,7 @@ title: Mapping
 <!-- mdsn:block profile -->
 
 \`\`\`mdsn
-block profile {
+BLOCK profile {
   INPUT text secret required -> password
   INPUT choice ["admin", "user"] required -> role
   INPUT asset required -> avatar

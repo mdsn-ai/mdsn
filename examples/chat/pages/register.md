@@ -20,14 +20,14 @@ description: Create an account for the shared chat room
 <!-- mdsn:block auth-nav -->
 
 ```mdsn
-block auth {
+BLOCK auth {
   INPUT text required -> username
   INPUT text required -> email
   INPUT text secret required -> password
   POST "/register" (username, email, password) -> register
 }
 
-block auth-nav {
+BLOCK auth-nav {
   GET "/" -> go_login
 }
 ```

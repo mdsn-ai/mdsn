@@ -85,7 +85,7 @@ id: hello
 <!-- mdsn:block hello -->
 
 \`\`\`mdsn
-block hello {
+BLOCK hello {
   INPUT text required -> name
   GET "/hello" (name) -> hello
 }
@@ -160,7 +160,7 @@ layout: default
 # Hello
 
 \`\`\`mdsn
-block home {
+BLOCK home {
 }
 \`\`\`
 `,
@@ -221,7 +221,7 @@ block home {
       `Visit https://example.com -- "quote"
 
 \`\`\`mdsn
-block home {
+BLOCK home {
 }
 \`\`\`
 `,

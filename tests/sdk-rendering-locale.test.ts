@@ -12,7 +12,7 @@ title: Public Web Entry
 <!-- mdsn:block profile -->
 
 \`\`\`mdsn
-block profile {
+BLOCK profile {
   INPUT choice ["admin", "user"] required -> role
   GET "/messages" (role) -> load_messages
 }

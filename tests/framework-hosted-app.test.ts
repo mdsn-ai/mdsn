@@ -41,7 +41,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search_action" (query) -> search
   GET "/done" -> finish
@@ -109,7 +109,7 @@ title: Entry
 <!-- mdsn:block sync -->
 
 \`\`\`mdsn
-block sync {
+BLOCK sync {
   INPUT text -> query
   GET "/dual" (query) -> preview
   POST "/dual" (query) -> commit
@@ -174,7 +174,7 @@ title: Writer
 <!-- mdsn:block writer -->
 
 \`\`\`mdsn
-block writer {
+BLOCK writer {
   INPUT text required -> query
   POST "/writer_action" (query) -> send
 }
@@ -212,7 +212,7 @@ title: Explode
 <!-- mdsn:block explode -->
 
 \`\`\`mdsn
-block explode {
+BLOCK explode {
   GET "/explode_action" -> run
 }
 \`\`\`
@@ -251,7 +251,7 @@ title: Chat
 <!-- mdsn:block session -->
 
 \`\`\`mdsn
-block session {
+BLOCK session {
   GET "/stream" accept:"text/event-stream"
 }
 \`\`\`

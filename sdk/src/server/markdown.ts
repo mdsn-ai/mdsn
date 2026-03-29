@@ -107,7 +107,7 @@ export function renderMarkdownValue(type: MarkdownValueType, value: MarkdownValu
 }
 
 export function serializeBlock(block: SerializableBlock): string {
-  const lines = ["```mdsn", `block ${block.name} {`];
+  const lines = ["```mdsn", `BLOCK ${block.name} {`];
 
   for (const input of block.inputs ?? []) {
     const requiredMarker = input.required ? " required" : "";

@@ -46,7 +46,7 @@ describe("framework starter site scaffold", () => {
     expect(starterPage).toContain("id: guestbook");
     expect(starterPage).not.toContain("layout: default");
     expect(starterPage).toContain("<!-- mdsn:block guestbook -->");
-    expect(starterPage).toContain("block guestbook {");
+    expect(starterPage).toContain("BLOCK guestbook {");
     expect(starterPage).toContain('GET "/list" -> refresh');
     expect(starterPage).toContain('POST "/post" (nickname, message) -> submit');
 

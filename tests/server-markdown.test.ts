@@ -37,7 +37,7 @@ describe("server markdown helpers", () => {
       }),
     ).toBe([
       "```mdsn",
-      "block guestbook {",
+      "BLOCK guestbook {",
       "  INPUT text -> nickname",
       "  INPUT text required -> message",
       '  GET "/list" -> refresh',
@@ -55,7 +55,7 @@ describe("server markdown helpers", () => {
       }),
     ).toBe([
       "```mdsn",
-      "block session {",
+      "BLOCK session {",
       '  GET "/stream" accept:"text/event-stream"',
       "}",
       "```",

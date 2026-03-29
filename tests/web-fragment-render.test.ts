@@ -13,7 +13,7 @@ describe("new web fragment render", () => {
     const fragment = parseBlockFragment(`# Chat
 
 \`\`\`mdsn
-block chat {
+BLOCK chat {
   INPUT text required -> message
   POST "/messages" (message) -> send
 }
@@ -53,12 +53,12 @@ block chat {
   it("rejects fragments that contain more than one executable mdsn block", () => {
     expect(() =>
       parseBlockFragment(`\`\`\`mdsn
-block one {
+BLOCK one {
 }
 \`\`\`
 
 \`\`\`mdsn
-block two {
+BLOCK two {
 }
 \`\`\`
 `),
@@ -71,7 +71,7 @@ block two {
 - **Tom**: Hello
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   POST "/guestbook/post" (message) -> submit
 }
@@ -91,7 +91,7 @@ block guestbook {
     const html = renderBlockFragmentHtml(`Before block.
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   POST "/guestbook/post" (message) -> submit
 }

@@ -20,13 +20,13 @@ description: Log in to the shared chat room
 <!-- mdsn:block auth-nav -->
 
 ```mdsn
-block auth {
+BLOCK auth {
   INPUT text required -> email
   INPUT text secret required -> password
   POST "/login" (email, password) -> login
 }
 
-block auth-nav {
+BLOCK auth-nav {
   GET "/register" -> go_register
 }
 ```

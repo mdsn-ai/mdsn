@@ -12,7 +12,7 @@ title: Input Mapping
 <!-- mdsn:block types -->
 
 \`\`\`mdsn
-block types {
+BLOCK types {
   INPUT text required -> nickname
   INPUT text secret required -> password
   INPUT number required -> quantity

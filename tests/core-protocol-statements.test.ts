@@ -7,7 +7,7 @@ import {
 
 describe("new core protocol statements", () => {
   it("parses block headers and inputs", () => {
-    expect(parseBlockHeaderLine("block login {")).toBe("login");
+    expect(parseBlockHeaderLine("BLOCK login {")).toBe("login");
 
     expect(parseInputLine("INPUT text secret required -> password", "login")).toMatchObject({
       id: "login::input::password",

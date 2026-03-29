@@ -284,7 +284,7 @@ describe("examples chat flow", () => {
       expect(firstFragment).toContain("sent_message_id:");
       expect(firstFragment).toContain("AgentAlpha");
       expect(firstFragment).toContain("第一条：我先开场");
-      expect(firstFragment).toContain("block chat");
+      expect(firstFragment).toContain("BLOCK chat");
 
       const secondLoginResponse = await fetch(`${baseUrl}/login`, {
         method: "POST",
@@ -301,7 +301,7 @@ describe("examples chat flow", () => {
       const secondLoginFragment = await secondLoginResponse.text();
       expect(secondLoginFragment).toContain("Login failed: no account matches this email and password.");
       expect(secondLoginFragment).toContain("Next step: enter the correct password and submit again, or go to register if no account exists.");
-      expect(secondLoginFragment).toContain("block auth");
+      expect(secondLoginFragment).toContain("BLOCK auth");
       const registerBeta = await fetch(`${baseUrl}/register`, {
         method: "POST",
         headers: {
@@ -348,7 +348,7 @@ describe("examples chat flow", () => {
       const refreshFragment = await refresh.text();
       expect(refreshFragment).toContain("AgentAlpha");
       expect(refreshFragment).toContain("AgentBeta");
-      expect(refreshFragment).toContain("block chat");
+      expect(refreshFragment).toContain("BLOCK chat");
       expect(refreshFragment).toContain("This view shows up to the most recent 50 messages.");
       expect(refreshFragment).toContain("Use `more` to read older messages.");
 
@@ -438,7 +438,7 @@ describe("examples chat flow", () => {
       expect(sendFragment).toContain("sent_message_id:");
       expect(sendFragment).toContain("MarkdownAgent");
       expect(sendFragment).toContain("Hello from markdown payload");
-      expect(sendFragment).toContain("block chat");
+      expect(sendFragment).toContain("BLOCK chat");
     });
   });
 
@@ -464,7 +464,7 @@ describe("examples chat flow", () => {
       expect(registerFragment).toContain("## Registration Status");
       expect(registerFragment).toContain("Registration succeeded. You are now signed in.");
       expect(registerFragment).toContain('GET "/chat" -> enter_chat');
-      expect(registerFragment).toContain("block next");
+      expect(registerFragment).toContain("BLOCK next");
 
       const cookie = registerResponse.headers.get("set-cookie") ?? "";
       const logoutResponse = await fetch(`${baseUrl}/logout`, {
@@ -483,7 +483,7 @@ describe("examples chat flow", () => {
       expect(logoutFragment).toContain("## Logout Status");
       expect(logoutFragment).toContain("Logout succeeded. The current session has been cleared.");
       expect(logoutFragment).toContain('GET "/" -> go_login');
-      expect(logoutFragment).toContain("block next");
+      expect(logoutFragment).toContain("BLOCK next");
 
       const unauthorizedSend = await fetch(`${baseUrl}/send`, {
         method: "POST",
@@ -499,7 +499,7 @@ describe("examples chat flow", () => {
       const unauthorizedFragment = await unauthorizedSend.text();
       expect(unauthorizedFragment).toContain("Please log in before sending messages.");
       expect(unauthorizedFragment).toContain('POST "/login" (email, password) -> login');
-      expect(unauthorizedFragment).toContain("block auth");
+      expect(unauthorizedFragment).toContain("BLOCK auth");
     });
   });
 
@@ -695,7 +695,7 @@ describe("examples chat flow", () => {
       expect(loginPage.status).toBe(200);
       expect(loginPage.headers.get("content-type")).toContain("text/markdown");
       const loginSource = await loginPage.text();
-      expect(loginSource).toContain("block auth");
+      expect(loginSource).toContain("BLOCK auth");
       expect(loginSource).toContain('POST "/login" (email, password) -> login');
       expect(loginSource).toContain('GET "/register" -> go_register');
 
@@ -705,7 +705,7 @@ describe("examples chat flow", () => {
       expect(registerPage.status).toBe(200);
       expect(registerPage.headers.get("content-type")).toContain("text/markdown");
       const registerSource = await registerPage.text();
-      expect(registerSource).toContain("block auth");
+      expect(registerSource).toContain("BLOCK auth");
       expect(registerSource).toContain('POST "/register" (username, email, password) -> register');
       expect(registerSource).toContain('GET "/" -> go_login');
 
@@ -738,8 +738,8 @@ describe("examples chat flow", () => {
       expect(chatPage.status).toBe(200);
       expect(chatPage.headers.get("content-type")).toContain("text/markdown");
       const chatSource = await chatPage.text();
-      expect(chatSource).toContain("block session");
-      expect(chatSource).toContain("block chat");
+      expect(chatSource).toContain("BLOCK session");
+      expect(chatSource).toContain("BLOCK chat");
       expect(chatSource).toContain('POST "/logout" () -> logout');
       expect(chatSource).toContain('POST "/send" (message) -> send');
       expect(chatSource).toContain('GET "/list" -> messages');
@@ -759,7 +759,7 @@ describe("examples chat flow", () => {
       const sendFragment = await send.text();
       expect(sendFragment).toContain("AgentFresh");
       expect(sendFragment).toContain("AgentFresh says hello");
-      expect(sendFragment).toContain("block chat");
+      expect(sendFragment).toContain("BLOCK chat");
 
       const list = await fetch(`${baseUrl}/list`, {
         method: "GET",
@@ -772,7 +772,7 @@ describe("examples chat flow", () => {
       const listFragment = await list.text();
       expect(listFragment).toContain("AgentFresh");
       expect(listFragment).toContain("AgentFresh says hello");
-      expect(listFragment).toContain("block chat");
+      expect(listFragment).toContain("BLOCK chat");
 
       const logout = await fetch(`${baseUrl}/logout`, {
         method: "POST",
@@ -831,7 +831,7 @@ describe("examples chat flow", () => {
       expect(emptySendFragment).toContain("send_status: failed");
       expect(emptySendFragment).toContain("Send failed: `message` is required.");
       expect(emptySendFragment).toContain("Next step: call `send` with `Content-Type: text/markdown` and body `message: \"hello\"`.");
-      expect(emptySendFragment).toContain("block chat");
+      expect(emptySendFragment).toContain("BLOCK chat");
 
       const recoveredSend = await fetch(`${baseUrl}/send`, {
         method: "POST",
@@ -850,7 +850,7 @@ describe("examples chat flow", () => {
       expect(recoveredSendFragment).toContain("sent_message_id:");
       expect(recoveredSendFragment).toContain("MarkdownBlackbox");
       expect(recoveredSendFragment).toContain("Markdown\\-only recovery works");
-      expect(recoveredSendFragment).toContain("block chat");
+      expect(recoveredSendFragment).toContain("BLOCK chat");
 
       const list = await fetch(`${baseUrl}/list`, {
         method: "GET",
@@ -1044,7 +1044,7 @@ describe("examples chat flow", () => {
       expect(failureFragment).toContain("Next step: call `send` with `Content-Type: text/markdown` and body `message: \"hello\"`.");
       expect(failureFragment).toContain("This view shows up to the most recent 50 messages.");
       expect(failureFragment).toContain('POST "/send" (message) -> send');
-      expect(failureFragment).toContain("block chat");
+      expect(failureFragment).toContain("BLOCK chat");
     });
   });
 

@@ -14,7 +14,7 @@ describe("vue chat model", () => {
 - \`09:31\` **AgentBeta** · 第二条：我接着回复
 
 \`\`\`mdsn
-block chat {
+BLOCK chat {
   INPUT text required -> message
   GET "/list" -> refresh
   POST "/send" (message) -> send

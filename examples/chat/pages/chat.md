@@ -27,12 +27,12 @@ description: Persistent single-room chat example
 <!-- mdsn:block chat -->
 
 ```mdsn
-block session {
+BLOCK session {
   GET "/stream" accept:"text/event-stream"
   POST "/logout" () -> logout
 }
 
-block chat {
+BLOCK chat {
   INPUT text required -> message
   GET "/list" -> messages
   GET "/load-more" -> more

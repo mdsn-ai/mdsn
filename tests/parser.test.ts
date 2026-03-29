@@ -99,7 +99,7 @@ schema filters_schema {
   "required": ["query"]
 }
 
-block search {
+BLOCK search {
   INPUT text required -> filters
   GET "/search" (filters) -> search
 }
@@ -120,13 +120,13 @@ title: Flow
 <!-- mdsn:block chat -->
 
 \`\`\`mdsn
-block login {
+BLOCK login {
   INPUT text required -> account
   POST "/login" (account) -> submit
   GET "/chat" -> enter_chat
 }
 
-block chat {
+BLOCK chat {
   INPUT text required -> message
   POST "/chat/send" (message) -> send
 }
@@ -148,18 +148,34 @@ block chat {
     ]);
   });
 
+  it("rejects lowercase block declarations", () => {
+    const raw = `# Guestbook
+
+<!-- mdsn:block guestbook -->
+
+\`\`\`mdsn
+block guestbook {
+  INPUT text required -> message
+  POST "/post" (message) -> submit
+}
+\`\`\`
+`;
+
+    expect(() => parsePageDefinition(raw)).toThrow("Unsupported MDSN statement: block guestbook {");
+  });
+
   it("rejects pages that contain more than one mdsn code block", () => {
     const raw = `---
 title: Invalid
 ---
 
 \`\`\`mdsn
-block first {
+BLOCK first {
 }
 \`\`\`
 
 \`\`\`mdsn
-block second {
+BLOCK second {
 }
 \`\`\`
 `;
@@ -173,7 +189,7 @@ title: Invalid
 ---
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   POST "/post" (message)
 }
@@ -195,7 +211,7 @@ title: Stream
 <!-- mdsn:block session -->
 
 \`\`\`mdsn
-block session {
+BLOCK session {
   GET "/stream" accept:"text/event-stream"
 }
 \`\`\`
@@ -222,7 +238,7 @@ title: Invalid
 ---
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   GET "/list"
 }
 \`\`\`
@@ -239,7 +255,7 @@ title: Duplicate operation
 ---
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search" (query) -> search
   POST "/save" (query) -> search

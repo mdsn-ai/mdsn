@@ -13,12 +13,12 @@ title: Block Rendering
 <!-- mdsn:block secondary -->
 
 \`\`\`mdsn
-block results {
+BLOCK results {
   GET "/api/refresh" -> refresh
   POST "/api/submit" () -> submit
 }
 
-block secondary {
+BLOCK secondary {
   GET "/done" -> finish
 }
 \`\`\`

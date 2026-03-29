@@ -64,7 +64,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search_action" (query) -> search
 }
@@ -127,7 +127,7 @@ This page shows MDSN examples.
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   POST "/post_message" (nickname, message) -> submit
@@ -174,7 +174,7 @@ title: Home
 <!-- mdsn:block home -->
 
 \`\`\`mdsn
-block home {
+BLOCK home {
   GET "/docs/index.md" -> open_docs
 }
 \`\`\`
@@ -216,7 +216,7 @@ title: Search
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search_action" (query) -> search
 }
@@ -265,7 +265,7 @@ title: Guestbook
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text required -> message
   POST "/post_message" (message) -> submit
 }
@@ -320,7 +320,7 @@ layout: default
 <!-- mdsn:block search -->
 
 \`\`\`mdsn
-block search {
+BLOCK search {
   INPUT text required -> query
   GET "/search_action" (query) -> search
 }

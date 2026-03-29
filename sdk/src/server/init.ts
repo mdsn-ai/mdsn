@@ -56,7 +56,7 @@ Start with a working guestbook and reshape it into your own app.
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   GET "/list" -> refresh

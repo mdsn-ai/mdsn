@@ -115,7 +115,7 @@ session / auth 状态不放进语法关键字，而是放在 HTTP 运行时里�
 
 ````mdsn-src
 ```mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   GET "/list" -> refresh

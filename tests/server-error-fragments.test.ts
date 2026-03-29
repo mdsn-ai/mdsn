@@ -31,6 +31,6 @@ describe("server error fragments", () => {
     expect(markdown).toContain("## Login Status");
     expect(markdown).toContain('POST "/login" (email, password) -> login');
     expect(markdown).toContain('GET "/register" -> go_register');
-    expect(markdown).toContain("block auth");
+    expect(markdown).toContain("BLOCK auth");
   });
 });

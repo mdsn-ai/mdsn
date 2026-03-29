@@ -113,7 +113,7 @@ For a minimal guestbook page:
 
 ````mdsn-src
 ```mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   GET "/list" -> refresh

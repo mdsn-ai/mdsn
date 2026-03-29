@@ -12,7 +12,7 @@ title: Guestbook
 <!-- mdsn:block guestbook -->
 
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
   INPUT text required -> message
   POST "/messages" (nickname, message) -> submit
@@ -79,7 +79,7 @@ block guestbook {
 
 \`\`\`\`mdsn-src
 \`\`\`mdsn
-block guestbook {
+BLOCK guestbook {
   INPUT text -> nickname
 }
 \`\`\`
@@ -97,12 +97,12 @@ block guestbook {
     const raw = `# Invalid
 
 \`\`\`mdsn
-block first {
+BLOCK first {
 }
 \`\`\`
 
 \`\`\`mdsn
-block second {
+BLOCK second {
 }
 \`\`\`
 `;
