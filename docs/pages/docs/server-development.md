@@ -107,8 +107,19 @@ const app = createHostedApp({
   }),
 });
 
-express().use(app);
+const server = express();
+
+server.use(app);
+server.listen(3000, () => {
+  console.log("MDSN hosted app running at http://localhost:3000/");
+});
 ```
+
+How to verify this path:
+
+- start the Express app
+- open `http://localhost:3000/`
+- confirm the homepage returns hosted HTML and `/list` returns a Markdown fragment
 
 Use this track when:
 
@@ -124,7 +135,7 @@ No matter which framework you use, the flow is the same:
 2. decide whether to return `text/markdown` or `text/html`
 3. map declared targets directly to HTTP routes
 4. return Markdown fragments on successful actions
-5. return error objects on failed actions
+5. return explanatory Markdown fragments on failed actions
 
 That means:
 
@@ -133,19 +144,14 @@ That means:
 
 ## 5. Serving pages manually
 
-The two most common public APIs here are:
+The most common public API here is:
 
 ```ts
-import { parsePageDefinition } from "@mdsnai/sdk/core";
-import { renderHostedPage, wantsHtml } from "@mdsnai/sdk/server";
+import { renderHostedPage } from "@mdsnai/sdk";
 ```
 
 Where:
 
-- `parsePageDefinition()`
-  - parses the page definition
-- `wantsHtml()`
-  - checks whether the current request wants HTML
 - `renderHostedPage()`
   - returns `text/markdown` or `text/html` based on `Accept`
 
@@ -154,7 +160,7 @@ A minimal Express skeleton can look like this:
 ```ts
 import express from "express";
 import { readFile } from "node:fs/promises";
-import { renderHostedPage } from "@mdsnai/sdk/server";
+import { renderHostedPage } from "@mdsnai/sdk";
 
 const app = express();
 const pageMarkdown = await readFile("pages/index.md", "utf8");
@@ -206,7 +212,7 @@ When the action cannot continue, return a Markdown fragment that explains the is
 You usually start with:
 
 ```ts
-import { defineAction, defineActions } from "@mdsnai/sdk/server";
+import { defineAction, defineActions } from "@mdsnai/sdk";
 ```
 
 Example:
@@ -217,7 +223,7 @@ import {
   defineActions,
   renderMarkdownFragment,
   renderMarkdownValue,
-} from "@mdsnai/sdk/server";
+} from "@mdsnai/sdk";
 
 const guestbookBlock = {
   name: "guestbook",

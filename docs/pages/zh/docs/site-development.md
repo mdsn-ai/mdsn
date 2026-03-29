@@ -9,6 +9,7 @@ layout: docs
 这条路径讲的是：
 
 - 直接使用 `@mdsnai/sdk/framework`
+- 默认从 `@mdsnai/sdk` 开始
 - 从 starter 开始开发一个完整站点
 - 什么时候再添加 `layout`、`config`、`public`
 - 什么时候切到 [服务端开发](/zh/docs/server-development) 或 headless 自定义渲染
@@ -69,7 +70,7 @@ layout: docs
 推荐方式：
 
 - 一个页面负责一个明确任务
-- 一个 `block` 负责一个明确交互片段
+- 一个 `BLOCK` 负责一个明确交互片段
 - 一个 action 文件负责一组明确 target
 
 starter 默认就是这套结构：

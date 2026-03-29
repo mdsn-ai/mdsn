@@ -57,6 +57,7 @@ layout: docs
 
 优先看：
 
+- [开发者路线图](/zh/docs/developer-paths)
 - [快速开始](/zh/docs/getting-started)
 - [基础开发框架](/zh/docs/site-development)
 
@@ -83,6 +84,7 @@ layout: docs
 
 优先看：
 
+- [开发者路线图](/zh/docs/developer-paths)
 - [服务端开发](/zh/docs/server-development)
 - [SDK 错误提示片段](/zh/docs/sdk-error-fragments)
 
@@ -122,6 +124,7 @@ layout: docs
 
 优先看：
 
+- [开发者路线图](/zh/docs/developer-paths)
 - [使用 Vue 自定义渲染](/zh/docs/vue-rendering)
 - [使用 React 自定义渲染](/zh/docs/react-rendering)
 

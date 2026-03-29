@@ -107,8 +107,19 @@ const app = createHostedApp({
   }),
 });
 
-express().use(app);
+const server = express();
+
+server.use(app);
+server.listen(3000, () => {
+  console.log("MDSN hosted app running at http://localhost:3000/");
+});
 ```
+
+验证方式：
+
+- 启动这个 Express 应用
+- 打开 `http://localhost:3000/`
+- 确认首页能返回 hosted HTML，`/list` 能返回 Markdown fragment
 
 适合你：
 
@@ -124,7 +135,7 @@ express().use(app);
 2. 决定返回 `text/markdown` 还是 `text/html`
 3. 把页面里声明的 target 直接映射到 HTTP 路由
 4. action 成功时返回 Markdown fragment
-5. action 失败时返回错误对象
+5. action 失败时也返回带说明的 Markdown fragment
 
 也就是说：
 
@@ -133,19 +144,14 @@ express().use(app);
 
 ## 5. 手动承载页面响应
 
-最常用的两个公开 API 是：
+最常用的公开 API 是：
 
 ```ts
-import { parsePageDefinition } from "@mdsnai/sdk/core";
-import { renderHostedPage, wantsHtml } from "@mdsnai/sdk/server";
+import { renderHostedPage } from "@mdsnai/sdk";
 ```
 
 其中：
 
-- `parsePageDefinition()`
-  - 解析页面定义
-- `wantsHtml()`
-  - 判断当前请求是否需要 HTML
 - `renderHostedPage()`
   - 根据 `Accept` 协商返回 `text/markdown` 或 `text/html`
 
@@ -154,7 +160,7 @@ import { renderHostedPage, wantsHtml } from "@mdsnai/sdk/server";
 ```ts
 import express from "express";
 import { readFile } from "node:fs/promises";
-import { renderHostedPage } from "@mdsnai/sdk/server";
+import { renderHostedPage } from "@mdsnai/sdk";
 
 const app = express();
 const pageMarkdown = await readFile("pages/index.md", "utf8");
@@ -206,7 +212,7 @@ action handler 统一返回 Markdown fragment。
 可以直接用：
 
 ```ts
-import { defineAction, defineActions } from "@mdsnai/sdk/server";
+import { defineAction, defineActions } from "@mdsnai/sdk";
 ```
 
 例如：
@@ -217,7 +223,7 @@ import {
   defineActions,
   renderMarkdownFragment,
   renderMarkdownValue,
-} from "@mdsnai/sdk/server";
+} from "@mdsnai/sdk";
 
 const guestbookBlock = {
   name: "guestbook",

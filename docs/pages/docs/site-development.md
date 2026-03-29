@@ -9,6 +9,7 @@ layout: docs
 This path is about:
 
 - using `@mdsnai/sdk/framework` directly
+- starting from `@mdsnai/sdk` by default
 - starting from the built-in starter
 - knowing when to add `layout`, `config`, and `public`
 - knowing when to move to [Server Development](/docs/server-development) or headless custom rendering
@@ -69,7 +70,7 @@ So by default, you do not need to worry about:
 Recommended shape:
 
 - one page for one clear task
-- one `block` for one clear interactive region
+- one `BLOCK` for one clear interactive region
 - one action file for one clear set of targets
 
 The starter follows exactly this pattern:

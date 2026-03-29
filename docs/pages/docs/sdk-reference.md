@@ -57,6 +57,7 @@ Use this when:
 
 Read first:
 
+- [Developer Paths](/docs/developer-paths)
 - [Getting Started](/docs/getting-started)
 - [Framework Development](/docs/site-development)
 
@@ -83,6 +84,7 @@ Use this when:
 
 Read first:
 
+- [Developer Paths](/docs/developer-paths)
 - [Server Development](/docs/server-development)
 - [SDK Error Fragments](/docs/sdk-error-fragments)
 
@@ -122,6 +124,7 @@ Use this when:
 
 Read first:
 
+- [Developer Paths](/docs/developer-paths)
 - [Custom Rendering with Vue](/docs/vue-rendering)
 - [Custom Rendering with React](/docs/react-rendering)
 

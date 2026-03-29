@@ -12,12 +12,30 @@ If you are new to MDSN, the shortest way to understand it is this:
 
 **A single page source defines both page content and page interaction.**
 
-In MDSN:
+Start with one minimal page:
 
-- page content stays in Markdown
-- dynamic regions are mounted back into the page through `mdsn:block` anchors
-- successful `read` and `write` operations return new Markdown fragments
-- the host replaces only the active block region
+````mdsn-src
+# Guestbook
+
+Welcome to a minimal runnable MDSN page.
+
+<!-- mdsn:block guestbook -->
+
+```mdsn
+BLOCK guestbook {
+  INPUT text -> nickname
+  INPUT text required -> message
+  GET "/list" -> refresh
+  POST "/post" (nickname, message) -> submit
+}
+```
+````
+
+The three most important ideas in this page are:
+
+- plain Markdown still owns the page content
+- `<!-- mdsn:block guestbook -->` marks the region replaced at runtime
+- `BLOCK guestbook { ... }` defines the inputs and actions for that region
 
 In MDSN, page content is not just presentation. It is also shared prompt context for AI agents.
 
@@ -30,12 +48,18 @@ This model is especially useful for:
 
 ## Start Here
 
-If you want to get something running quickly:
+If you want to understand one small example before you run anything:
 
 - [Getting Started](/docs/getting-started)
-- [Framework Development](/docs/site-development)
+- [Developer Paths](/docs/developer-paths)
 
-If you want to understand the interaction model first:
+If you want to choose the right integration path first:
+
+- [Developer Paths](/docs/developer-paths)
+- [Framework Development](/docs/site-development)
+- [Server Development](/docs/server-development)
+
+If you want to understand the interaction model more deeply:
 
 - [HTTP Content Negotiation and Shared Interaction](/docs/shared-interaction)
 - [Agent App Demo Walkthrough](/docs/agent-app-demo)
@@ -60,7 +84,7 @@ An MDSN page usually contains:
 
 ### 2. Block
 
-A `block` is an interaction scope inside the page.
+A `BLOCK` is an interaction scope inside the page.
 
 It is mounted back into the Markdown body through an anchor such as `<!-- mdsn:block guestbook -->`, and becomes the replaceable region at runtime.
 
@@ -108,4 +132,5 @@ Read:
 - [Action Reference](/docs/action-reference)
 - [Config Reference](/docs/config-reference)
 - [CLI Reference](/docs/cli-reference)
+- [Developer Paths](/docs/developer-paths)
 - [SDK Reference](/docs/sdk-reference)
