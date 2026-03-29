@@ -31,7 +31,7 @@ export function createStarterSite(targetDir: string): void {
         start: "mdsn start",
       },
       dependencies: {
-        "@mdsnai/sdk": "^0.1.0",
+        "@mdsnai/sdk": "^0.2.0",
       },
     }, null, 2) + "\n",
     "utf8",

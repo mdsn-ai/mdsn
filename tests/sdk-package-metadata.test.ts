@@ -119,6 +119,15 @@ describe("sdk package metadata", () => {
     expect(filePaths).toContain("LICENSE");
   });
 
+  it("documents the root-first sdk entrypoint in the published readme", () => {
+    const readme = readFileSync(path.join(process.cwd(), "sdk", "README.md"), "utf8");
+
+    expect(readme).toContain('import { createFrameworkApp, defineConfig } from "@mdsnai/sdk";');
+    expect(readme).toContain("createHostedApp");
+    expect(readme).toContain("createActionContextFromRequest");
+    expect(readme).toContain("Use the root entry point for the common paths:");
+  });
+
   it("keeps dist free of stale internal build artifacts", () => {
     expect(existsSync(path.join(process.cwd(), "sdk", "dist", "host-node", "app.js"))).toBe(false);
     expect(existsSync(path.join(process.cwd(), "sdk", "dist", "host-node", "guestbook-api.js"))).toBe(false);

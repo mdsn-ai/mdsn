@@ -44,7 +44,7 @@ describe("sdk cli usability", () => {
       start: "mdsn start",
     });
     expect(packageJson.dependencies).toMatchObject({
-      "@mdsnai/sdk": "^0.1.0",
+      "@mdsnai/sdk": "^0.2.0",
     });
 
     await runCli(["build", "--cwd", siteRoot]);

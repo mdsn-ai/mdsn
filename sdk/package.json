@@ -1,6 +1,6 @@
 {
   "name": "@mdsnai/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "SDK, framework host, parser, renderer, and CLI for building MDSN sites.",
   "license": "MIT",

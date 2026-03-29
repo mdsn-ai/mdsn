@@ -4,6 +4,37 @@
 
 MDSN keeps page content and page interaction in the same source by combining a Markdown body with an executable `mdsn` block.
 
+## Start With One Package
+
+For most projects, start with:
+
+```ts
+import { createFrameworkApp, defineConfig } from "@mdsnai/sdk";
+```
+
+```ts
+import {
+  createHostedApp,
+  createActionContextFromRequest,
+  defineActions,
+  renderHostedPage,
+  renderMarkdownFragment,
+  renderMarkdownValue,
+} from "@mdsnai/sdk";
+```
+
+```ts
+import { parsePage, parseFragment } from "@mdsnai/sdk";
+```
+
+Use the root entry point for the common paths:
+
+- build a site with the built-in framework
+- host MDSN pages and actions inside your own server
+- render the UI yourself with React or Vue
+
+Move to `@mdsnai/sdk/framework`, `@mdsnai/sdk/server`, `@mdsnai/sdk/web`, or `@mdsnai/sdk/core` only when you want stricter boundaries or narrower imports.
+
 ## Why MDSN
 
 Plain Markdown is good for content, but weak at expressing interaction.
