@@ -35,7 +35,7 @@ npm start
 That starter keeps the app shape intentionally small:
 
 - `app/guestbook.md`
-- `app/sdk/server.ts`
+- `app/server.ts`
 - `app/client.ts`
 - `index.mjs`
 
@@ -184,8 +184,8 @@ If you want a concrete third-party Markdown renderer integration, see:
 - SDK overview: [docs/sdk.md](/Users/hencoo/projects/mdsn/docs/sdk.md)
 - API reference: [docs/api-reference.md](/Users/hencoo/projects/mdsn/docs/api-reference.md)
 - Third-party Markdown renderer example: [docs/third-party-markdown-renderer.md](/Users/hencoo/projects/mdsn/docs/third-party-markdown-renderer.md)
-- Server runtime: [docs/sdk/server-runtime.md](/Users/hencoo/projects/mdsn/docs/sdk/server-runtime.md)
-- Web runtime: [docs/sdk/web-runtime.md](/Users/hencoo/projects/mdsn/docs/sdk/web-runtime.md)
-- Elements: [docs/sdk/elements.md](/Users/hencoo/projects/mdsn/docs/sdk/elements.md)
+- Server runtime: [docs/server-runtime.md](/Users/hencoo/projects/mdsn/docs/server-runtime.md)
+- Web runtime: [docs/web-runtime.md](/Users/hencoo/projects/mdsn/docs/web-runtime.md)
+- Elements: [docs/elements.md](/Users/hencoo/projects/mdsn/docs/elements.md)
 - Session provider: [docs/session-provider.md](/Users/hencoo/projects/mdsn/docs/session-provider.md)
 - Examples: [docs/examples.md](/Users/hencoo/projects/mdsn/docs/examples.md)
