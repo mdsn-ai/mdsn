@@ -50,6 +50,9 @@ Run tests.
     expect(response.body).toContain('href="#setup"');
     expect(response.body).toContain('href="#verify"');
     expect(response.body).toContain('src="/docs-site/docs.js"');
+    expect(response.body).toContain('<html lang="en">');
+    expect(response.body).toContain('<a href="/docs/sdk" aria-current="page">EN</a>');
+    expect(response.body).toContain('<a href="/zh/docs/sdk">中文</a>');
   });
 
   it("supports custom third-party markdown renderer and keeps toc output", async () => {
@@ -83,5 +86,36 @@ This is **important**.
     expect(response.body).toContain("<strong>important</strong>");
     expect(response.body).toContain('href="#api"');
     expect(response.body).toContain('<h2 id="api">');
+  });
+
+  it("serves zh docs routes with localized toc title and language switch", async () => {
+    const server = createDocsSiteServer({
+      pages: {
+        "/docs": "# Docs",
+        "/zh/docs": "# 文档",
+        "/docs/sdk": `# SDK
+
+## Setup
+`,
+        "/zh/docs/sdk": `# SDK 概览
+
+## 安装
+`
+      }
+    });
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/zh/docs/sdk",
+      headers: { accept: "text/html" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toContain('<html lang="zh">');
+    expect(response.body).toContain("本页目录");
+    expect(response.body).toContain('<a href="/docs/sdk">EN</a>');
+    expect(response.body).toContain('<a href="/zh/docs/sdk" aria-current="page">中文</a>');
+    expect(response.body).toContain("搜索文档...");
   });
 });

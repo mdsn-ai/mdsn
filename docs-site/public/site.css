@@ -30,6 +30,9 @@ body {
   width: min(1240px, calc(100% - 40px));
   margin: 0 auto;
   padding: 18px 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .docs-brand {
@@ -37,6 +40,28 @@ body {
   text-decoration: none;
   font-family: "Iowan Old Style", "Georgia", serif;
   font-size: 30px;
+  font-weight: 700;
+}
+
+.docs-lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.docs-lang-switch a {
+  color: #39518a;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.docs-lang-switch a[aria-current="page"] {
+  color: #143baf;
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border) 66%);
+  background: color-mix(in srgb, var(--accent) 12%, #fff 88%);
   font-weight: 700;
 }
 
@@ -111,6 +136,15 @@ body {
   border-radius: 8px;
   display: block;
   text-decoration: none;
+  padding: 7px 9px;
+  font-size: 14px;
+}
+
+.docs-nav-section .docs-nav-disabled {
+  color: #8a96b2;
+  border: 1px dashed #d6ddef;
+  border-radius: 8px;
+  display: block;
   padding: 7px 9px;
   font-size: 14px;
 }
@@ -258,6 +292,12 @@ body {
 
   .docs-nav {
     position: static;
+  }
+
+  .docs-topbar {
+    gap: 10px;
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .docs-content {
