@@ -49,6 +49,16 @@ function createErrorFragment(title: string, detail?: string) {
   };
 }
 
+function createInternalServerErrorResult() {
+  return fail({
+    status: 500,
+    fragment: createErrorFragment(
+      "Internal Server Error",
+      "The host hit an unexpected failure. Retry the previous action or refresh the page."
+    )
+  });
+}
+
 function getRenderablePage(page: MdsnPage) {
   const visibleBlockNames = page.visibleBlockNames ? new Set(page.visibleBlockNames) : null;
   const blocks = visibleBlockNames ? page.blocks.filter((block) => visibleBlockNames.has(block.name)) : page.blocks;
@@ -225,10 +235,15 @@ export function createMdsnServer(options: CreateMdsnServerOptions = {}) {
               htmlRenderer
             );
           }
-          const page = await pageHandler({
-            request,
-            session
-          });
+          let page: MdsnPage | null;
+          try {
+            page = await pageHandler({
+              request,
+              session
+            });
+          } catch {
+            return createResponse(createInternalServerErrorResult(), representation, htmlRenderer);
+          }
           if (page) {
             return createPageResponse(page, representation, htmlRenderer, pathname);
           }
@@ -281,18 +296,27 @@ export function createMdsnServer(options: CreateMdsnServerOptions = {}) {
         throw error;
       }
 
-      const result = await handler({
-        request,
-        inputs,
-        session
-      });
+      let result: MdsnHandlerResult;
+      try {
+        result = await handler({
+          request,
+          inputs,
+          session
+        });
+      } catch {
+        return createResponse(createInternalServerErrorResult(), representation, htmlRenderer);
+      }
       const response = createResponse(result, representation, htmlRenderer);
 
       if (sessionProvider) {
-        if (result.session?.type === "sign-out") {
-          await sessionProvider.clear(session, response, request);
-        } else {
-          await sessionProvider.commit(result.session ?? null, response);
+        try {
+          if (result.session?.type === "sign-out") {
+            await sessionProvider.clear(session, response, request);
+          } else {
+            await sessionProvider.commit(result.session ?? null, response);
+          }
+        } catch {
+          return createResponse(createInternalServerErrorResult(), representation, htmlRenderer);
         }
       }
 

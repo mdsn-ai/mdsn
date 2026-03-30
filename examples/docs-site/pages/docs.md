@@ -4,7 +4,7 @@ title: Docs Home
 
 # Docs Home
 
-Welcome to the MDSNv documentation site example.
+Welcome to the MDSN documentation site example.
 
 This page is rendered by `createDocsSiteServer()` and a custom docs HTML shell.
 

@@ -3,6 +3,7 @@ import { parseAnchors } from "./parse/anchors.js";
 import { parseBlocks } from "./parse/block-parser.js";
 import { extractExecutableBlock } from "./parse/executable-block.js";
 import { parseFrontmatter } from "./parse/frontmatter.js";
+import { validatePage } from "./validate.js";
 import type { MdsnComposedPage, MdsnFragment, MdsnPage } from "./types.js";
 
 export * from "./errors.js";
@@ -36,6 +37,10 @@ export function parsePage(source: string): MdsnPage {
   }
 }
 
+export function parseAndValidatePage(source: string): MdsnPage {
+  return validatePage(parsePage(source));
+}
+
 function attachFragmentHelper(page: MdsnPage): MdsnComposedPage {
   const composed = page as MdsnComposedPage;
   Object.defineProperty(composed, "fragment", {
@@ -48,7 +53,7 @@ function attachFragmentHelper(page: MdsnPage): MdsnComposedPage {
 }
 
 export function composePage(source: string, options: ComposePageOptions = {}): MdsnComposedPage {
-  const page = parsePage(source);
+  const page = parseAndValidatePage(source);
   if (options.blocks) {
     page.blockContent = { ...options.blocks };
   }

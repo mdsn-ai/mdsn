@@ -16,6 +16,8 @@ interface DocsPageRecord {
   page: ReturnType<typeof composePage>;
 }
 
+type DocsLocale = "en" | "zh";
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -45,25 +47,62 @@ function sortByRoute(records: DocsPageRecord[]): DocsPageRecord[] {
   });
 }
 
-function renderNavigation(availableRoutes: Set<string>, currentRoute: string): string {
+function localeFromRoute(route: string): DocsLocale {
+  return route.startsWith("/zh/") ? "zh" : "en";
+}
+
+function localizedRoute(baseRoute: string, locale: DocsLocale): string {
+  if (locale === "zh") {
+    return baseRoute.replace(/^\/docs/, "/zh/docs");
+  }
+  return baseRoute.replace(/^\/zh\/docs/, "/docs");
+}
+
+function docsRouteSuffix(route: string): string {
+  if (route === "/docs" || route === "/zh/docs") {
+    return "";
+  }
+  if (route.startsWith("/docs/")) {
+    return route.slice("/docs".length);
+  }
+  if (route.startsWith("/zh/docs/")) {
+    return route.slice("/zh/docs".length);
+  }
+  return "";
+}
+
+function withLocaleSuffix(locale: DocsLocale, suffix: string): string {
+  return locale === "zh" ? `/zh/docs${suffix}` : `/docs${suffix}`;
+}
+
+function withFallbackRoute(candidate: string, fallback: string, availableRoutes: Set<string>): string {
+  return availableRoutes.has(candidate) ? candidate : fallback;
+}
+
+function renderNavigation(availableRoutes: Set<string>, currentRoute: string, locale: DocsLocale): string {
   return docsNav
     .map((section) => {
       const links = section.items
-        .filter((item) => availableRoutes.has(item.href))
         .map((item) => {
-          const active = item.href === currentRoute ? ' aria-current="page"' : "";
-          return `<a href="${escapeHtml(item.href)}" data-nav-link${active}>${escapeHtml(item.label)}</a>`;
+          const localRoute = localizedRoute(item.href, locale);
+          const fallbackRoute = localizedRoute(item.href, locale === "zh" ? "en" : "zh");
+          const resolvedRoute = withFallbackRoute(localRoute, fallbackRoute, availableRoutes);
+          const hasPage = availableRoutes.has(resolvedRoute);
+
+          if (!hasPage) {
+            return `<span class="docs-nav-disabled" data-nav-link>${escapeHtml(item.label[locale])}</span>`;
+          }
+
+          const active = resolvedRoute === currentRoute ? ' aria-current="page"' : "";
+          return `<a href="${escapeHtml(resolvedRoute)}" data-nav-link${active}>${escapeHtml(item.label[locale])}</a>`;
         })
         .join("");
-      if (!links) {
-        return "";
-      }
-      return `<section class="docs-nav-section"><h2>${escapeHtml(section.section)}</h2><nav>${links}</nav></section>`;
+      return `<section class="docs-nav-section"><h2>${escapeHtml(section.section[locale])}</h2><nav>${links}</nav></section>`;
     })
     .join("");
 }
 
-function renderToc(items: ReturnType<typeof extractToc>): string {
+function renderToc(items: ReturnType<typeof extractToc>, locale: DocsLocale): string {
   if (items.length === 0) {
     return `<aside class="docs-toc docs-toc-empty"></aside>`;
   }
@@ -73,20 +112,38 @@ function renderToc(items: ReturnType<typeof extractToc>): string {
         `<li class="depth-${item.depth}"><a href="#${escapeHtml(item.id)}" data-toc-link>${escapeHtml(item.text)}</a></li>`
     )
     .join("");
-  return `<aside class="docs-toc"><h2>On this page</h2><ul>${list}</ul></aside>`;
+  const title = locale === "zh" ? "本页目录" : "On this page";
+  return `<aside class="docs-toc"><h2>${title}</h2><ul>${list}</ul></aside>`;
 }
 
 export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
   const markdownRenderer = options.markdownRenderer;
-  const siteTitle = options.siteTitle ?? "MDSNv Docs";
+  const siteTitle = options.siteTitle ?? "MDSN Docs";
 
-  const records = sortByRoute(
+  const explicitRecords = sortByRoute(
     Object.entries(options.pages).map(([route, source]) => ({
       route,
       page: composePage(source)
     }))
   );
-  const pageMap = new Map(records.map((record) => [record.route, record.page]));
+  const pageMap = new Map(explicitRecords.map((record) => [record.route, record.page]));
+
+  for (const [route, page] of pageMap.entries()) {
+    if (route.startsWith("/docs")) {
+      const zhRoute = route.replace(/^\/docs/, "/zh/docs");
+      if (!pageMap.has(zhRoute)) {
+        pageMap.set(zhRoute, page);
+      }
+    }
+    if (route.startsWith("/zh/docs")) {
+      const enRoute = route.replace(/^\/zh\/docs/, "/docs");
+      if (!pageMap.has(enRoute)) {
+        pageMap.set(enRoute, page);
+      }
+    }
+  }
+
+  const records = sortByRoute(Array.from(pageMap.entries()).map(([route, page]) => ({ route, page })));
   const availableRoutes = new Set(records.map((record) => record.route));
 
   return createHostedApp({
@@ -104,19 +161,26 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
     ),
     renderHtml(fragment, renderOptions) {
       const route = renderOptions?.route ?? "/docs";
+      const locale = localeFromRoute(route);
       const page = pageMap.get(route);
       const pageTitle = page ? toTitle(page.frontmatter, route) : "Docs";
-      const navigation = renderNavigation(availableRoutes, route);
+      const suffix = docsRouteSuffix(route);
+      const enRoute = withFallbackRoute(withLocaleSuffix("en", suffix), "/docs", availableRoutes);
+      const zhRoute = withFallbackRoute(withLocaleSuffix("zh", suffix), "/zh/docs", availableRoutes);
+      const homeRoute = locale === "zh" && availableRoutes.has("/zh/docs") ? "/zh/docs" : "/docs";
+      const navigation = renderNavigation(availableRoutes, route, locale);
       const tocItems = extractToc(fragment.markdown);
       const rendered = markdownRenderer
         ? {
             html: injectHeadingIds(markdownRenderer.render(fragment.markdown), tocItems)
           }
         : renderDocsMarkdown(fragment.markdown);
-      const toc = renderToc(tocItems);
+      const toc = renderToc(tocItems, locale);
+      const searchLabel = locale === "zh" ? "搜索" : "Search";
+      const searchPlaceholder = locale === "zh" ? "搜索文档..." : "Search docs...";
 
       return `<!doctype html>
-<html lang="en">
+<html lang="${locale}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -126,13 +190,17 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
   </head>
   <body>
     <header class="docs-topbar">
-      <a class="docs-brand" href="/docs">${escapeHtml(siteTitle)}</a>
+      <a class="docs-brand" href="${homeRoute}">${escapeHtml(siteTitle)}</a>
+      <div class="docs-lang-switch" aria-label="Language">
+        <a href="${escapeHtml(enRoute)}"${locale === "en" ? ' aria-current="page"' : ""}>EN</a>
+        <a href="${escapeHtml(zhRoute)}"${locale === "zh" ? ' aria-current="page"' : ""}>中文</a>
+      </div>
     </header>
     <main class="docs-shell">
       <aside class="docs-nav" aria-label="Sidebar navigation">
         <div class="docs-nav-search">
-          <label for="docs-nav-filter">Search</label>
-          <input id="docs-nav-filter" type="search" placeholder="Search docs...">
+          <label for="docs-nav-filter">${searchLabel}</label>
+          <input id="docs-nav-filter" type="search" placeholder="${searchPlaceholder}">
         </div>
         ${navigation}
       </aside>

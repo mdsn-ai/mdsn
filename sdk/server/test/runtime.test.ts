@@ -256,6 +256,66 @@ describe("createMdsnServer", () => {
     });
   });
 
+  it("returns a recoverable 500 fragment when an action handler throws", async () => {
+    const server = createMdsnServer();
+
+    server.post("/boom", async () => {
+      throw new Error("boom");
+    });
+
+    const response = await server.handle({
+      method: "POST",
+      url: "https://example.test/boom",
+      headers: {
+        accept: "text/markdown",
+        "content-type": "text/markdown"
+      },
+      body: `message: "hi"`,
+      cookies: {}
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.headers["content-type"]).toBe("text/markdown");
+    expect(response.body).toContain("Internal Server Error");
+  });
+
+  it("returns a recoverable 500 fragment when session persistence throws", async () => {
+    const server = createMdsnServer({
+      session: {
+        read: async () => null,
+        commit: async () => {
+          throw new Error("commit failed");
+        },
+        clear: async () => undefined
+      }
+    });
+
+    server.post("/login", async () =>
+      ok({
+        fragment: {
+          markdown: "## Welcome",
+          blocks: []
+        },
+        session: signIn({ userId: "user-1" })
+      })
+    );
+
+    const response = await server.handle({
+      method: "POST",
+      url: "https://example.test/login",
+      headers: {
+        accept: "text/markdown",
+        "content-type": "text/markdown"
+      },
+      body: `nickname: "Guest"`,
+      cookies: {}
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.headers["content-type"]).toBe("text/markdown");
+    expect(response.body).toContain("Internal Server Error");
+  });
+
   it("returns html when the client prefers html", async () => {
     const server = createMdsnServer();
 
@@ -460,5 +520,24 @@ describe("createMdsnServer", () => {
     expect(response.status).toBe(406);
     expect(response.headers["content-type"]).toBe("text/markdown");
     await expect(readBody(response.body)).resolves.toContain("Page routes do not support text/event-stream");
+  });
+
+  it("returns a recoverable 500 fragment when a page handler throws", async () => {
+    const server = createMdsnServer();
+
+    server.page("/boom", async () => {
+      throw new Error("boom");
+    });
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/boom",
+      headers: { accept: "text/markdown" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.headers["content-type"]).toBe("text/markdown");
+    await expect(readBody(response.body)).resolves.toContain("Internal Server Error");
   });
 });

@@ -67,4 +67,15 @@ BLOCK compose {
 
     expect(() => validatePage(page)).toThrow(/Only choice inputs may declare options/);
   });
+
+  it("accepts POST operations with an explicit empty input list", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK auth {
+  POST "/logout" () -> logout label:"Log Out"
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).not.toThrow();
+  });
 });

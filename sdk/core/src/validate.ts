@@ -82,11 +82,6 @@ function validatePostOperation(operation: MdsnOperation, blockName: string): voi
       `POST "${operation.target}" in block "${blockName}" must define an operation name.`
     );
   }
-  if (operation.inputs.length === 0) {
-    throw new MdsnValidationError(
-      `POST "${operation.target}" in block "${blockName}" must declare an input list.`
-    );
-  }
 }
 
 export function validatePage(page: MdsnPage): MdsnPage {

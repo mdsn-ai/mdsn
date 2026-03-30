@@ -201,7 +201,7 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
   </head>
   <body>
     <header class="docs-topbar">
-      <a class="docs-brand" href="/docs">MDSNv Docs</a>
+      <a class="docs-brand" href="/docs">MDSN Docs</a>
     </header>
     <main class="docs-shell">
       <aside class="docs-nav">

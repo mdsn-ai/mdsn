@@ -151,6 +151,7 @@ BLOCK updates {
 
 \`\`\`mdsn
 BLOCK secure {
+  INPUT text -> message
   POST "/shared" (message) -> save
 }
 \`\`\``;

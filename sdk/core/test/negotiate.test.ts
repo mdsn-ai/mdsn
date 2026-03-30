@@ -23,4 +23,9 @@ describe("negotiateRepresentation", () => {
   it("returns not-acceptable for unsupported accept", () => {
     expect(negotiateRepresentation("application/json")).toBe("not-acceptable");
   });
+
+  it("honors q-weight preferences across supported representations", () => {
+    expect(negotiateRepresentation("text/html;q=0.9, text/markdown;q=0.8")).toBe("html");
+    expect(negotiateRepresentation("text/event-stream;q=0.4, text/markdown;q=0.8")).toBe("markdown");
+  });
 });

@@ -39,6 +39,21 @@ BLOCK guestbook {
     expect(page.blocks[0]?.name).toBe("guestbook");
   });
 
+  it("validates page structure while composing", () => {
+    expect(() =>
+      composePage(`# Demo
+
+<!-- mdsn:block missing -->
+
+\`\`\`mdsn
+BLOCK guestbook {
+  GET "/list" -> refresh
+}
+\`\`\`
+`)
+    ).toThrow(/does not match any BLOCK/);
+  });
+
   it("returns a composed page with a fragment helper for block-scoped responses", () => {
     const page = composePage(
       `# Guestbook
@@ -74,6 +89,8 @@ BLOCK guestbook {
 
 \`\`\`mdsn
 BLOCK auth {
+  INPUT text -> nickname
+  INPUT text -> password
   POST "/login" (nickname, password) -> login label:"Sign In"
 }
 

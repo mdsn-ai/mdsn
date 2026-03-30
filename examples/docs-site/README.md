@@ -1,6 +1,6 @@
-# MDSNv Docs Site Example
+# MDSN Docs Site Example
 
-This is a minimal docs website example built with MDSNv runtime primitives.
+This is a minimal docs website example built with MDSN runtime primitives.
 
 ## What It Demonstrates
 

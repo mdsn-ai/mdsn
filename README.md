@@ -147,45 +147,45 @@ For stream reads, declare `GET "/stream" accept:"text/event-stream"`. The server
 
 If you want the smallest runnable scaffold, start here:
 
-- [examples/starter/README.md](/Users/hencoo/projects/mdsnv/examples/starter/README.md)
-- [examples/starter/src/index.ts](/Users/hencoo/projects/mdsnv/examples/starter/src/index.ts)
-- [examples/starter/dev.mjs](/Users/hencoo/projects/mdsnv/examples/starter/dev.mjs)
+- [examples/starter/README.md](/Users/hencoo/projects/mdsn/examples/starter/README.md)
+- [examples/starter/src/index.ts](/Users/hencoo/projects/mdsn/examples/starter/src/index.ts)
+- [examples/starter/dev.mjs](/Users/hencoo/projects/mdsn/examples/starter/dev.mjs)
 
 If you want the same starter shape with a framework host that fully takes over UI from the headless browser bootstrap, see:
 
-- [examples/vue-starter/README.md](/Users/hencoo/projects/mdsnv/examples/vue-starter/README.md)
-- [examples/vue-starter/src/client.ts](/Users/hencoo/projects/mdsnv/examples/vue-starter/src/client.ts)
-- [examples/vue-starter/dev.mjs](/Users/hencoo/projects/mdsnv/examples/vue-starter/dev.mjs)
-- [examples/react-starter/README.md](/Users/hencoo/projects/mdsnv/examples/react-starter/README.md)
-- [examples/react-starter/src/client.tsx](/Users/hencoo/projects/mdsnv/examples/react-starter/src/client.tsx)
-- [examples/react-starter/dev.mjs](/Users/hencoo/projects/mdsnv/examples/react-starter/dev.mjs)
+- [examples/vue-starter/README.md](/Users/hencoo/projects/mdsn/examples/vue-starter/README.md)
+- [examples/vue-starter/src/client.ts](/Users/hencoo/projects/mdsn/examples/vue-starter/src/client.ts)
+- [examples/vue-starter/dev.mjs](/Users/hencoo/projects/mdsn/examples/vue-starter/dev.mjs)
+- [examples/react-starter/README.md](/Users/hencoo/projects/mdsn/examples/react-starter/README.md)
+- [examples/react-starter/src/client.tsx](/Users/hencoo/projects/mdsn/examples/react-starter/src/client.tsx)
+- [examples/react-starter/dev.mjs](/Users/hencoo/projects/mdsn/examples/react-starter/dev.mjs)
 
 If you want the same starter business module hosted on Express, see:
 
-- [examples/express-starter/README.md](/Users/hencoo/projects/mdsnv/examples/express-starter/README.md)
-- [examples/express-starter/src/index.ts](/Users/hencoo/projects/mdsnv/examples/express-starter/src/index.ts)
-- [examples/express-starter/src/express-adapter.ts](/Users/hencoo/projects/mdsnv/examples/express-starter/src/express-adapter.ts)
-- [examples/express-starter/dev.mjs](/Users/hencoo/projects/mdsnv/examples/express-starter/dev.mjs)
+- [examples/express-starter/README.md](/Users/hencoo/projects/mdsn/examples/express-starter/README.md)
+- [examples/express-starter/src/index.ts](/Users/hencoo/projects/mdsn/examples/express-starter/src/index.ts)
+- [examples/express-starter/src/express-adapter.ts](/Users/hencoo/projects/mdsn/examples/express-starter/src/express-adapter.ts)
+- [examples/express-starter/dev.mjs](/Users/hencoo/projects/mdsn/examples/express-starter/dev.mjs)
 
 If you want to validate a docs website architecture before moving it to a top-level app, see:
 
-- [examples/docs-site/README.md](/Users/hencoo/projects/mdsnv/examples/docs-site/README.md)
-- [examples/docs-site/src/index.ts](/Users/hencoo/projects/mdsnv/examples/docs-site/src/index.ts)
-- [examples/docs-site/dev.mjs](/Users/hencoo/projects/mdsnv/examples/docs-site/dev.mjs)
+- [examples/docs-site/README.md](/Users/hencoo/projects/mdsn/examples/docs-site/README.md)
+- [examples/docs-site/src/index.ts](/Users/hencoo/projects/mdsn/examples/docs-site/src/index.ts)
+- [examples/docs-site/dev.mjs](/Users/hencoo/projects/mdsn/examples/docs-site/dev.mjs)
 
 If you want a concrete third-party Markdown renderer integration, see:
 
-- [examples/marked-starter/README.md](/Users/hencoo/projects/mdsnv/examples/marked-starter/README.md)
-- [examples/marked-starter/src/index.ts](/Users/hencoo/projects/mdsnv/examples/marked-starter/src/index.ts)
-- [examples/marked-starter/src/client.ts](/Users/hencoo/projects/mdsnv/examples/marked-starter/src/client.ts)
+- [examples/marked-starter/README.md](/Users/hencoo/projects/mdsn/examples/marked-starter/README.md)
+- [examples/marked-starter/src/index.ts](/Users/hencoo/projects/mdsn/examples/marked-starter/src/index.ts)
+- [examples/marked-starter/src/client.ts](/Users/hencoo/projects/mdsn/examples/marked-starter/src/client.ts)
 
 ## Docs
 
-- SDK overview: [docs/sdk.md](/Users/hencoo/projects/mdsnv/docs/sdk.md)
-- API reference: [docs/api-reference.md](/Users/hencoo/projects/mdsnv/docs/api-reference.md)
-- Third-party Markdown renderer example: [docs/third-party-markdown-renderer.md](/Users/hencoo/projects/mdsnv/docs/third-party-markdown-renderer.md)
-- Server runtime: [docs/server-runtime.md](/Users/hencoo/projects/mdsnv/docs/server-runtime.md)
-- Web runtime: [docs/web-runtime.md](/Users/hencoo/projects/mdsnv/docs/web-runtime.md)
-- Elements: [docs/elements.md](/Users/hencoo/projects/mdsnv/docs/elements.md)
-- Session provider: [docs/session-provider.md](/Users/hencoo/projects/mdsnv/docs/session-provider.md)
-- Examples: [docs/examples.md](/Users/hencoo/projects/mdsnv/docs/examples.md)
+- SDK overview: [docs/sdk.md](/Users/hencoo/projects/mdsn/docs/sdk.md)
+- API reference: [docs/api-reference.md](/Users/hencoo/projects/mdsn/docs/api-reference.md)
+- Third-party Markdown renderer example: [docs/third-party-markdown-renderer.md](/Users/hencoo/projects/mdsn/docs/third-party-markdown-renderer.md)
+- Server runtime: [docs/server-runtime.md](/Users/hencoo/projects/mdsn/docs/server-runtime.md)
+- Web runtime: [docs/web-runtime.md](/Users/hencoo/projects/mdsn/docs/web-runtime.md)
+- Elements: [docs/elements.md](/Users/hencoo/projects/mdsn/docs/elements.md)
+- Session provider: [docs/session-provider.md](/Users/hencoo/projects/mdsn/docs/session-provider.md)
+- Examples: [docs/examples.md](/Users/hencoo/projects/mdsn/docs/examples.md)
