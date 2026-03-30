@@ -38,7 +38,7 @@ An MDSN page usually contains:
 
 A `BLOCK` is an interaction scope inside the page.
 
-It is mounted into Markdown body by anchors like `<!-- mdsn:block guestbook -->`, and becomes the replaceable region at runtime.
+It is mounted into Markdown body by block anchors (for example: `mdsn:block <name>`), and becomes the replaceable region at runtime.
 
 ### 3. Fragment Update
 
