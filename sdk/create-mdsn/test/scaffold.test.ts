@@ -25,14 +25,14 @@ describe("create-mdsn starter scaffold", () => {
 
     const packageJson = await readFile(join(targetDir, "package.json"), "utf8");
     expect(packageJson).toContain('"name": "my-mdsn-app"');
-    expect(packageJson).toContain('"@mdsn/server": "^0.1.0-test"');
+    expect(packageJson).toContain('"@mdsnai/sdk": "^0.1.0-test"');
 
     const readme = await readFile(join(targetDir, "README.md"), "utf8");
     expect(readme).toContain("# my-mdsn-app");
     expect(readme).toContain("app/guestbook.md");
 
     const indexSource = await readFile(join(targetDir, "index.mjs"), "utf8");
-    expect(indexSource).toContain('import { createAppServer } from "./dist/server.js";');
+    expect(indexSource).toContain('import { createAppServer } from "./dist/sdk-server.js";');
     expect(indexSource).toContain('"/app/client.js"');
 
     const serverSource = await readFile(join(targetDir, "app", "server.ts"), "utf8");

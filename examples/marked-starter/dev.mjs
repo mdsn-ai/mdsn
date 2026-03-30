@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createNodeHost } from "@mdsn/server";
+import { createNodeHost } from "@mdsnai/sdk/server";
 
 import { createMarkedStarterServer } from "./dist/index.js";
 
@@ -19,9 +19,9 @@ function withVersion(path) {
 
 const importMap = {
   imports: {
-    "@mdsn/core": withVersion("/sdk/core/dist/index.js"),
-    "@mdsn/web": withVersion("/sdk/web/dist/index.js"),
-    "@mdsn/elements": withVersion("/sdk/elements/dist/index.js"),
+    "@mdsnai/sdk/core": withVersion("/sdk/dist/core/index.js"),
+    "@mdsnai/sdk/web": withVersion("/sdk/dist/web/index.js"),
+    "@mdsnai/sdk/elements": withVersion("/sdk/dist/elements/index.js"),
     "marked": withVersion("/node_modules/marked/lib/marked.esm.js"),
     "lit": withVersion("/node_modules/lit/index.js"),
     "lit-html": withVersion("/node_modules/lit-html/lit-html.js"),

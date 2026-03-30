@@ -4,9 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@mdsn/core": "0.1.0",
-    "@mdsn/server": "0.1.0",
-    "@mdsn/web": "0.1.0",
-    "@mdsn/elements": "0.1.0"
+    "@mdsnai/sdk": "0.1.0"
   }
 }

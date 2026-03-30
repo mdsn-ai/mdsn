@@ -6,10 +6,7 @@
     "outDir": "./dist"
   },
   "references": [
-    { "path": "../../sdk/core" },
-    { "path": "../../sdk/server" },
-    { "path": "../../sdk/web" },
-    { "path": "../../sdk/elements" }
+    { "path": "../../sdk" }
   ],
   "include": ["src/**/*.ts"]
 }

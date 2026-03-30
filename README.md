@@ -6,10 +6,10 @@ Page routes return full Markdown pages. Ordinary `BLOCK` actions return block-sc
 
 ## What You Get
 
-- `@mdsn/core`: parse, validate, serialize, negotiate
-- `@mdsn/server`: target-first server runtime and session abstraction
-- `@mdsn/web`: headless browser host for page/block state and actions
-- `@mdsn/elements`: default headless-powered Web Components UI
+- `@mdsnai/sdk/core`: parse, validate, serialize, negotiate
+- `@mdsnai/sdk/server`: target-first server runtime and session abstraction
+- `@mdsnai/sdk/web`: headless browser host for page/block state and actions
+- `@mdsnai/sdk/elements`: default headless-powered Web Components UI
 
 ## Quick Start
 
@@ -35,21 +35,21 @@ npm start
 That starter keeps the app shape intentionally small:
 
 - `app/guestbook.md`
-- `app/server.ts`
+- `app/sdk/server.ts`
 - `app/client.ts`
 - `index.mjs`
 
 Install the packages you need:
 
 ```bash
-npm install @mdsn/core @mdsn/server @mdsn/web @mdsn/elements
+npm install @mdsnai/sdk
 ```
 
 Compose a page from canonical Markdown, then return block fragments from actions:
 
 ```ts
-import { composePage } from "@mdsn/core";
-import { createHostedApp, createNodeHost } from "@mdsn/server";
+import { composePage } from "@mdsnai/sdk/core";
+import { createHostedApp, createNodeHost } from "@mdsnai/sdk/server";
 
 const source = await readFile("pages/guestbook.md", "utf8");
 
@@ -102,8 +102,8 @@ http.createServer(
 On the browser side, mount the default headless-powered UI:
 
 ```ts
-import { mountMdsnElements } from "@mdsn/elements";
-import { createHeadlessHost } from "@mdsn/web";
+import { mountMdsnElements } from "@mdsnai/sdk/elements";
+import { createHeadlessHost } from "@mdsnai/sdk/web";
 
 const host = createHeadlessHost({ root: document, fetchImpl: window.fetch });
 mountMdsnElements({
@@ -116,22 +116,22 @@ If you do not want the default UI, keep `createHeadlessHost()` and render `snaps
 
 ## Package Guide
 
-Use `@mdsn/server` when you want the fastest path to a working host.
+Use `@mdsnai/sdk/server` when you want the fastest path to a working host.
 
-Use `@mdsn/web` when you want block-local updates in the browser but plan to bring your own UI.
+Use `@mdsnai/sdk/web` when you want block-local updates in the browser but plan to bring your own UI.
 
-Use `@mdsn/elements` when you want the official default UI on top of the same headless browser state that framework hosts can consume.
+Use `@mdsnai/sdk/elements` when you want the official default UI on top of the same headless browser state that framework hosts can consume.
 
-Use `@mdsn/core` when you only need protocol parsing, validation, or serialization.
+Use `@mdsnai/sdk/core` when you only need protocol parsing, validation, or serialization.
 
-If you want to swap in a third-party Markdown renderer for browser HTML output, provide the same `markdownRenderer` object to both `@mdsn/server` and `@mdsn/elements`.
+If you want to swap in a third-party Markdown renderer for browser HTML output, provide the same `markdownRenderer` object to both `@mdsnai/sdk/server` and `@mdsnai/sdk/elements`.
 
 The intended boundary is:
 
 - app code owns canonical `.md` page files and business state
-- `@mdsn/core` turns page source plus runtime block content into page/fragment objects
-- `@mdsn/server` owns negotiation, request parsing, and HTTP response writing
-- `@mdsn/web` and `@mdsn/elements` own browser interaction and default presentation
+- `@mdsnai/sdk/core` turns page source plus runtime block content into page/fragment objects
+- `@mdsnai/sdk/server` owns negotiation, request parsing, and HTTP response writing
+- `@mdsnai/sdk/web` and `@mdsnai/sdk/elements` own browser interaction and default presentation
 
 For `POST` request bodies, the canonical markdown format is comma-separated key/value text such as:
 
@@ -139,7 +139,7 @@ For `POST` request bodies, the canonical markdown format is comma-separated key/
 nickname: "Guest", message: "Hello"
 ```
 
-`@mdsn/server` now enforces `Content-Type: text/markdown` for direct `POST` action requests and returns `415` when callers send a different write media type. The built-in Node bridge normalizes browser form posts into that canonical body format and forwards incoming cookies to session providers.
+`@mdsnai/sdk/server` now enforces `Content-Type: text/markdown` for direct `POST` action requests and returns `415` when callers send a different write media type. The built-in Node bridge normalizes browser form posts into that canonical body format and forwards incoming cookies to session providers.
 
 For stream reads, declare `GET "/stream" accept:"text/event-stream"`. The server runtime can now return SSE with `stream(...)`, while the browser runtime uses that channel to trigger block-local refreshes.
 
@@ -184,8 +184,8 @@ If you want a concrete third-party Markdown renderer integration, see:
 - SDK overview: [docs/sdk.md](/Users/hencoo/projects/mdsn/docs/sdk.md)
 - API reference: [docs/api-reference.md](/Users/hencoo/projects/mdsn/docs/api-reference.md)
 - Third-party Markdown renderer example: [docs/third-party-markdown-renderer.md](/Users/hencoo/projects/mdsn/docs/third-party-markdown-renderer.md)
-- Server runtime: [docs/server-runtime.md](/Users/hencoo/projects/mdsn/docs/server-runtime.md)
-- Web runtime: [docs/web-runtime.md](/Users/hencoo/projects/mdsn/docs/web-runtime.md)
-- Elements: [docs/elements.md](/Users/hencoo/projects/mdsn/docs/elements.md)
+- Server runtime: [docs/sdk/server-runtime.md](/Users/hencoo/projects/mdsn/docs/sdk/server-runtime.md)
+- Web runtime: [docs/sdk/web-runtime.md](/Users/hencoo/projects/mdsn/docs/sdk/web-runtime.md)
+- Elements: [docs/sdk/elements.md](/Users/hencoo/projects/mdsn/docs/sdk/elements.md)
 - Session provider: [docs/session-provider.md](/Users/hencoo/projects/mdsn/docs/session-provider.md)
 - Examples: [docs/examples.md](/Users/hencoo/projects/mdsn/docs/examples.md)

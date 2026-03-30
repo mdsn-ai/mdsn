@@ -1,6 +1,6 @@
-import { createHostedApp } from "@mdsn/server";
-import { composePage } from "@mdsn/core";
-import type { MdsnFrontmatter, MdsnMarkdownRenderer } from "@mdsn/core";
+import { createHostedApp } from "@mdsnai/sdk/server";
+import { composePage } from "@mdsnai/sdk/core";
+import type { MdsnFrontmatter, MdsnMarkdownRenderer } from "@mdsnai/sdk/core";
 
 export interface CreateDocsSiteServerOptions {
   pages: Record<string, string>;

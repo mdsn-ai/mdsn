@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createNodeHost } from "@mdsn/server";
+import { createNodeHost } from "@mdsnai/sdk/server";
 
-import { createAppServer } from "./dist/server.js";
+import { createAppServer } from "./dist/sdk-server.js";
 
 const port = Number(process.env.PORT || 4322);
 const projectRoot = fileURLToPath(new URL("./", import.meta.url));
@@ -18,9 +18,9 @@ function withVersion(path) {
 
 const importMap = {
   imports: {
-    "@mdsn/core": withVersion("/node_modules/@mdsn/core/dist/index.js"),
-    "@mdsn/web": withVersion("/node_modules/@mdsn/web/dist/index.js"),
-    "@mdsn/elements": withVersion("/node_modules/@mdsn/elements/dist/index.js"),
+    "@mdsnai/sdk/core": withVersion("/node_modules/@mdsnai/sdk/dist/core/index.js"),
+    "@mdsnai/sdk/web": withVersion("/node_modules/@mdsnai/sdk/dist/web/index.js"),
+    "@mdsnai/sdk/elements": withVersion("/node_modules/@mdsnai/sdk/dist/elements/index.js"),
     "lit": withVersion("/node_modules/lit/index.js"),
     "lit-html": withVersion("/node_modules/lit-html/lit-html.js"),
     "lit-html/is-server.js": withVersion("/node_modules/lit-html/is-server.js"),

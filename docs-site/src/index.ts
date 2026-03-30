@@ -1,6 +1,6 @@
-import { composePage } from "@mdsn/core";
-import type { MdsnFrontmatter, MdsnMarkdownRenderer } from "@mdsn/core";
-import { createHostedApp } from "@mdsn/server";
+import { composePage } from "@mdsnai/sdk/core";
+import type { MdsnFrontmatter, MdsnMarkdownRenderer } from "@mdsnai/sdk/core";
+import { createHostedApp } from "@mdsnai/sdk/server";
 
 import { extractToc, injectHeadingIds, renderDocsMarkdown } from "./markdown.js";
 import { docsNav } from "./nav.js";

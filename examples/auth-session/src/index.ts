@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { composePage } from "@mdsn/core";
+import { composePage } from "@mdsnai/sdk/core";
 import {
   block,
   createHostedApp,
@@ -12,7 +12,7 @@ import {
   type MdsnResponse,
   type MdsnSessionProvider,
   type MdsnSessionSnapshot
-} from "@mdsn/server";
+} from "@mdsnai/sdk/server";
 
 interface UserRecord {
   password: string;

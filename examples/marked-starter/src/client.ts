@@ -1,5 +1,5 @@
-import { mountMdsnElements } from "@mdsn/elements";
-import { createHeadlessHost } from "@mdsn/web";
+import { mountMdsnElements } from "@mdsnai/sdk/elements";
+import { createHeadlessHost } from "@mdsnai/sdk/web";
 import { marked } from "marked";
 
 const markdownRenderer = {

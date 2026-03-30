@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createNodeHost } from "@mdsn/server";
+import { createNodeHost } from "@mdsnai/sdk/server";
 
 import { createGuestbookServer } from "./dist/index.js";
 
@@ -13,9 +13,9 @@ const guestbookPagePath = join(repoRoot, "examples", "guestbook", "pages", "gues
 
 const importMap = {
   imports: {
-    "@mdsn/core": "/sdk/core/dist/index.js",
-    "@mdsn/web": "/sdk/web/dist/index.js",
-    "@mdsn/elements": "/sdk/elements/dist/index.js",
+    "@mdsnai/sdk/core": "/sdk/dist/core/index.js",
+    "@mdsnai/sdk/web": "/sdk/dist/web/index.js",
+    "@mdsnai/sdk/elements": "/sdk/dist/elements/index.js",
     "lit": "/node_modules/lit/index.js",
     "lit-html": "/node_modules/lit-html/lit-html.js",
     "lit-html/is-server.js": "/node_modules/lit-html/is-server.js",
@@ -28,8 +28,8 @@ function injectEnhancement(html) {
   const enhancement = `
 <script type="importmap">${JSON.stringify(importMap)}</script>
 <script type="module">
-  import { mountMdsnElements } from "@mdsn/elements";
-  import { createHeadlessHost } from "@mdsn/web";
+  import { mountMdsnElements } from "@mdsnai/sdk/elements";
+  import { createHeadlessHost } from "@mdsnai/sdk/web";
 
   const host = createHeadlessHost({ root: document, fetchImpl: window.fetch.bind(window) });
   mountMdsnElements({ root: document, host }).mount();

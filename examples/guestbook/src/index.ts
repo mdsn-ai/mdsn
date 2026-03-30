@@ -1,7 +1,7 @@
-import { composePage } from "@mdsn/core";
-import { mountMdsnElements } from "@mdsn/elements";
-import { createHostedApp } from "@mdsn/server";
-import { createHeadlessHost } from "@mdsn/web";
+import { composePage } from "@mdsnai/sdk/core";
+import { mountMdsnElements } from "@mdsnai/sdk/elements";
+import { createHostedApp } from "@mdsnai/sdk/server";
+import { createHeadlessHost } from "@mdsnai/sdk/web";
 
 export interface CreateGuestbookServerOptions {
   source: string;

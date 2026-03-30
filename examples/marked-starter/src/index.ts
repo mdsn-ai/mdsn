@@ -1,5 +1,5 @@
-import { composePage } from "@mdsn/core";
-import { createHostedApp } from "@mdsn/server";
+import { composePage } from "@mdsnai/sdk/core";
+import { createHostedApp } from "@mdsnai/sdk/server";
 import { marked } from "marked";
 
 export interface CreateMarkedStarterServerOptions {

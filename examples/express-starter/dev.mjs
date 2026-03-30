@@ -19,9 +19,9 @@ function withVersion(path) {
 
 const importMap = {
   imports: {
-    "@mdsn/core": withVersion("/sdk/core/dist/index.js"),
-    "@mdsn/web": withVersion("/sdk/web/dist/index.js"),
-    "@mdsn/elements": withVersion("/sdk/elements/dist/index.js"),
+    "@mdsnai/sdk/core": withVersion("/sdk/dist/core/index.js"),
+    "@mdsnai/sdk/web": withVersion("/sdk/dist/web/index.js"),
+    "@mdsnai/sdk/elements": withVersion("/sdk/dist/elements/index.js"),
     "lit": withVersion("/node_modules/lit/index.js"),
     "lit-html": withVersion("/node_modules/lit-html/lit-html.js"),
     "lit-html/is-server.js": withVersion("/node_modules/lit-html/is-server.js"),

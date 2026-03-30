@@ -1,4 +1,4 @@
-import { createHeadlessHost, type HeadlessSnapshot, type MdsnHeadlessHost } from "@mdsn/web";
+import { createHeadlessHost, type HeadlessSnapshot, type MdsnHeadlessHost } from "@mdsnai/sdk/web";
 import { marked } from "marked";
 import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";

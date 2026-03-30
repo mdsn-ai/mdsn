@@ -1,5 +1,5 @@
-import { serializeMarkdownBody } from "@mdsn/core";
-import type { MdsnRequest, MdsnResponse } from "@mdsn/server";
+import { serializeMarkdownBody } from "@mdsnai/sdk/core";
+import type { MdsnRequest, MdsnResponse } from "@mdsnai/sdk/server";
 
 interface MdsnRequestHandler {
   handle(request: MdsnRequest): Promise<MdsnResponse>;

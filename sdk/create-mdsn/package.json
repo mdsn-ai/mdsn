@@ -4,6 +4,10 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "template/starter"
+  ],
   "bin": {
     "create-mdsn": "./dist/cli.js"
   },
@@ -12,5 +16,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "dependencies": {
+    "@mdsnai/sdk": "0.1.0"
   }
 }

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { build } from "esbuild";
-import { createNodeHost } from "@mdsn/server";
+import { createNodeHost } from "@mdsnai/sdk/server";
 
 import { createReactStarterServer } from "./dist/index.js";
 

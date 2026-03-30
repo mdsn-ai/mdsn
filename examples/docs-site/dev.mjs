@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createNodeHost } from "@mdsn/server";
+import { createNodeHost } from "@mdsnai/sdk/server";
 
 import { createDocsSiteServer } from "./dist/index.js";
 

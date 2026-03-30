@@ -1,4 +1,4 @@
-import { createHeadlessHost, type HeadlessSnapshot } from "@mdsn/web";
+import { createHeadlessHost, type HeadlessSnapshot } from "@mdsnai/sdk/web";
 import { marked } from "marked";
 import { createApp, computed, defineComponent, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 
