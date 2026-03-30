@@ -9,7 +9,7 @@ import { createGuestbookServer } from "./dist/index.js";
 
 const port = Number(process.env.PORT || 4321);
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
-const guestbookPagePath = join(repoRoot, "pages", "guestbook.md");
+const guestbookPagePath = join(repoRoot, "examples", "guestbook", "pages", "guestbook.md");
 
 const importMap = {
   imports: {

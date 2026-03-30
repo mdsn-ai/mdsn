@@ -12,7 +12,7 @@ function renderGuestbookBlock(messages: string[]): string {
 
 describe("canonical page source", () => {
   it("loads guestbook from a real markdown file and preserves mdsn definitions", async () => {
-    const filePath = join(process.cwd(), "pages", "guestbook.md");
+    const filePath = join(process.cwd(), "examples", "guestbook", "pages", "guestbook.md");
     const source = await readFile(filePath, "utf8");
     const page = parsePage(source);
     page.blockContent = {

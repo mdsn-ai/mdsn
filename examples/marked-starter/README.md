@@ -6,6 +6,7 @@
 
 - `server` 通过同一个 `markdownRenderer` 输出 browser HTML
 - `elements` 通过同一个 `markdownRenderer` 渲染默认 UI
+- agent 路径仍然保持原始 `md + mdsn`，不受 HTML renderer 影响
 - 第三方库使用的是 `marked`
 
 ## 启动
@@ -13,6 +14,7 @@
 先在仓库根目录执行：
 
 ```bash
+npm install
 npm run build
 node examples/marked-starter/dev.mjs
 ```

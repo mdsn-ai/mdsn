@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { createGuestbookServer } from "../../../examples/guestbook/src/index.js";
 
 async function readGuestbookSource(): Promise<string> {
-  return readFile(join(process.cwd(), "pages", "guestbook.md"), "utf8");
+  return readFile(join(process.cwd(), "examples", "guestbook", "pages", "guestbook.md"), "utf8");
 }
 
 describe("guestbook example", () => {

@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/create-mdsn" },
     { "path": "./packages/core" },
     { "path": "./packages/server" },
     { "path": "./packages/web" },
@@ -8,6 +9,7 @@
     { "path": "./examples/guestbook" },
     { "path": "./examples/auth-session" },
     { "path": "./examples/starter" },
+    { "path": "./examples/docs-site" },
     { "path": "./examples/express-starter" },
     { "path": "./examples/marked-starter" },
     { "path": "./examples/vue-starter" },

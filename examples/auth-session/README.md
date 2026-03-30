@@ -13,7 +13,7 @@
 - `src/index.ts`
   - 用户、笔记和 session 业务逻辑
 - `src/client.ts`
-  - 浏览器挂载入口
+  - 默认 UI 挂载入口，走 `createHeadlessHost() + mountMdsnElements()`
 - `dev.mjs`
   - 本地开发壳，基于 `createNodeHost()`
 
@@ -22,6 +22,7 @@
 先在仓库根目录执行：
 
 ```bash
+npm install
 npm run build
 node examples/auth-session/dev.mjs
 ```

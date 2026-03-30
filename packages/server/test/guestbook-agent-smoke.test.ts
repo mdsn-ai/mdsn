@@ -60,8 +60,8 @@ async function postMarkdown(url: string, body: string) {
   });
 }
 
-async function readRootGuestbookSource(): Promise<string> {
-  return readFile(join(process.cwd(), "pages", "guestbook.md"), "utf8");
+async function readExampleGuestbookSource(): Promise<string> {
+  return readFile(join(process.cwd(), "examples", "guestbook", "pages", "guestbook.md"), "utf8");
 }
 
 async function readStarterGuestbookSource(): Promise<string> {
@@ -70,7 +70,7 @@ async function readStarterGuestbookSource(): Promise<string> {
 
 describe("guestbook agent-only smoke test", () => {
   it("lets an agent self-discover the guestbook flow over HTTP only", async () => {
-    const source = await readRootGuestbookSource();
+    const source = await readExampleGuestbookSource();
     const server = createGuestbookServer({
       source,
       initialMessages: ["Alpha", "Beta"]

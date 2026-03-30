@@ -1,0 +1,10 @@
+{
+  "name": "docs-site-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mdsn/core": "0.1.0",
+    "@mdsn/server": "0.1.0"
+  }
+}

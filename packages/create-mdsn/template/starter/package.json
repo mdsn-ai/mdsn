@@ -1,0 +1,20 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@mdsn/core": "^__SDK_VERSION__",
+    "@mdsn/server": "^__SDK_VERSION__",
+    "@mdsn/web": "^__SDK_VERSION__",
+    "@mdsn/elements": "^__SDK_VERSION__"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.3"
+  }
+}

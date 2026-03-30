@@ -8,6 +8,8 @@
   - 你的 canonical 页面源
 - `src/index.ts`
   - 你的业务逻辑
+- `src/client.ts`
+  - 默认 UI 挂载入口，走 `createHeadlessHost() + mountMdsnElements()`
 - `dev.mjs`
   - 本地开发壳，基于 `createNodeHost()`
 
@@ -16,6 +18,7 @@
 先在仓库根目录执行：
 
 ```bash
+npm install
 npm run build
 node examples/starter/dev.mjs
 ```
@@ -35,4 +38,5 @@ node examples/starter/dev.mjs
 - 页面源放 `.md`
 - 运行时 block 内容用 `composePage()`
 - hosted app 里的 action 显式声明 `target / methods / routePath / blockName`
+- 浏览器侧默认链路走 `createHeadlessHost() + mountMdsnElements()`
 - Node 开发壳用 `createNodeHost()`

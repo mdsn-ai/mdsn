@@ -1,10 +1,10 @@
 ---
-title: Guestbook
+title: "Guestbook"
 ---
 
 # Guestbook
 
-A tiny shared wall for quick notes, feedback, and experiments while we shape the MDSN default experience.
+Leave a short message and refresh the block to see the latest entries.
 
 <!-- mdsn:block guestbook -->
 

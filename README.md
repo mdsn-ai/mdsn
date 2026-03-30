@@ -1,6 +1,6 @@
 # MDSN SDK
 
-MDSN is a Markdown-native interaction protocol with a framework-agnostic server runtime, a browser runtime for block updates, and a default Web Components UI.
+MDSN is a Markdown-native interaction protocol with a framework-agnostic server runtime, a headless browser host, and a default Web Components UI.
 
 Page routes return full Markdown pages. Ordinary `BLOCK` actions return block-scoped `md + mdsn` fragments by default.
 
@@ -8,15 +8,41 @@ Page routes return full Markdown pages. Ordinary `BLOCK` actions return block-sc
 
 - `@mdsn/core`: parse, validate, serialize, negotiate
 - `@mdsn/server`: target-first server runtime and session abstraction
-- `@mdsn/web`: browser runtime for block-local updates
-- `@mdsn/elements`: Lit-based default UI components
+- `@mdsn/web`: headless browser host for page/block state and actions
+- `@mdsn/elements`: default headless-powered Web Components UI
 
 ## Quick Start
+
+If you are trying the SDK from this repository, start with:
+
+```bash
+npm install
+npm run build
+```
+
+Then pick one of the examples below.
+
+If you are starting a fresh app from the published starter, use:
+
+```bash
+npm create mdsn@latest my-app
+cd my-app
+npm install
+npm run build
+npm start
+```
+
+That starter keeps the app shape intentionally small:
+
+- `app/guestbook.md`
+- `app/server.ts`
+- `app/client.ts`
+- `index.mjs`
 
 Install the packages you need:
 
 ```bash
-npm install @mdsn/server @mdsn/web @mdsn/elements
+npm install @mdsn/core @mdsn/server @mdsn/web @mdsn/elements
 ```
 
 Compose a page from canonical Markdown, then return block fragments from actions:
@@ -86,6 +112,8 @@ mountMdsnElements({
 }).mount();
 ```
 
+If you do not want the default UI, keep `createHeadlessHost()` and render `snapshot.markdown` plus `snapshot.blocks` from Vue, React, or your own view layer instead.
+
 ## Package Guide
 
 Use `@mdsn/server` when you want the fastest path to a working host.
@@ -138,6 +166,12 @@ If you want the same starter business module hosted on Express, see:
 - [examples/express-starter/src/index.ts](/Users/hencoo/projects/mdsnv/examples/express-starter/src/index.ts)
 - [examples/express-starter/src/express-adapter.ts](/Users/hencoo/projects/mdsnv/examples/express-starter/src/express-adapter.ts)
 - [examples/express-starter/dev.mjs](/Users/hencoo/projects/mdsnv/examples/express-starter/dev.mjs)
+
+If you want to validate a docs website architecture before moving it to a top-level app, see:
+
+- [examples/docs-site/README.md](/Users/hencoo/projects/mdsnv/examples/docs-site/README.md)
+- [examples/docs-site/src/index.ts](/Users/hencoo/projects/mdsnv/examples/docs-site/src/index.ts)
+- [examples/docs-site/dev.mjs](/Users/hencoo/projects/mdsnv/examples/docs-site/dev.mjs)
 
 If you want a concrete third-party Markdown renderer integration, see:
 
