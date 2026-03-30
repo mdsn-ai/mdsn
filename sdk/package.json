@@ -1,12 +1,37 @@
 {
   "name": "@mdsnai/sdk",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": false,
+  "description": "SDK, parser, server runtime, web runtime, and elements UI for building MDSN apps.",
+  "license": "MIT",
+  "homepage": "https://docs.mdsn.ai",
+  "bugs": {
+    "url": "https://github.com/mdsn-ai/mdsn/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdsn-ai/mdsn.git"
+  },
+  "keywords": [
+    "mdsn",
+    "markdown",
+    "sdk",
+    "ai",
+    "agent",
+    "agentic",
+    "workflow",
+    "interactive-documents",
+    "skills-app",
+    "agent-app",
+    "server",
+    "web-components"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"

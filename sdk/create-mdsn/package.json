@@ -1,6 +1,30 @@
 {
   "name": "create-mdsn",
-  "version": "0.1.0",
+  "version": "0.3.0",
+  "private": false,
+  "description": "npm create entry for scaffolding a new MDSN app project.",
+  "license": "MIT",
+  "homepage": "https://docs.mdsn.ai",
+  "bugs": {
+    "url": "https://github.com/mdsn-ai/mdsn/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdsn-ai/mdsn.git"
+  },
+  "keywords": [
+    "mdsn",
+    "create",
+    "scaffold",
+    "markdown",
+    "ai",
+    "agent",
+    "agentic",
+    "workflow",
+    "skills-app",
+    "agent-app",
+    "cli"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,6 +42,6 @@
     }
   },
   "dependencies": {
-    "@mdsnai/sdk": "0.1.0"
+    "@mdsnai/sdk": "0.3.0"
   }
 }
