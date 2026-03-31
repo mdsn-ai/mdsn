@@ -74,7 +74,8 @@ const server = http.createServer(
   createNodeHost(mdsn, {
     staticFiles: {
       "/docs-site/site.css": join(docsRoot, "public", "site.css"),
-      "/docs-site/docs.js": join(docsRoot, "public", "docs.js")
+      "/docs-site/docs.js": join(docsRoot, "public", "docs.js"),
+      "/docs-site/logo-mark.svg": join(docsRoot, "public", "logo-mark.svg")
     }
   })
 );

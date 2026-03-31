@@ -238,12 +238,16 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(pageTitle)} · ${escapeHtml(siteTitle)}</title>
+    <link rel="icon" href="/docs-site/logo-mark.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/docs-site/site.css">
     <script defer src="/docs-site/docs.js"></script>
   </head>
   <body>
     <header class="docs-topbar">
-      <a class="docs-brand" href="${homeRoute}">${escapeHtml(siteTitle)}</a>
+      <a class="docs-brand" href="${homeRoute}" aria-label="${escapeHtml(siteTitle)}">
+        <img src="/docs-site/logo-mark.svg" alt="" width="36" height="36">
+        <span>${escapeHtml(siteTitle)}</span>
+      </a>
       <div class="docs-lang-switch" aria-label="Language">
         <a href="${escapeHtml(enRoute)}"${locale === "en" ? ' aria-current="page"' : ""}>EN</a>
         <a href="${escapeHtml(zhRoute)}"${locale === "zh" ? ' aria-current="page"' : ""}>中文</a>
@@ -262,6 +266,16 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
       </article>
       ${toc}
     </main>
+    <footer class="docs-footer">
+      <div class="docs-footer-inner">
+        <p>${locale === "zh" ? "MDSN 文档站" : "MDSN Docs"}</p>
+        <nav aria-label="Footer links">
+          <a href="${homeRoute}">${locale === "zh" ? "首页" : "Home"}</a>
+          <a href="${locale === "zh" ? "/zh/getting-started" : "/getting-started"}">${locale === "zh" ? "快速开始" : "Getting Started"}</a>
+          <a href="https://github.com/mdsn-ai/mdsn" rel="noreferrer" target="_blank">GitHub</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>`;
     }
