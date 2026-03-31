@@ -31,9 +31,9 @@ The same Markdown source can carry:
 
 ## Syntax
 
-The starter uses this minimal page shape:
+The starter page keeps Markdown content and the interaction block in the same file:
 
-````md
+```text
 ---
 title: "Agent App"
 ---
@@ -44,14 +44,12 @@ Use this starter as the smallest end-to-end MDSN app.
 
 <!-- mdsn:block main -->
 
-```mdsn
 BLOCK main {
   INPUT text required -> message
   GET "/list" -> refresh label:"Refresh"
   POST "/post" (message) -> submit label:"Submit"
 }
 ```
-````
 
 ## Quick Start
 
