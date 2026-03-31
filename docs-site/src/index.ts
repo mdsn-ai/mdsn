@@ -9,6 +9,7 @@ export interface CreateDocsSiteServerOptions {
   pages: Record<string, string>;
   markdownRenderer?: MdsnMarkdownRenderer;
   siteTitle?: string;
+  assetVersion?: string;
 }
 
 interface DocsPageRecord {
@@ -162,6 +163,8 @@ function renderToc(items: ReturnType<typeof extractToc>, locale: DocsLocale): st
 export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
   const markdownRenderer = options.markdownRenderer;
   const siteTitle = options.siteTitle ?? "MDSN Docs";
+  const assetVersion = options.assetVersion?.trim();
+  const assetSuffix = assetVersion ? `?v=${encodeURIComponent(assetVersion)}` : "";
 
   const explicitRecords = sortByRoute(
     Object.entries(options.pages).map(([route, source]) => ({
@@ -238,14 +241,14 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(pageTitle)} · ${escapeHtml(siteTitle)}</title>
-    <link rel="icon" href="/docs-site/logo-mark.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/docs-site/site.css">
-    <script defer src="/docs-site/docs.js"></script>
+    <link rel="icon" href="/docs-site/logo-mark.svg${assetSuffix}" type="image/svg+xml">
+    <link rel="stylesheet" href="/docs-site/site.css${assetSuffix}">
+    <script defer src="/docs-site/docs.js${assetSuffix}"></script>
   </head>
   <body>
     <header class="docs-topbar">
       <a class="docs-brand" href="${homeRoute}" aria-label="${escapeHtml(siteTitle)}">
-        <img src="/docs-site/logo-mark.svg" alt="" width="36" height="36">
+        <img src="/docs-site/logo-mark.svg${assetSuffix}" alt="" width="36" height="36">
         <span>${escapeHtml(siteTitle)}</span>
       </a>
       <div class="docs-lang-switch" aria-label="Language">

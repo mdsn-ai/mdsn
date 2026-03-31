@@ -2,6 +2,7 @@ import http from "node:http";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 import { createNodeHost } from "@mdsnai/sdk/server";
 
@@ -12,6 +13,9 @@ const docsRoot = fileURLToPath(new URL("./", import.meta.url));
 const pagesDir = process.env.DOCS_CONTENT_DIR
   ? process.env.DOCS_CONTENT_DIR
   : join(docsRoot, "..", "docs");
+const assetVersion =
+  process.env.DOCS_ASSET_VERSION ??
+  createHash("sha1").update(String(Date.now())).digest("hex").slice(0, 8);
 
 async function collectMarkdownFiles(rootDir, relativeDir = "") {
   const dirPath = join(rootDir, relativeDir);
@@ -67,6 +71,7 @@ if (!pages["/zh"]) {
 
 const mdsn = createDocsSiteServer({
   siteTitle: "MDSN Docs",
+  assetVersion,
   pages
 });
 
