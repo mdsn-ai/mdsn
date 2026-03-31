@@ -45,7 +45,7 @@ This is **important**.
 
     const response = await server.handle({
       method: "GET",
-      url: "https://example.test/docs/getting-started",
+      url: "https://example.test/getting-started",
       headers: { accept: "text/html" },
       cookies: {}
     });
@@ -65,6 +65,8 @@ This is **important**.
     expect(response.body).toContain("<strong>important</strong>");
     expect(response.body).toContain('>EN</a>');
     expect(response.body).toContain('>中文</a>');
+    expect(response.body).toContain('href="/getting-started"');
+    expect(response.body).not.toContain('href="/docs/getting-started"');
   });
 
   it("falls back across locales for missing translated pages while keeping zh shell labels", async () => {
@@ -89,7 +91,7 @@ Keep docs and shell aligned.
 
     const response = await server.handle({
       method: "GET",
-      url: "https://example.test/zh/docs/build-with-mdsn",
+      url: "https://example.test/zh/build-with-mdsn",
       headers: { accept: "text/html" },
       cookies: {}
     });
@@ -99,6 +101,26 @@ Keep docs and shell aligned.
     expect(response.body).toContain("Build a docs site.");
     expect(response.body).toContain("本页目录");
     expect(response.body).toContain("搜索");
-    expect(response.body).toContain("/zh/docs");
+    expect(response.body).toContain("/zh");
+  });
+
+  it("keeps old /docs links working as compatibility aliases", async () => {
+    const server = createDocsSiteServer({
+      pages: {
+        "/": `# Docs Home`,
+        "/getting-started": `# Getting Started`
+      }
+    });
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/docs/getting-started",
+      headers: { accept: "text/html" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toContain("Getting Started");
+    expect(response.body).toContain('href="/getting-started"');
   });
 });

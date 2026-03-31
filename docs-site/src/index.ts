@@ -37,10 +37,10 @@ function toTitle(frontmatter: MdsnFrontmatter, route: string): string {
 
 function sortByRoute(records: DocsPageRecord[]): DocsPageRecord[] {
   return [...records].sort((a, b) => {
-    if (a.route === "/docs") {
+    if (a.route === "/") {
       return -1;
     }
-    if (b.route === "/docs") {
+    if (b.route === "/") {
       return 1;
     }
     return a.route.localeCompare(b.route);
@@ -48,18 +48,11 @@ function sortByRoute(records: DocsPageRecord[]): DocsPageRecord[] {
 }
 
 function localeFromRoute(route: string): DocsLocale {
-  return route.startsWith("/zh/") ? "zh" : "en";
-}
-
-function localizedRoute(baseRoute: string, locale: DocsLocale): string {
-  if (locale === "zh") {
-    return baseRoute.replace(/^\/docs/, "/zh/docs");
-  }
-  return baseRoute.replace(/^\/zh\/docs/, "/docs");
+  return route === "/zh" || route.startsWith("/zh/") ? "zh" : "en";
 }
 
 function docsRouteSuffix(route: string): string {
-  if (route === "/docs" || route === "/zh/docs") {
+  if (route === "/" || route === "/docs" || route === "/zh" || route === "/zh/docs") {
     return "";
   }
   if (route.startsWith("/docs/")) {
@@ -68,15 +61,65 @@ function docsRouteSuffix(route: string): string {
   if (route.startsWith("/zh/docs/")) {
     return route.slice("/zh/docs".length);
   }
-  return "";
+  if (route.startsWith("/zh/")) {
+    return route.slice("/zh".length);
+  }
+  return route;
 }
 
 function withLocaleSuffix(locale: DocsLocale, suffix: string): string {
-  return locale === "zh" ? `/zh/docs${suffix}` : `/docs${suffix}`;
+  if (locale === "zh") {
+    return suffix ? `/zh${suffix}` : "/zh";
+  }
+  return suffix || "/";
+}
+
+function localizedRoute(baseRoute: string, locale: DocsLocale): string {
+  return withLocaleSuffix(locale, docsRouteSuffix(baseRoute));
 }
 
 function withFallbackRoute(candidate: string, fallback: string, availableRoutes: Set<string>): string {
   return availableRoutes.has(candidate) ? candidate : fallback;
+}
+
+function legacyAliasRoute(route: string): string | null {
+  if (route === "/") {
+    return "/docs";
+  }
+  if (route === "/zh") {
+    return "/zh/docs";
+  }
+  if (route.startsWith("/zh/")) {
+    return `/zh/docs${route.slice("/zh".length)}`;
+  }
+  if (route.startsWith("/docs") || route.startsWith("/zh/docs")) {
+    return null;
+  }
+  return `/docs${route}`;
+}
+
+function canonicalRoute(route: string): string {
+  if (route === "/docs") {
+    return "/";
+  }
+  if (route.startsWith("/docs/")) {
+    return route.slice("/docs".length);
+  }
+  if (route === "/zh/docs") {
+    return "/zh";
+  }
+  if (route.startsWith("/zh/docs/")) {
+    return `/zh${route.slice("/zh/docs".length)}`;
+  }
+  return route;
+}
+
+function rewriteDocsLinks(html: string): string {
+  return html
+    .replaceAll('href="/docs"', 'href="/"')
+    .replaceAll('href="/docs/', 'href="/')
+    .replaceAll('href="/zh/docs"', 'href="/zh"')
+    .replaceAll('href="/zh/docs/', 'href="/zh/');
 }
 
 function renderNavigation(availableRoutes: Set<string>, currentRoute: string, locale: DocsLocale): string {
@@ -129,14 +172,22 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
   const pageMap = new Map(explicitRecords.map((record) => [record.route, record.page]));
 
   for (const [route, page] of pageMap.entries()) {
-    if (route.startsWith("/docs")) {
-      const zhRoute = route.replace(/^\/docs/, "/zh/docs");
+    const canonical = canonicalRoute(route);
+    if (!pageMap.has(canonical)) {
+      pageMap.set(canonical, page);
+    }
+    const alias = legacyAliasRoute(canonical);
+    if (alias && !pageMap.has(alias)) {
+      pageMap.set(alias, page);
+    }
+    if (canonical === "/" || (canonical.startsWith("/") && !canonical.startsWith("/zh"))) {
+      const zhRoute = canonical === "/" ? "/zh" : `/zh${canonical}`;
       if (!pageMap.has(zhRoute)) {
         pageMap.set(zhRoute, page);
       }
     }
-    if (route.startsWith("/zh/docs")) {
-      const enRoute = route.replace(/^\/zh\/docs/, "/docs");
+    if (canonical === "/zh" || canonical.startsWith("/zh/")) {
+      const enRoute = canonical === "/zh" ? "/" : canonical.slice("/zh".length) || "/";
       if (!pageMap.has(enRoute)) {
         pageMap.set(enRoute, page);
       }
@@ -160,21 +211,23 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
       ])
     ),
     renderHtml(fragment, renderOptions) {
-      const route = renderOptions?.route ?? "/docs";
+      const route = canonicalRoute(renderOptions?.route ?? "/");
       const locale = localeFromRoute(route);
       const page = pageMap.get(route);
       const pageTitle = page ? toTitle(page.frontmatter, route) : "Docs";
       const suffix = docsRouteSuffix(route);
-      const enRoute = withFallbackRoute(withLocaleSuffix("en", suffix), "/docs", availableRoutes);
-      const zhRoute = withFallbackRoute(withLocaleSuffix("zh", suffix), "/zh/docs", availableRoutes);
-      const homeRoute = locale === "zh" && availableRoutes.has("/zh/docs") ? "/zh/docs" : "/docs";
+      const enRoute = withFallbackRoute(withLocaleSuffix("en", suffix), "/", availableRoutes);
+      const zhRoute = withFallbackRoute(withLocaleSuffix("zh", suffix), "/zh", availableRoutes);
+      const homeRoute = locale === "zh" && availableRoutes.has("/zh") ? "/zh" : "/";
       const navigation = renderNavigation(availableRoutes, route, locale);
       const tocItems = extractToc(fragment.markdown);
       const rendered = markdownRenderer
         ? {
-            html: injectHeadingIds(markdownRenderer.render(fragment.markdown), tocItems)
+            html: rewriteDocsLinks(injectHeadingIds(markdownRenderer.render(fragment.markdown), tocItems))
           }
-        : renderDocsMarkdown(fragment.markdown);
+        : {
+            html: rewriteDocsLinks(renderDocsMarkdown(fragment.markdown).html)
+          };
       const toc = renderToc(tocItems, locale);
       const searchLabel = locale === "zh" ? "搜索" : "Search";
       const searchPlaceholder = locale === "zh" ? "搜索文档..." : "Search docs...";

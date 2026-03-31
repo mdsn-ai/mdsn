@@ -41,10 +41,10 @@ async function collectMarkdownFiles(rootDir, relativeDir = "") {
 function toRoute(fileName) {
   if (fileName.startsWith("zh/")) {
     const baseName = fileName.slice(3).replace(/\.md$/i, "");
-    return baseName === "index" ? "/zh/docs" : `/zh/docs/${baseName}`;
+    return baseName === "index" ? "/zh" : `/zh/${baseName}`;
   }
   const baseName = fileName.replace(/\.md$/i, "");
-  return baseName === "index" ? "/docs" : `/docs/${baseName}`;
+  return baseName === "index" ? "/" : `/${baseName}`;
 }
 
 const fileNames = (await collectMarkdownFiles(pagesDir)).sort();
@@ -53,16 +53,16 @@ const entries = await Promise.all(
 );
 const pages = Object.fromEntries(entries);
 
-if (!pages["/docs"]) {
-  if (pages["/docs/sdk"]) {
-    pages["/docs"] = pages["/docs/sdk"];
+if (!pages["/"]) {
+  if (pages["/sdk"]) {
+    pages["/"] = pages["/sdk"];
   } else {
     throw new Error(`Missing docs home source in ${pagesDir}. Add index.md or sdk.md.`);
   }
 }
 
-if (!pages["/zh/docs"]) {
-  pages["/zh/docs"] = pages["/docs"];
+if (!pages["/zh"]) {
+  pages["/zh"] = pages["/"];
 }
 
 const mdsn = createDocsSiteServer({
@@ -72,7 +72,7 @@ const mdsn = createDocsSiteServer({
 
 const server = http.createServer(
   createNodeHost(mdsn, {
-    rootRedirect: "/docs",
+    rootRedirect: "/",
     staticFiles: {
       "/docs-site/site.css": join(docsRoot, "public", "site.css"),
       "/docs-site/docs.js": join(docsRoot, "public", "docs.js")
@@ -81,5 +81,5 @@ const server = http.createServer(
 );
 
 server.listen(port, "127.0.0.1", () => {
-  console.log(`MDSN docs site running at http://127.0.0.1:${port}/docs`);
+  console.log(`MDSN docs site running at http://127.0.0.1:${port}/`);
 });
