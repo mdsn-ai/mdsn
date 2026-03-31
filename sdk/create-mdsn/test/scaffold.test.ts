@@ -1,10 +1,11 @@
-import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { scaffoldStarterProject } from "../src/index.js";
+import { readBundledSdkVersion, scaffoldStarterProject } from "../src/index.js";
 
 describe("create-mdsn starter scaffold", () => {
   it("creates the starter with app-oriented structure and filled placeholders", async () => {
@@ -34,7 +35,7 @@ describe("create-mdsn starter scaffold", () => {
     expect(readme).toContain("http://127.0.0.1:3000/");
 
     const indexSource = await readFile(join(targetDir, "index.mjs"), "utf8");
-    expect(indexSource).toContain('import { createAppServer } from "./dist/sdk-server.js";');
+    expect(indexSource).toContain('import { createAppServer } from "./dist/server.js";');
     expect(indexSource).toContain('"/app/client.js"');
     expect(indexSource).toContain("process.env.PORT || 3000");
 
@@ -54,5 +55,33 @@ describe("create-mdsn starter scaffold", () => {
         sdkVersion: "0.1.0-test"
       })
     ).rejects.toThrow(/must be empty/);
+  });
+
+  it("reads the bundled sdk dependency version instead of the create-mdsn package version", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "mdsn-create-version-"));
+    const packageRoot = join(parent, "create-mdsn");
+    await mkdir(packageRoot, { recursive: true });
+    await writeFile(
+      join(parent, "package.json"),
+      JSON.stringify({
+        name: "outer",
+        version: "9.9.9"
+      }),
+      "utf8"
+    );
+    await writeFile(
+      join(packageRoot, "package.json"),
+      JSON.stringify({
+        name: "create-mdsn",
+        version: "0.3.1",
+        dependencies: {
+          "@mdsnai/sdk": "0.3.0"
+        }
+      }),
+      "utf8"
+    );
+
+    const version = await readBundledSdkVersion(pathToFileURL(join(packageRoot, "dist", "cli.js")).href);
+    expect(version).toBe("0.3.0");
   });
 });

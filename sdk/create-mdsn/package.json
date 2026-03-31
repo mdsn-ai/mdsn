@@ -1,6 +1,6 @@
 {
   "name": "create-mdsn",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "private": false,
   "description": "Create a minimal MDSN app with npm create.",
   "license": "MIT",

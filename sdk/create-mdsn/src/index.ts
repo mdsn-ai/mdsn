@@ -99,3 +99,15 @@ export async function readCreateMdsnVersion(moduleUrl = import.meta.url): Promis
   }
   return packageJson.version;
 }
+
+export async function readBundledSdkVersion(moduleUrl = import.meta.url): Promise<string> {
+  const packageJsonPath = join(packageRootFromModule(moduleUrl), "package.json");
+  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
+    dependencies?: Record<string, string>;
+  };
+  const version = packageJson.dependencies?.["@mdsnai/sdk"];
+  if (!version) {
+    throw new Error("Unable to determine bundled @mdsnai/sdk version.");
+  }
+  return version;
+}

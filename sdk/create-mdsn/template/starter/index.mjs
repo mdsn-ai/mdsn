@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { createNodeHost } from "@mdsnai/sdk/server";
 
-import { createAppServer } from "./dist/sdk-server.js";
+import { createAppServer } from "./dist/server.js";
 
 const port = Number(process.env.PORT || 3000);
 const projectRoot = fileURLToPath(new URL("./", import.meta.url));
