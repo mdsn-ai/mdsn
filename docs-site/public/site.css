@@ -97,27 +97,33 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 88%, #eef3ff 12%);
+  padding: 14px 16px;
   color: var(--muted);
   font-size: 14px;
 }
 
-.docs-footer-inner p {
+.docs-footer-copy {
   margin: 0;
+  font-weight: 600;
 }
 
-.docs-footer-inner nav {
-  display: inline-flex;
+.docs-footer-links {
+  display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
 
-.docs-footer-inner a {
+.docs-footer-link {
   color: #39518a;
   text-decoration: none;
+  font-weight: 500;
 }
 
-.docs-footer-inner a:hover {
+.docs-footer-link:hover {
   color: #143baf;
 }
 

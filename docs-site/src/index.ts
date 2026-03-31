@@ -268,11 +268,11 @@ export function createDocsSiteServer(options: CreateDocsSiteServerOptions) {
     </main>
     <footer class="docs-footer">
       <div class="docs-footer-inner">
-        <p>${locale === "zh" ? "MDSN 文档站" : "MDSN Docs"}</p>
-        <nav aria-label="Footer links">
-          <a href="${homeRoute}">${locale === "zh" ? "首页" : "Home"}</a>
-          <a href="${locale === "zh" ? "/zh/getting-started" : "/getting-started"}">${locale === "zh" ? "快速开始" : "Getting Started"}</a>
-          <a href="https://github.com/mdsn-ai/mdsn" rel="noreferrer" target="_blank">GitHub</a>
+        <p class="docs-footer-copy">${locale === "zh" ? "MDSN 文档站" : "MDSN Docs"}</p>
+        <nav class="docs-footer-links" aria-label="Footer links">
+          <a class="docs-footer-link" href="${homeRoute}">${locale === "zh" ? "首页" : "Home"}</a>
+          <a class="docs-footer-link" href="${locale === "zh" ? "/zh/getting-started" : "/getting-started"}">${locale === "zh" ? "快速开始" : "Getting Started"}</a>
+          <a class="docs-footer-link" href="https://github.com/mdsn-ai/mdsn" rel="noreferrer" target="_blank">GitHub</a>
         </nav>
       </div>
     </footer>
