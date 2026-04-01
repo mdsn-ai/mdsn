@@ -39,6 +39,18 @@ Install dependencies.
 Run tests.
 
 This is **important**.
+`,
+        "/docs/examples": `---
+title: Examples
+---
+
+# Examples
+
+## Starter Paths
+
+### [\`examples/starter\`](https://github.com/mdsn-ai/mdsn/tree/main/examples/starter)
+
+The smallest path first.
 `
       }
     });
@@ -67,6 +79,39 @@ This is **important**.
     expect(response.body).toContain('>中文</a>');
     expect(response.body).toContain('href="/getting-started"');
     expect(response.body).not.toContain('href="/docs/getting-started"');
+  });
+
+  it("renders links and code spans correctly inside docs headings and toc entries", async () => {
+    const server = createDocsSiteServer({
+      pages: {
+        "/": `# Docs Home`,
+        "/examples": `---
+title: Examples
+---
+
+# Examples
+
+## Starter Paths
+
+### [\`examples/starter\`](https://github.com/mdsn-ai/mdsn/tree/main/examples/starter)
+
+The smallest path first.
+`
+      }
+    });
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/examples",
+      headers: { accept: "text/html" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toContain('href="https://github.com/mdsn-ai/mdsn/tree/main/examples/starter"');
+    expect(response.body).toContain("<code>examples/starter</code>");
+    expect(response.body).not.toContain("[`examples/starter`]");
+    expect(response.body).toContain('href="#examplesstarter"');
   });
 
   it("falls back across locales for missing translated pages while keeping zh shell labels", async () => {

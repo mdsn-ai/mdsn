@@ -1,4 +1,4 @@
-import { Marked } from "marked";
+import { Marked, Parser } from "marked";
 
 export interface TocItem {
   depth: 2 | 3;
@@ -36,19 +36,33 @@ function uniqueSlug(slug: string, counts: Map<string, number>): string {
   return count === 0 ? slug : `${slug}-${count + 1}`;
 }
 
+function renderInlineText(parser: Marked, markdown: string): string {
+  const rendered = parser.parseInline(markdown);
+  if (typeof rendered !== "string") {
+    throw new TypeError("Expected synchronous inline markdown rendering.");
+  }
+  return stripHtmlTags(rendered);
+}
+
 function collectHeadings(markdown: string): TocItem[] {
   const items: TocItem[] = [];
   const counts = new Map<string, number>();
+  const parser = new Marked({
+    gfm: true,
+    async: false
+  });
 
-  for (const line of markdown.split("\n")) {
-    const match = line.trim().match(/^(#{2,3})\s+(.+)$/);
-    if (!match) {
+  for (const token of parser.lexer(markdown)) {
+    if (token.type !== "heading") {
       continue;
     }
-    const depth = match[1]!.length as 2 | 3;
-    const text = match[2]!.trim();
-    const id = uniqueSlug(slugify(stripHtmlTags(text)), counts);
-    items.push({ depth, id, text: stripHtmlTags(text) });
+    const depth = token.depth as 1 | 2 | 3 | 4 | 5 | 6;
+    if (depth !== 2 && depth !== 3) {
+      continue;
+    }
+    const text = renderInlineText(parser, token.text).trim();
+    const id = uniqueSlug(slugify(text), counts);
+    items.push({ depth, id, text });
   }
 
   return items;
@@ -82,13 +96,14 @@ export function renderDocsMarkdown(markdown: string): { html: string; toc: TocIt
 
   parser.use({
     renderer: {
-      heading: ({ depth, text }) => {
+      heading: ({ depth, text, tokens }) => {
         if (depth < 1 || depth > 6) {
           return `<p>${escapeHtml(text)}</p>`;
         }
         const id = depth === 2 || depth === 3 ? idQueue.shift() : undefined;
         const attrs = id ? ` id="${escapeHtml(id)}"` : "";
-        return `<h${depth}${attrs}>${escapeHtml(text)}</h${depth}>`;
+        const inner = tokens ? Parser.parseInline(tokens) : parser.parseInline(text);
+        return `<h${depth}${attrs}>${inner}</h${depth}>`;
       }
     }
   });
