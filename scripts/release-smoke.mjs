@@ -195,7 +195,7 @@ async function createProject({ mode, runtime, tempRoot, createVersion, sdkTarbal
   await mkdir(cwd, { recursive: true });
 
   if (mode === "prepublish") {
-    const cliPath = join(repoRoot, "create-mdsn", "dist", "cli.js");
+    const cliPath = join(repoRoot, "create-mdsn", "dist", "cli-bin.js");
     if (runtime === "bun") {
       await run(bunBin, ["run", cliPath, "agent-app", "--runtime", "bun"], { cwd });
     } else {

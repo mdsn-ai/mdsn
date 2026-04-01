@@ -1,6 +1,6 @@
 {
   "name": "create-mdsn",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": false,
   "description": "Create a minimal MDSN app with npm create or bunx.",
   "license": "MIT",
@@ -41,7 +41,7 @@
     "template/bun"
   ],
   "bin": {
-    "create-mdsn": "./dist/cli.js"
+    "create-mdsn": "./dist/cli-bin.js"
   },
   "scripts": {
     "prepack": "node ../scripts/sync-package-license.mjs",

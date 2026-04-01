@@ -1,7 +1,4 @@
-#!/usr/bin/env node
-
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { scaffoldStarterProject, type StarterRuntime } from "./index.js";
 
@@ -119,16 +116,4 @@ async function main(argv: string[]): Promise<void> {
   console.log(formatNextSteps(projectDir, runtime, targetArg));
 }
 
-const entryPath = process.argv[1] ? resolve(process.argv[1]) : null;
-const modulePath = resolve(fileURLToPath(import.meta.url));
-const isMainModule =
-  typeof import.meta.main === "boolean"
-    ? import.meta.main
-    : entryPath === modulePath;
-
-if (isMainModule || entryPath === modulePath) {
-  main(process.argv.slice(2)).catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
-}
+export { main };

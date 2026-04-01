@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 This changelog starts at `0.4.0`. Earlier releases were not backfilled.
 
+## 0.4.2 - 2026-04-01
+
+### Fixed
+
+- `create-mdsn` now executes correctly when package managers launch the published bin through a symlinked entrypoint
+- Published CLI execution now uses a dedicated bin entry instead of relying on fragile main-module detection
+
 ## 0.4.1 - 2026-04-01
 
 ### Fixed
