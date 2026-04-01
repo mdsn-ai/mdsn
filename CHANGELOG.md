@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 This changelog starts at `0.4.0`. Earlier releases were not backfilled.
 
+## 0.4.3 - 2026-04-01
+
+### Changed
+
+- `create-mdsn` now pins generated apps to the compatible `@mdsnai/sdk` minor series instead of writing `latest`
+- `0.4.x` starters now generate `@mdsnai/sdk: ^0.4.0`
+
 ## 0.4.2 - 2026-04-01
 
 ### Fixed

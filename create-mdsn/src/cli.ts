@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
+import packageJson from "../package.json" with { type: "json" };
 
-import { scaffoldStarterProject, type StarterRuntime } from "./index.js";
+import { scaffoldStarterProject, toCompatibleSdkRange, type StarterRuntime } from "./index.js";
 
 export interface ParsedCliArgs {
   targetArg: string | undefined;
@@ -108,7 +109,7 @@ async function main(argv: string[]): Promise<void> {
   const targetDir = resolve(process.cwd(), targetArg);
   const projectDir = await scaffoldStarterProject({
     targetDir,
-    sdkVersion: "latest",
+    sdkVersion: toCompatibleSdkRange(packageJson.version),
     runtime,
     ...(targetArg === "." ? {} : { projectName: targetArg })
   });

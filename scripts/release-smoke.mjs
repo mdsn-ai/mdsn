@@ -10,6 +10,14 @@ const cacheDir = "/tmp/mdsn-release-smoke-cache";
 const defaultBunBin = process.env.HOME ? join(process.env.HOME, ".bun", "bin", "bun") : "bun";
 const bunBin = process.env.BUN_BIN ?? (existsSync(defaultBunBin) ? defaultBunBin : "bun");
 
+function toCompatibleSdkRange(packageVersion) {
+  const match = String(packageVersion).match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  if (!match) {
+    throw new Error(`Unsupported package version: ${packageVersion}`);
+  }
+  return `^${match[1]}.${match[2]}.0`;
+}
+
 function withBunPath(env = {}) {
   if (!bunBin.includes("/")) {
     return { ...process.env, ...env };
@@ -341,7 +349,7 @@ async function main() {
       tempRoot,
       createVersion
     });
-    await assertFlow(projectDir, `^${sdkVersion}`, runtime);
+    await assertFlow(projectDir, toCompatibleSdkRange(createVersion), runtime);
     console.log(`release smoke (${mode}, ${runtime}) passed`);
   } finally {
     await rm(tempRoot, { recursive: true, force: true });

@@ -18,6 +18,16 @@ const TEMPLATE_PLACEHOLDERS = {
 
 const DEFAULT_RUNTIME: StarterRuntime = "node";
 
+export function toCompatibleSdkRange(packageVersion: string): string {
+  const match = packageVersion.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  if (!match) {
+    throw new Error(`Unsupported package version "${packageVersion}".`);
+  }
+
+  const [, major, minor] = match;
+  return `^${major}.${minor}.0`;
+}
+
 function templateRootsFromModule(moduleUrl: string, runtime: StarterRuntime): string[] {
   return [
     resolve(fileURLToPath(new URL("../template/shared", moduleUrl))),

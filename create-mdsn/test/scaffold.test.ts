@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 
 import { describe, expect, it } from "vitest";
 
-import { scaffoldStarterProject } from "../src/index.js";
+import { scaffoldStarterProject, toCompatibleSdkRange } from "../src/index.js";
 
 describe("create-mdsn starter scaffold", () => {
   it("creates the starter with app-oriented structure and filled placeholders", async () => {
@@ -63,19 +63,19 @@ describe("create-mdsn starter scaffold", () => {
     ).rejects.toThrow(/must be empty/);
   });
 
-  it("can scaffold a starter pinned to latest", async () => {
+  it("can scaffold a starter with a compatible sdk range", async () => {
     const parent = await mkdtemp(join(tmpdir(), "mdsn-create-latest-"));
     const targetDir = join(parent, "latest-app");
 
     await scaffoldStarterProject({
       targetDir,
       projectName: "latest-app",
-      sdkVersion: "latest",
+      sdkVersion: toCompatibleSdkRange("0.4.2"),
       runtime: "node"
     });
 
     const packageJson = await readFile(join(targetDir, "package.json"), "utf8");
-    expect(packageJson).toContain('"@mdsnai/sdk": "latest"');
+    expect(packageJson).toContain('"@mdsnai/sdk": "^0.4.0"');
   });
 
   it("can scaffold a Bun-native starter", async () => {
@@ -101,5 +101,11 @@ describe("create-mdsn starter scaffold", () => {
     const indexSource = await readFile(join(targetDir, "index.mjs"), "utf8");
     expect(indexSource).toContain('@mdsnai/sdk/server/bun');
     expect(indexSource).toContain("Bun.serve");
+  });
+
+  it("maps package versions to same-series sdk ranges", () => {
+    expect(toCompatibleSdkRange("0.4.2")).toBe("^0.4.0");
+    expect(toCompatibleSdkRange("1.3.7")).toBe("^1.3.0");
+    expect(toCompatibleSdkRange("0.5.0-beta.1")).toBe("^0.5.0");
   });
 });
