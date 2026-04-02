@@ -17,7 +17,6 @@ interface MdsnRenderableDocument extends MdsnFragment {
 const blockAnchorPattern = /^<!--\s*mdsn:block\s+([a-zA-Z_][\w-]*)\s*-->$/;
 
 export interface RenderHtmlDocumentOptions {
-  continueTarget?: string;
   kind?: "page" | "fragment";
   route?: string;
   alternateMarkdownHref?: string;
@@ -167,10 +166,6 @@ function createHeadlessBootstrap(
     )
   };
 
-  if (options.continueTarget) {
-    bootstrap.continueTarget = options.continueTarget;
-  }
-
   return bootstrap;
 }
 
@@ -277,7 +272,6 @@ export function renderHtmlDocument(fragment: MdsnRenderableDocument, options: Re
     : isSingleBlockResponse
       ? renderBlock(fragment.blocks[0]!, markdownRenderer.render(fragment.markdown))
       : fragment.blocks.map((block) => renderBlock(block)).join("\n");
-  const continueTarget = options.continueTarget ? ` data-mdsn-continue-target="${escapeHtml(options.continueTarget)}"` : "";
   const bootstrap = createHeadlessBootstrap(fragment, options, hasAnchors, isSingleBlockResponse);
   const bootstrapScript = bootstrap
     ? `\n    <script id="mdsn-bootstrap" type="application/json">${escapeScriptJson(JSON.stringify(bootstrap))}</script>`
@@ -432,7 +426,7 @@ ${discoveryHead}
   </head>
   <body>
     <mdsn-page>
-      <main data-mdsn-root${continueTarget}>
+      <main data-mdsn-root>
         ${markdown}
         ${blocks}
       </main>

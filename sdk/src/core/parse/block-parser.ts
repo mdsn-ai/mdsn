@@ -50,12 +50,14 @@ function parseInputList(raw: string | undefined): string[] {
 }
 
 function parseOperation(line: string): MdsnOperation {
-  const match = line.match(/^(GET|POST)\s+"([^"]+)"(?:\s+\(([^)]*)\))?(?:\s+->\s+([a-zA-Z_][\w-]*))?(?:\s+label:"([^"]+)")?(?:\s+accept:"([^"]+)")?$/);
+  const match = line.match(
+    /^(GET|POST)\s+"([^"]+)"(?:\s+\(([^)]*)\))?(?:\s+->\s+([a-zA-Z_][\w-]*))?(?:\s+(auto))?(?:\s+label:"([^"]+)")?(?:\s+accept:"([^"]+)")?$/
+  );
   if (!match) {
     throw new MdsnParseError(`Invalid operation syntax: ${line}`);
   }
 
-  const [, method, target, inputsRaw, name, label, accept] = match;
+  const [, method, target, inputsRaw, name, auto, label, accept] = match;
   const inputs = parseInputList(inputsRaw);
   if (method === "POST" && inputsRaw === undefined) {
     throw new MdsnParseError("POST operations must declare an input list.");
@@ -68,6 +70,7 @@ function parseOperation(line: string): MdsnOperation {
     target,
     name: name || undefined,
     inputs,
+    auto: auto === "auto" ? true : undefined,
     label: label || undefined,
     accept: accept || undefined
   } as MdsnOperation;

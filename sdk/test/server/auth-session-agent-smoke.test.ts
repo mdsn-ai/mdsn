@@ -103,9 +103,10 @@ describe("auth-session agent-only smoke test", () => {
     expect(register.status).toBe(200);
     const sessionCookie = cookieValueFromSetCookie(register.headers.get("set-cookie"));
     const registerResult = await register.text();
-    expect(registerResult).toContain(`Account created for ${nickname}`);
-    expect(registerResult).toContain('GET "/vault" -> open_vault');
-    expect(registerResult).not.toContain('POST "/vault" (message) -> save');
+    expect(registerResult).toContain("# Vault");
+    expect(registerResult).toContain(`## Welcome ${nickname}`);
+    expect(registerResult).toContain('POST "/vault" (message) -> save');
+    expect(registerResult).not.toContain('GET "/vault" -> open_vault auto');
     expect(sessionCookie).toMatch(/^mdsn_session=[0-9a-f-]+$/);
     expect(sessionCookie).not.toContain(nickname);
 
@@ -132,7 +133,8 @@ describe("auth-session agent-only smoke test", () => {
     expect(logout.status).toBe(200);
     expect(logout.headers.get("set-cookie")).toContain("Max-Age=0");
     const logoutBody = await logout.text();
-    expect(logoutBody).toContain('GET "/login" -> open_login');
+    expect(logoutBody).toContain('POST "/login" (nickname, password) -> login');
+    expect(logoutBody).not.toContain('GET "/login" -> open_login auto');
 
     const lockedVault = await getMarkdown(`${baseUrl}/vault`, sessionCookie);
     expect(lockedVault.status).toBe(200);

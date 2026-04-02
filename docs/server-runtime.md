@@ -178,6 +178,7 @@ import { createHost } from "@mdsnai/sdk/server/bun";
 - cookie forwarding into `request.cookies`
 - session injection
 - Markdown vs HTML negotiation
+- host-side `auto` resolution before results are returned to clients
 - fragment serialization
 - `text/event-stream` negotiation for stream reads
 - 404 and 406 fallback responses
@@ -199,6 +200,19 @@ const server = createHostedApp({
 ```
 
 If you also use the default `@mdsnai/sdk/elements` UI, pass the same `markdownRenderer` object to `mountMdsnElements(...)` so server-side and default UI rendering stay consistent.
+
+## Auto Resolution
+
+`auto` is an explicit server-host instruction.
+
+The runtime should resolve `auto` operations before returning results to any client, so agent and browser consumers observe the same final state.
+
+Use `auto` only for safe, idempotent, zero-input `GET` dependencies. `label` remains presentation-only.
+
+The normative definition lives in the protocol spec:
+- [协议规范](/Users/hencoo/projects/mdsn/zh-spec.md)
+
+This page only describes the runtime consequence: server hosts are responsible for resolving `auto`, not browser code.
 
 ## When To Wrap It
 

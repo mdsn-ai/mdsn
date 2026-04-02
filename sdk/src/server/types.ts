@@ -30,10 +30,6 @@ export interface MdsnSessionProvider {
   clear(session: MdsnSessionSnapshot | null, response: MdsnResponse, request: MdsnRequest): Promise<void>;
 }
 
-export interface MdsnNavigation {
-  target: string;
-}
-
 export interface MdsnProtocolDiscovery {
   markdownHref: string;
   llmsTxtHref?: string;
@@ -54,7 +50,6 @@ export type MdsnHtmlDiscoveryResolver =
 export interface MdsnActionResult {
   fragment?: MdsnFragment;
   page?: MdsnPage;
-  navigation?: MdsnNavigation;
   route?: string;
   status?: number;
   headers?: Record<string, string>;

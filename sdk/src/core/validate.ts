@@ -40,6 +40,7 @@ function validateOperationNames(block: MdsnBlock): void {
 
 function validateOperationReferences(block: MdsnBlock): void {
   const inputNames = new Set(block.inputs.map((input) => input.name));
+  let autoGetCount = 0;
   for (const operation of block.operations) {
     for (const input of operation.inputs) {
       if (!inputNames.has(input)) {
@@ -50,9 +51,15 @@ function validateOperationReferences(block: MdsnBlock): void {
     }
     if (operation.method === "GET") {
       validateGetOperation(operation, block.name);
+      if (operation.auto) {
+        autoGetCount += 1;
+      }
     } else {
       validatePostOperation(operation, block.name);
     }
+  }
+  if (autoGetCount > 1) {
+    throw new MdsnValidationError(`Block "${block.name}" may define at most one auto GET operation.`);
   }
 }
 
@@ -71,6 +78,16 @@ function validateGetOperation(operation: MdsnOperation, blockName: string): void
       `GET "${operation.target}" in block "${blockName}" must define an operation name.`
     );
   }
+  if (operation.auto && operation.inputs.length > 0) {
+    throw new MdsnValidationError(
+      `Auto GET "${operation.target}" in block "${blockName}" must not declare inputs.`
+    );
+  }
+  if (operation.auto && operation.accept) {
+    throw new MdsnValidationError(
+      `Auto GET "${operation.target}" in block "${blockName}" must not declare an accept override.`
+    );
+  }
 }
 
 function validatePostOperation(operation: MdsnOperation, blockName: string): void {
@@ -80,6 +97,11 @@ function validatePostOperation(operation: MdsnOperation, blockName: string): voi
   if (!operation.name) {
     throw new MdsnValidationError(
       `POST "${operation.target}" in block "${blockName}" must define an operation name.`
+    );
+  }
+  if (operation.auto) {
+    throw new MdsnValidationError(
+      `POST "${operation.target}" in block "${blockName}" must not declare auto.`
     );
   }
 }

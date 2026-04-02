@@ -194,4 +194,34 @@ BLOCK messages {
 \`\`\`
 `);
   });
+
+  it("serializes explicit auto GET operations", () => {
+    const fragment: MdsnFragment = {
+      markdown: "## Messages",
+      blocks: [
+        {
+          name: "messages",
+          inputs: [],
+          operations: [
+            {
+              method: "GET",
+              target: "/messages",
+              name: "load_messages",
+              inputs: [],
+              auto: true
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(serializeFragment(fragment)).toBe(`## Messages
+
+\`\`\`mdsn
+BLOCK messages {
+  GET "/messages" -> load_messages auto
+}
+\`\`\`
+`);
+  });
 });

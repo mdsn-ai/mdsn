@@ -22,6 +22,8 @@ The same Markdown source can carry:
 - state and task context for AI agents to interpret
 - explicit interaction structure for both sides to continue from
 
+The default server runtime keeps Markdown canonical while also supporting explicit `auto` `GET` dependencies. Server hosts resolve `auto` before returning results, so agents and browsers observe the same final state. See the protocol/runtime docs for the full rules.
+
 ## Use Cases
 
 - skills apps with guided inputs and step-by-step actions for non-technical users
@@ -48,6 +50,7 @@ Use this starter as the smallest end-to-end MDSN app.
 
 BLOCK main {
   INPUT text required -> message
+  GET "/list" -> load_messages auto
   GET "/list" -> refresh label:"Refresh"
   POST "/post" (message) -> submit label:"Submit"
 }

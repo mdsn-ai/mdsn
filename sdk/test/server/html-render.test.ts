@@ -177,34 +177,28 @@ describe("renderHtmlDocument", () => {
     expect(html).toContain("<li>Still usable</li>");
   });
 
-  it("renders an explicit continue target marker for browser navigation responses", () => {
-    const html = renderHtmlDocument(
-      {
-        markdown: "## Account created for Ada\n\nUse `open_vault` to continue.",
-        blocks: [
-          {
-            name: "register",
-            inputs: [],
-            operations: [
-              {
-                method: "GET",
-                target: "/vault",
-                name: "open_vault",
-                inputs: [],
-                label: "Open Vault"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        continueTarget: "/vault"
-      }
-    );
+  it("does not add a special continue target marker to fragment html", () => {
+    const html = renderHtmlDocument({
+      markdown: "## Account created for Ada\n\nUse `open_vault` to continue.",
+      blocks: [
+        {
+          name: "register",
+          inputs: [],
+          operations: [
+            {
+              method: "GET",
+              target: "/vault",
+              name: "open_vault",
+              inputs: [],
+              auto: true
+            }
+          ]
+        }
+      ]
+    });
 
-    expect(html).toContain('data-mdsn-continue-target="/vault"');
-    expect(html).toContain("Open Vault");
-    expect(html).toContain('"continueTarget":"/vault"');
+    expect(html).not.toContain("data-mdsn-continue-target");
+    expect(html).not.toContain('"continueTarget":');
   });
 
   it("renders alternate markdown and llms discovery links when configured", () => {

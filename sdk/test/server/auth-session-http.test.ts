@@ -96,9 +96,24 @@ describe("auth-session example over real node http", () => {
     expect(register.status).toBe(200);
     const sessionCookie = cookieValueFromSetCookie(register.headers.get("set-cookie"));
     const registerBody = await register.text();
-    expect(registerBody).toContain("Account created for HttpAgent");
-    expect(registerBody).toContain('GET "/vault" -> open_vault');
-    expect(registerBody).not.toContain('POST "/vault" (message) -> save');
+    expect(registerBody).toContain("# Vault");
+    expect(registerBody).toContain("No private notes yet");
+    expect(registerBody).not.toContain('GET "/vault" -> open_vault auto');
+
+    const loginHtml = await fetch(`${baseUrl}/login`, {
+      method: "POST",
+      headers: {
+        accept: "text/html",
+        "content-type": "text/markdown"
+      },
+      body: 'nickname: "HttpAgent", password: "pass-1234"'
+    });
+    expect(loginHtml.status).toBe(200);
+    const loginHtmlBody = await loginHtml.text();
+    expect(loginHtmlBody).toContain("# Vault");
+    expect(loginHtmlBody).toContain("No private notes yet");
+    expect(loginHtmlBody).not.toContain("Open Vault");
+    expect(loginHtmlBody).not.toContain("Use `open_vault` to continue.");
 
     const save = await fetch(`${baseUrl}/vault`, {
       method: "POST",
@@ -139,8 +154,9 @@ describe("auth-session example over real node http", () => {
     expect(logout.status).toBe(200);
     expect(logout.headers.get("set-cookie")).toContain("Max-Age=0");
     const logoutBody = await logout.text();
-    expect(logoutBody).toContain("Signed out");
-    expect(logoutBody).toContain('GET "/login" -> open_login');
+    expect(logoutBody).toContain("# Sign In");
+    expect(logoutBody).toContain('POST "/login" (nickname, password) -> login');
+    expect(logoutBody).not.toContain('GET "/login" -> open_login auto');
     expect(logoutBody).not.toContain('POST "/vault" (message) -> save');
 
     const replayAfterLogout = await fetch(`${baseUrl}/vault`, {
@@ -190,6 +206,8 @@ describe("auth-session example over real node http", () => {
     expect(setCookie).not.toContain("%E5%93%88%E5%93%88");
     expect(setCookie).not.toContain("哈哈");
     const registerBody = await register.text();
-    expect(registerBody).toContain("Account created for 哈哈");
+    expect(registerBody).toContain("# Vault");
+    expect(registerBody).toContain("## Welcome 哈哈");
+    expect(registerBody).not.toContain("Account created for 哈哈");
   }, 15_000);
 });

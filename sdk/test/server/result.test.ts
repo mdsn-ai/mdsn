@@ -12,6 +12,7 @@ describe("result helpers", () => {
     expect("createNodeRequestListener" in serverApi).toBe(false);
     expect("renderHtmlDocument" in serverApi).toBe(false);
     expect("createNodeHost" in serverApi).toBe(false);
+    expect("navigate" in serverApi).toBe(false);
     expect("createHost" in serverNodeApi).toBe(true);
     expect("createNodeRequestListener" in serverNodeApi).toBe(true);
     expect("createHost" in serverBunApi).toBe(true);

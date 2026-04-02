@@ -64,13 +64,28 @@ describe("auth-session example", () => {
       cookies: {}
     });
 
-    expect(registerResponse.body).toContain("Account created for Ada");
-    expect(registerResponse.body).toContain('GET "/vault" -> open_vault');
-    expect(registerResponse.body).not.toContain("# Starter Vault");
-    expect(registerResponse.body).not.toContain('POST "/vault" (message) -> save');
+    expect(registerResponse.body).toContain("# Starter Vault");
+    expect(registerResponse.body).toContain("No private notes yet");
+    expect(registerResponse.body).not.toContain('GET "/vault" -> open_vault auto');
     const sessionCookie = cookieValueFromSetCookie(registerResponse.headers["set-cookie"]);
     expect(sessionCookie).toBeTruthy();
     expect(decodeURIComponent(sessionCookie)).not.toBe("Ada");
+
+    const loginHtmlResponse = await server.handle({
+      method: "POST",
+      url: "https://example.test/login",
+      headers: {
+        accept: "text/html",
+        "content-type": "text/markdown"
+      },
+      body: 'nickname: "Ada", password: "1234"',
+      cookies: {}
+    });
+
+    expect(loginHtmlResponse.body).toContain("# Starter Vault");
+    expect(loginHtmlResponse.body).toContain("No private notes yet");
+    expect(loginHtmlResponse.body).not.toContain("Open Vault");
+    expect(loginHtmlResponse.body).not.toContain("Use `open_vault` to continue.");
 
     const saveResponse = await server.handle({
       method: "POST",
@@ -101,9 +116,9 @@ describe("auth-session example", () => {
       }
     });
 
-    expect(logoutResponse.body).toContain("Signed out");
-    expect(logoutResponse.body).toContain('GET "/login" -> open_login');
-    expect(logoutResponse.body).not.toContain('POST "/login" (nickname, password) -> login');
+    expect(logoutResponse.body).toContain("# Starter Sign In");
+    expect(logoutResponse.body).toContain('POST "/login" (nickname, password) -> login');
+    expect(logoutResponse.body).not.toContain('GET "/login" -> open_login auto');
     expect(logoutResponse.body).not.toContain('POST "/vault" (message) -> save');
     expect(logoutResponse.headers["set-cookie"]).toContain("Max-Age=0");
 

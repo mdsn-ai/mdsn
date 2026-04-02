@@ -40,13 +40,13 @@ Reference: [examples/auth-session/app/server.ts](/Users/hencoo/projects/mdsn/exa
 This example adds two important patterns:
 
 - session mutation during action handling with `signIn` and `signOut`
-- explicit page transitions through `navigate(...)`
+- explicit page transitions through `auto` follow-up reads resolved by the server host
 
 Typical transitions:
 
-- register success -> `navigate` to `/vault` with sign-in mutation
-- login success -> `navigate` to `/vault`
-- logout -> `navigate` to `/login` with sign-out mutation
+- register success -> sign-in mutation plus `auto GET` follow-up to `/vault`
+- login success -> `auto GET` follow-up to `/vault`
+- logout -> sign-out mutation plus `auto GET` follow-up to `/login`
 
 That means the agent does not have to guess where to go next. The returned content already carries the next path.
 

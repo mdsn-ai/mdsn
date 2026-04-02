@@ -78,4 +78,61 @@ BLOCK auth {
 
     expect(() => validatePage(page)).not.toThrow();
   });
+
+  it("accepts a zero-input auto GET operation", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK guestbook {
+  GET "/list" -> load_messages auto
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).not.toThrow();
+  });
+
+  it("rejects auto GET operations with inputs", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK guestbook {
+  INPUT text -> cursor
+  GET "/list" (cursor) -> load_messages auto
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).toThrow(/must not declare inputs/);
+  });
+
+  it("rejects POST operations marked auto", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK guestbook {
+  POST "/post" () -> submit auto
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).toThrow(/must not declare auto/);
+  });
+
+  it("rejects auto GET operations with an accept override", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK guestbook {
+  GET "/stream" -> watch auto accept:"text/plain"
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).toThrow(/must not declare an accept override/);
+  });
+
+  it("rejects multiple auto GET operations in the same block", () => {
+    const page = parsePage(`\`\`\`mdsn
+BLOCK guestbook {
+  GET "/list" -> load_messages auto
+  GET "/summary" -> load_summary auto
+}
+\`\`\`
+`);
+
+    expect(() => validatePage(page)).toThrow(/at most one auto GET operation/);
+  });
 });

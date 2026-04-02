@@ -114,6 +114,77 @@ describe("registerMdsnElements", () => {
     expect(seenBodies[0]).toBe('message: "beta-only"');
   });
 
+  it("renders the target page when a form submit returns a page transition", async () => {
+    document.body.innerHTML = `
+      <div id="root">
+        <script id="mdsn-bootstrap" type="application/json">
+          {"kind":"page","route":"/login","markdown":"# Sign In","blocks":[{"name":"login","markdown":"## Welcome back","inputs":[{"name":"nickname","type":"text","required":true,"secret":false},{"name":"password","type":"text","required":true,"secret":true}],"operations":[{"method":"POST","target":"/login","name":"login","inputs":["nickname","password"],"label":"Sign In"}]}]}
+        </script>
+      </div>
+    `;
+
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          `<!doctype html><html><body><script id="mdsn-bootstrap" type="application/json">${JSON.stringify({
+            kind: "page",
+            route: "/vault",
+            markdown: "# Vault",
+            blocks: [
+              {
+                name: "vault",
+                markdown: "## 0 saved notes\n\n- No private notes yet",
+                inputs: [{ name: "message", type: "text", required: true, secret: false }],
+                operations: [{ method: "POST", target: "/vault", name: "save", inputs: ["message"], label: "Save Note" }]
+              }
+            ]
+          })}</script></body></html>`,
+          { headers: { "content-type": "text/html" } }
+        )
+      );
+
+    const pushState = vi.fn();
+    const originalHistory = window.history;
+    Object.defineProperty(window, "history", {
+      configurable: true,
+      value: {
+        ...originalHistory,
+        pushState
+      }
+    });
+
+    try {
+      const host = createHeadlessHost({ root: document.getElementById("root")!, fetchImpl });
+      const runtime = mountMdsnElements({ root: document.getElementById("root")!, host });
+
+      runtime.mount();
+      await Promise.resolve();
+
+      const inputs = [...document.querySelectorAll("input")] as HTMLInputElement[];
+      inputs[0]!.value = "Ada";
+      inputs[0]!.dispatchEvent(new Event("input", { bubbles: true }));
+      inputs[1]!.value = "1234";
+      inputs[1]!.dispatchEvent(new Event("input", { bubbles: true }));
+
+      const form = document.querySelector("form") as HTMLFormElement;
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(pushState).toHaveBeenCalledWith({}, "", "/vault");
+      expect(document.getElementById("root")?.textContent).toContain("Vault");
+      expect(document.getElementById("root")?.textContent).toContain("No private notes yet");
+    } finally {
+      Object.defineProperty(window, "history", {
+        configurable: true,
+        value: originalHistory
+      });
+    }
+  });
+
   it("uses an injected markdown renderer for default elements output", async () => {
     document.body.innerHTML = `
       <script id="mdsn-bootstrap" type="application/json">

@@ -54,6 +54,6 @@
     }
   },
   "dependencies": {
-    "@mdsnai/sdk": "0.4.0"
+    "@mdsnai/sdk": "0.4.1"
   }
 }

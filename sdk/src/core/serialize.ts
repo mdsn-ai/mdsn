@@ -47,6 +47,9 @@ function serializeOperation(operation: MdsnOperation): string {
   if (operation.name) {
     parts.push("->", operation.name);
   }
+  if (operation.auto) {
+    parts.push("auto");
+  }
   if (operation.label) {
     parts.push(`label:${JSON.stringify(operation.label)}`);
   }

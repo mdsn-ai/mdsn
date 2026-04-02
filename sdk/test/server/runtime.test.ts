@@ -556,6 +556,326 @@ describe("createMdsnServer", () => {
     expect(response.body).toContain("<li>Hello</li>");
   });
 
+  it("auto-resolves explicit auto GET block dependencies for html page responses", async () => {
+    const server = createMdsnServer();
+    const listHandler = vi.fn(async () =>
+      ok({
+        fragment: {
+          markdown: "## 2 live messages\n\n- Welcome\n- Hello",
+          blocks: [
+            {
+              name: "guestbook",
+              inputs: [],
+              operations: []
+            }
+          ]
+        }
+      })
+    );
+
+    server.page("/guestbook", async () => ({
+      frontmatter: { title: "Guestbook" },
+      markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
+      blocks: [
+        {
+          name: "guestbook",
+          inputs: [],
+          operations: [{ method: "GET", target: "/list", name: "load_messages", inputs: [], auto: true }]
+        }
+      ],
+      blockAnchors: ["guestbook"]
+    }));
+
+    server.get("/list", listHandler);
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/guestbook",
+      headers: { accept: "text/html" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe("text/html");
+    expect(listHandler).toHaveBeenCalledTimes(1);
+    expect(response.body).toContain("2 live messages");
+    expect(response.body).not.toContain('action="/list"');
+  });
+
+  it("auto-resolves explicit auto GET block dependencies in markdown page responses", async () => {
+    const server = createMdsnServer();
+    const listHandler = vi.fn(async () =>
+      ok({
+        fragment: {
+          markdown: "## 2 live messages",
+          blocks: [
+            {
+              name: "guestbook",
+              inputs: [],
+              operations: []
+            }
+          ]
+        }
+      })
+    );
+
+    server.page("/guestbook", async () => ({
+      frontmatter: { title: "Guestbook" },
+      markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
+      blocks: [
+        {
+          name: "guestbook",
+          inputs: [],
+          operations: [{ method: "GET", target: "/list", name: "load_messages", inputs: [], auto: true }]
+        }
+      ],
+      blockAnchors: ["guestbook"]
+    }));
+
+    server.get("/list", listHandler);
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/guestbook",
+      headers: { accept: "text/markdown" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe('text/markdown; profile="https://mdsn.ai/protocol/v1"');
+    expect(listHandler).toHaveBeenCalledTimes(1);
+    expect(response.body).toContain("2 live messages");
+    expect(response.body).not.toContain('GET "/list" -> load_messages auto');
+  });
+
+  it("does not auto-resolve manual labeled GET operations for html page responses", async () => {
+    const server = createMdsnServer();
+    const listHandler = vi.fn(async () =>
+      ok({
+        fragment: {
+          markdown: "## 2 live messages",
+          blocks: [
+            {
+              name: "guestbook",
+              inputs: [],
+              operations: []
+            }
+          ]
+        }
+      })
+    );
+
+    server.page("/guestbook", async () => ({
+      frontmatter: { title: "Guestbook" },
+      markdown: "# Guestbook\n\n<!-- mdsn:block guestbook -->",
+      blocks: [
+        {
+          name: "guestbook",
+          inputs: [],
+          operations: [{ method: "GET", target: "/list", name: "refresh", inputs: [], label: "Refresh" }]
+        }
+      ],
+      blockAnchors: ["guestbook"]
+    }));
+
+    server.get("/list", listHandler);
+
+    const response = await server.handle({
+      method: "GET",
+      url: "https://example.test/guestbook",
+      headers: { accept: "text/html" },
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(listHandler).not.toHaveBeenCalled();
+    expect(response.body).toContain('action="/list"');
+    expect(response.body).toContain("Refresh");
+  });
+
+  it("auto-resolves explicit auto GET dependencies for html fragment responses", async () => {
+    const server = createMdsnServer();
+
+    server.page("/vault", async () => ({
+      frontmatter: { title: "Vault" },
+      markdown: "# Vault\n\n<!-- mdsn:block vault -->",
+      blockContent: {
+        vault: "## 0 saved notes\n\n- No private notes yet"
+      },
+      blocks: [
+        {
+          name: "vault",
+          inputs: [{ name: "message", type: "text", required: true, secret: false }],
+          operations: [{ method: "POST", target: "/vault", name: "save", inputs: ["message"], label: "Save Note" }]
+        }
+      ],
+      blockAnchors: ["vault"]
+    }));
+
+    server.post("/login", async () =>
+      ok({
+        fragment: {
+          markdown: "## Welcome Ada\n\nUse `open_vault` to continue.",
+          blocks: [
+            {
+              name: "login",
+              inputs: [],
+              operations: [{ method: "GET", target: "/vault", name: "open_vault", inputs: [], auto: true }]
+            }
+          ]
+        }
+      })
+    );
+
+    const response = await server.handle({
+      method: "POST",
+      url: "https://example.test/login",
+      headers: {
+        accept: "text/html",
+        "content-type": "text/markdown"
+      },
+      body: 'nickname: "Ada"',
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe("text/html");
+    expect(response.body).toContain("# Vault");
+    expect(response.body).toContain("No private notes yet");
+    expect(response.body).toContain('action="/vault"');
+    expect(response.body).not.toContain("Use `open_vault` to continue.");
+    expect(response.body).not.toContain('GET "/vault" -> open_vault');
+  });
+
+  it("propagates session mutations from implicit html GET dependencies to later implicit steps", async () => {
+    const server = createMdsnServer();
+    const sessionAfterLogin = signIn({ userId: "Ada" });
+
+    server.page("/vault", async ({ session }) =>
+      session
+        ? {
+            frontmatter: { title: "Vault" },
+            markdown: "# Vault\n\n<!-- mdsn:block vault -->",
+            blockContent: {
+              vault: "## Welcome Ada"
+            },
+            blocks: [
+              {
+                name: "vault",
+                inputs: [],
+                operations: []
+              }
+            ],
+            blockAnchors: ["vault"]
+          }
+        : {
+            frontmatter: { title: "Vault" },
+            markdown: "# Vault\n\n<!-- mdsn:block vault -->",
+            blockContent: {
+              vault: "## Please sign in"
+            },
+            blocks: [
+              {
+                name: "vault",
+                inputs: [],
+                operations: []
+              }
+            ],
+            blockAnchors: ["vault"]
+          }
+    );
+
+    server.post("/login", async () =>
+      ok({
+        fragment: {
+          markdown: "## Starting login",
+          blocks: [
+            {
+              name: "login",
+              inputs: [],
+              operations: [{ method: "GET", target: "/session-ready", name: "continue_login", inputs: [], auto: true }]
+            }
+          ]
+        }
+      })
+    );
+
+    server.get("/session-ready", async ({ session }) =>
+      ok({
+        fragment: {
+          markdown: session ? "## Session already ready" : "## Session ready now",
+          blocks: [
+            {
+              name: "login",
+              inputs: [],
+              operations: [{ method: "GET", target: "/vault", name: "open_vault", inputs: [], auto: true }]
+            }
+          ]
+        },
+        session: sessionAfterLogin
+      })
+    );
+
+    const response = await server.handle({
+      method: "POST",
+      url: "https://example.test/login",
+      headers: {
+        accept: "text/html",
+        "content-type": "text/markdown"
+      },
+      body: 'nickname: "Ada"',
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toContain("Welcome Ada");
+    expect(response.body).not.toContain("Please sign in");
+    expect(response.body).not.toContain("Session ready now");
+  });
+
+  it("auto-resolves explicit auto GET dependencies in markdown fragment responses", async () => {
+    const server = createMdsnServer();
+
+    server.page("/vault", async () => ({
+      frontmatter: { title: "Vault" },
+      markdown: "# Vault",
+      blocks: [],
+      blockAnchors: []
+    }));
+
+    server.post("/login", async () =>
+      ok({
+        fragment: {
+          markdown: "## Welcome Ada\n\nUse `open_vault` to continue.",
+          blocks: [
+            {
+              name: "login",
+              inputs: [],
+              operations: [{ method: "GET", target: "/vault", name: "open_vault", inputs: [], auto: true }]
+            }
+          ]
+        }
+      })
+    );
+
+    const response = await server.handle({
+      method: "POST",
+      url: "https://example.test/login",
+      headers: {
+        accept: "text/markdown",
+        "content-type": "text/markdown"
+      },
+      body: 'nickname: "Ada"',
+      cookies: {}
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe('text/markdown; profile="https://mdsn.ai/protocol/v1"');
+    expect(response.body).toContain("# Vault");
+    expect(response.body).not.toContain('GET "/vault" -> open_vault auto');
+    expect(response.body).not.toContain("Welcome Ada");
+  });
+
   it("rejects event-stream negotiation on page routes", async () => {
     const server = createMdsnServer();
 

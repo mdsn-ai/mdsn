@@ -100,7 +100,7 @@ describe("createHeadlessHost", () => {
     expect(snapshot.blocks[1]?.markdown).toContain("Hello");
   });
 
-  it("follows explicit continue targets by loading the target page and updating the route", async () => {
+  it("updates history when a form submit returns a new page route", async () => {
     const root = createRootWithBootstrap({
       kind: "page",
       route: "/register",
@@ -120,21 +120,6 @@ describe("createHeadlessHost", () => {
 
     const fetchImpl = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          `<!doctype html><html><body><script id="mdsn-bootstrap" type="application/json">${JSON.stringify({
-            kind: "fragment",
-            continueTarget: "/vault",
-            block: {
-              name: "register",
-              markdown: "## Account created",
-              inputs: [],
-              operations: [{ method: "GET", target: "/vault", name: "open_vault", inputs: [], label: "Open Vault" }]
-            }
-          })}</script></body></html>`,
-          { headers: { "content-type": "text/html" } }
-        )
-      )
       .mockResolvedValueOnce(
         new Response(
           `<!doctype html><html><body><script id="mdsn-bootstrap" type="application/json">${JSON.stringify({
@@ -172,10 +157,73 @@ describe("createHeadlessHost", () => {
       });
       await flushAsync();
 
-      expect(fetchImpl).toHaveBeenCalledTimes(2);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
       expect(pushState).toHaveBeenCalledWith({}, "", "/vault");
       expect(host.getSnapshot().route).toBe("/vault");
       expect(host.getSnapshot().markdown).toBe("# Vault");
+    } finally {
+      Object.defineProperty(window, "history", {
+        configurable: true,
+        value: originalHistory
+      });
+    }
+  });
+
+  it("does not push history when a form submit re-renders the current route", async () => {
+    const root = createRootWithBootstrap({
+      kind: "page",
+      route: "/vault",
+      markdown: "# Vault",
+      blocks: [
+        {
+          name: "vault",
+          markdown: "## Add note",
+          inputs: [{ name: "message", type: "text", required: true, secret: false }],
+          operations: [{ method: "POST", target: "/vault", name: "save", inputs: ["message"], label: "Save Note" }]
+        }
+      ]
+    });
+
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      new Response(
+        `<!doctype html><html><body><script id="mdsn-bootstrap" type="application/json">${JSON.stringify({
+          kind: "page",
+          route: "/vault",
+          markdown: "# Vault",
+          blocks: [
+            {
+              name: "vault",
+              markdown: "## Saved",
+              inputs: [{ name: "message", type: "text", required: true, secret: false }],
+              operations: [{ method: "POST", target: "/vault", name: "save", inputs: ["message"], label: "Save Note" }]
+            }
+          ]
+        })}</script></body></html>`,
+        { headers: { "content-type": "text/html" } }
+      )
+    );
+
+    const pushState = vi.fn();
+    const originalHistory = window.history;
+    Object.defineProperty(window, "history", {
+      configurable: true,
+      value: {
+        ...originalHistory,
+        pushState
+      }
+    });
+
+    try {
+      const host = createHeadlessHost({ root, fetchImpl });
+      await host.submit(host.getSnapshot().blocks[0]!.operations[0]!, {
+        message: "hello"
+      });
+      await flushAsync();
+
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(pushState).not.toHaveBeenCalled();
+      expect(host.getSnapshot().route).toBe("/vault");
+      expect(host.getSnapshot().blocks[0]?.markdown).toContain("Saved");
     } finally {
       Object.defineProperty(window, "history", {
         configurable: true,

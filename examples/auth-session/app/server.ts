@@ -5,7 +5,6 @@ import {
   block,
   createHostedApp,
   fail,
-  navigate,
   signIn,
   signOut,
   type MdsnRequest,
@@ -212,14 +211,27 @@ export function createAuthServer(options: CreateAuthServerOptions) {
         }
 
         users.set(nickname, { password, notes: [] });
-        return navigate({
-          blockName: "register",
-          target: "/vault",
-          name: "open_vault",
-          label: "Open Vault",
-          markdown: `## Account created for ${nickname}\n\nUse \`open_vault\` to continue.`,
-          session: signIn({ userId: nickname })
-        });
+        return {
+          session: signIn({ userId: nickname }),
+          fragment: {
+            markdown: `## Account created for ${nickname}\n\nUse \`open_vault\` to continue.`,
+            blocks: [
+              {
+                name: "register",
+                inputs: [],
+                operations: [
+                  {
+                    method: "GET",
+                    target: "/vault",
+                    name: "open_vault",
+                    inputs: [],
+                    auto: true
+                  }
+                ]
+              }
+            ]
+          }
+        };
         }
       },
       {
@@ -238,14 +250,27 @@ export function createAuthServer(options: CreateAuthServerOptions) {
           });
         }
 
-        return navigate({
-          blockName: "login",
-          target: "/vault",
-          name: "open_vault",
-          label: "Open Vault",
-          markdown: `## Welcome ${nickname}\n\nUse \`open_vault\` to continue.`,
-          session: signIn({ userId: nickname })
-        });
+        return {
+          session: signIn({ userId: nickname }),
+          fragment: {
+            markdown: `## Welcome ${nickname}\n\nUse \`open_vault\` to continue.`,
+            blocks: [
+              {
+                name: "login",
+                inputs: [],
+                operations: [
+                  {
+                    method: "GET",
+                    target: "/vault",
+                    name: "open_vault",
+                    inputs: [],
+                    auto: true
+                  }
+                ]
+              }
+            ]
+          }
+        };
         }
       },
       {
@@ -254,14 +279,27 @@ export function createAuthServer(options: CreateAuthServerOptions) {
         routePath: "/vault",
         blockName: "session",
         handler: ({ session }) => {
-        return navigate({
-          blockName: "session",
-          target: "/login",
-          name: "open_login",
-          label: "Open Sign In",
-          markdown: "## Signed out\n\nUse `open_login` to continue.",
-          session: signOut()
-        });
+        return {
+          session: signOut(),
+          fragment: {
+            markdown: "## Signed out\n\nUse `open_login` to continue.",
+            blocks: [
+              {
+                name: "session",
+                inputs: [],
+                operations: [
+                  {
+                    method: "GET",
+                    target: "/login",
+                    name: "open_login",
+                    inputs: [],
+                    auto: true
+                  }
+                ]
+              }
+            ]
+          }
+        };
         }
       },
       {

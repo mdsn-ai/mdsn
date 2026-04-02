@@ -15,6 +15,7 @@ export interface MdsnGetOperation {
   target: string;
   name?: string;
   inputs: string[];
+  auto?: boolean;
   label?: string;
   accept?: string;
 }
@@ -24,6 +25,7 @@ export interface MdsnPostOperation {
   target: string;
   name: string;
   inputs: string[];
+  auto?: boolean;
   label?: string;
   accept?: string;
 }
@@ -71,7 +73,6 @@ export interface MdsnHeadlessPageBootstrap {
 export interface MdsnHeadlessFragmentBootstrap {
   kind: "fragment";
   block: MdsnHeadlessBlock;
-  continueTarget?: string;
 }
 
 export type MdsnHeadlessBootstrap = MdsnHeadlessPageBootstrap | MdsnHeadlessFragmentBootstrap;

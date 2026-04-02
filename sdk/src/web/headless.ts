@@ -254,15 +254,13 @@ export function createHeadlessHost(options: CreateHeadlessHostOptions): MdsnHead
     publish();
   }
 
-  async function applyResponse(content: string): Promise<void> {
+  async function applyResponse(content: string, updateHistory = false): Promise<void> {
     const bootstrap = parseBootstrapFromHtml(content);
-
-    if (bootstrap.kind === "fragment" && bootstrap.continueTarget) {
-      await visit(bootstrap.continueTarget, true);
-      return;
-    }
-
+    const previousRoute = snapshot.route;
     snapshot = toSnapshot(bootstrap, snapshot);
+    if (updateHistory && bootstrap.kind === "page" && bootstrap.route && bootstrap.route !== previousRoute) {
+      pushHistory(bootstrap.route);
+    }
     setStatus({ status: "idle" });
   }
 
@@ -271,7 +269,7 @@ export function createHeadlessHost(options: CreateHeadlessHostOptions): MdsnHead
     try {
       const response = await fetchImpl(target, init);
       const content = await response.text();
-      await applyResponse(content);
+      await applyResponse(content, true);
     } catch (error) {
       setStatus({ status: "error", error: error instanceof Error ? error.message : String(error) });
     }

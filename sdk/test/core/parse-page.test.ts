@@ -140,7 +140,33 @@ BLOCK auth {
         target: "/logout",
         name: "logout",
         inputs: [],
+        auto: undefined,
         label: "Log Out",
+        accept: undefined
+      }
+    ]);
+  });
+
+  it("parses explicit auto GET operations", () => {
+    const page = parsePage(`# Guestbook
+
+<!-- mdsn:block guestbook -->
+
+\`\`\`mdsn
+BLOCK guestbook {
+  GET "/list" -> load_messages auto
+}
+\`\`\`
+`);
+
+    expect(page.blocks[0]?.operations).toEqual([
+      {
+        method: "GET",
+        target: "/list",
+        name: "load_messages",
+        inputs: [],
+        auto: true,
+        label: undefined,
         accept: undefined
       }
     ]);
