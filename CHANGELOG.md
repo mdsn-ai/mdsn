@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 This changelog starts at `0.4.0`. Earlier releases were not backfilled.
 
+## SDK 0.4.3 - 2026-04-03
+
+### Fixed
+
+- Root-mounted static files now resolve correctly from top-level paths in both the Node and Bun host adapters
+- Host adapter coverage now includes regression tests for top-level static file serving
+
 ## 0.4.5 - 2026-04-02
 
 ### Changed

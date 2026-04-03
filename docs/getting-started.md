@@ -16,7 +16,7 @@ MDSN officially supports Node and Bun.
 Current npm releases:
 
 - `create-mdsn@0.4.5`
-- `@mdsnai/sdk@0.4.2`
+- `@mdsnai/sdk@0.4.3`
 
 ## 1. Create and Start a Project
 
