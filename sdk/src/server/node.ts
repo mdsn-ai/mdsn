@@ -148,6 +148,15 @@ function resolveMountedFile(directory: string, urlPrefix: string, pathname: stri
   const normalizedPrefix =
     urlPrefix.length > 1 && urlPrefix.endsWith("/") ? urlPrefix.slice(0, -1) : urlPrefix;
 
+  if (normalizedPrefix === "/") {
+    const baseDirectory = resolve(directory);
+    const target = resolve(baseDirectory, pathname.replace(/^\/+/, ""));
+    if (target !== baseDirectory && !target.startsWith(`${baseDirectory}/`)) {
+      return null;
+    }
+    return target;
+  }
+
   if (pathname !== normalizedPrefix && !pathname.startsWith(`${normalizedPrefix}/`)) {
     return null;
   }

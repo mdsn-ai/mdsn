@@ -128,4 +128,20 @@ describe("bun host adapter", () => {
 
     expect(response.status).toBe(404);
   });
+
+  it("serves root-mounted static files from top-level paths", async () => {
+    const staticRoot = await mkdtemp(join(tmpdir(), "mdsn-bun-host-root-"));
+    await writeFile(join(staticRoot, "site.css"), "body { color: red; }", "utf8");
+
+    const server = createMdsnServer();
+    const host = createHost(server, {
+      staticMounts: [{ urlPrefix: "/", directory: staticRoot }]
+    });
+
+    const response = await host(new Request("https://example.test/site.css"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/css");
+    await expect(response.text()).resolves.toContain("color: red");
+  });
 });

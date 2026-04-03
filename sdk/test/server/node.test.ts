@@ -556,4 +556,22 @@ describe("createNodeRequestListener", () => {
 
     expect(response.status).toBe(404);
   });
+
+  it("serves root-mounted static files from top-level paths", async () => {
+    const tempRoot = await mkdtemp(join(tmpdir(), "mdsn-node-host-root-"));
+    await writeFile(join(tempRoot, "site.css"), "body { color: red; }");
+
+    const mdsn = createMdsnServer();
+    const baseUrl = await listen(
+      createHost(mdsn, {
+        staticMounts: [{ urlPrefix: "/", directory: tempRoot }]
+      })
+    );
+
+    const response = await fetch(`${baseUrl}/site.css`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/css");
+    await expect(response.text()).resolves.toContain("color: red");
+  });
 });
